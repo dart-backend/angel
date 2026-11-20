@@ -218,7 +218,7 @@ bool requiresPkce(PseudoApplication client) => client.id != 'legacy-app';
 bool get allowsPlainPkce => true;
 ```
 
-The `authorizationEndpoint` injects a `Pkce` of the `code_challenge` and `code_challenge_method` of the request into its container, for a code request: an implicit one has no PKCE, and making it throws `invalid_request` without a challenge, as of a client that `requiresPkce` exempts and that sent none. At the token endpoint, whose request has a `code_verifier` and no challenge, build a `Pkce` of the stored challenge instead, as below:
+The `authorizationEndpoint` injects a `Pkce` of the `code_challenge` and `code_challenge_method` of the request into its container, for a code request: an implicit one has no PKCE, and making it throws `invalid_request` without a challenge, as of a client that `requiresPkce` exempts and that sent none. The `tokenEndpoint` injects none: its request has a `code_verifier` and no challenge, so build a `Pkce` of the stored challenge instead, as below:
 
 ```dart
 @override

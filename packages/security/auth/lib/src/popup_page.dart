@@ -8,8 +8,9 @@ import 'options.dart';
 /// Displays a default callback page to confirm authentication via popups.
 AngelAuthCallback confirmPopupAuthentication({String eventName = 'token'}) {
   return (req, ResponseContext res, String jwt) {
-    var evt = json.encode(eventName);
-    var detail = json.encode({'detail': jwt});
+    // Of no `</script>`, which would end the script.
+    var evt = json.encode(eventName).replaceAll('<', r'\u003c');
+    var detail = json.encode({'detail': jwt}).replaceAll('<', r'\u003c');
 
     res
       ..contentType = MediaType('text', 'html')

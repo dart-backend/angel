@@ -100,7 +100,8 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
     // Redirect failed authentication
     if (localOptions.failureRedirect != null &&
         localOptions.failureRedirect!.isNotEmpty) {
-      await res.redirect(localOptions.failureRedirect, code: 401);
+      // A 302, as browsers follow no `Location` of a 401.
+      await res.redirect(localOptions.failureRedirect);
       return null;
     }
 

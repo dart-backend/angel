@@ -1899,10 +1899,6 @@ abstract class AuthorizationServer<Client, User> {
 
       state = body['state']?.toString() ?? '';
 
-      req.container!.registerLazySingleton<Pkce>((_) {
-        return Pkce.fromJson(req.bodyAsMap, state: state);
-      });
-
       // Missing, or empty, is `invalid_request`; before the client is
       // authenticated, as is a grant that is not supported, which it need
       // not be to learn of either.

@@ -339,4 +339,204 @@ void main() {
       expect(got.status, 400);
     });
   });
+
+  group('fixes', () {
+    late Site site;
+    var otherRan = false;
+
+    setUp(() async {
+      otherRan = false;
+      site = Site();
+      site.auth.strategies['other'] = _Recording(() => otherRan = true);
+      await site.start();
+      site.app
+        ..get(
+          '/basic',
+          (req, res) => 'in',
+          middleware: [forceBasicAuth<String?>()],
+        )
+        ..post('/chain', site.auth.authenticate(['local', 'other']))
+        ..post(
+          '/login-redirect',
+          site.auth.authenticate(
+            'local',
+            AngelAuthOptions(successRedirect: '/'),
+          ),
+        )
+        ..post(
+          '/logout-redirect',
+          (req, res) => res.write('bye'),
+          middleware: [
+            site.auth.logout(AngelAuthOptions(successRedirect: '/')),
+          ],
+        )
+        ..get('/as/:id', (RequestContext req, ResponseContext res) async {
+          await site.auth.loginById(req.params['id'] as String, req, res);
+          return 'ok';
+        })
+        ..post(
+          '/refused',
+          site.auth.authenticate(
+            'local',
+            AngelAuthOptions(
+              tokenCallback: (req, res, token, user) =>
+                  throw AngelHttpException.forbidden(),
+            ),
+          ),
+        )
+        ..post(
+          '/again',
+          site.auth.authenticate('local'),
+          middleware: [requireAuthentication<String?>()],
+        )
+        ..get('/optional', (RequestContext req, ResponseContext res) async {
+          // Called as a function, of `throwError: false`.
+          Function handler = requireAuthentication<String?>();
+          return {'ok': await handler(req, res, throwError: false)};
+        })
+        ..get('/popup', (RequestContext req, ResponseContext res) {
+          return confirmPopupAuthentication(eventName: '</script>x')(
+            req,
+            res,
+            'jwt',
+          );
+        });
+    });
+
+    test('forceBasicAuth refuses an expired JWT, not challenges it', () async {
+      var jwt = site.jwt(
+        AuthToken(
+          userId: 'alice',
+          lifeSpan: 1000,
+          issuedAt: DateTime.now().subtract(const Duration(days: 7)),
+        ),
+      );
+      var got = await site.send(
+        'GET',
+        '/basic',
+        headers: {'authorization': 'Bearer $jwt'},
+      );
+      expect(got.status, 403);
+    });
+
+    test(
+      'requireAuthentication of throwError: false is false of no JWT',
+      () async {
+        expect((await site.send('GET', '/optional')).body, {'ok': false});
+      },
+    );
+
+    test('onLogin is not told of a login that tokenCallback refuses, nor of '
+        'a user signed in already', () async {
+      var logins = <String?>[];
+      var sub = site.auth.onLogin.listen(logins.add);
+      var credentials = {'username': 'alice', 'password': 'pässwörd'};
+      expect(
+        (await site.send('POST', '/refused', body: credentials)).status,
+        403,
+      );
+      var jwt = site.jwt(AuthToken(userId: 'alice'));
+      expect(
+        (await site.send(
+          'POST',
+          '/again',
+          headers: {'authorization': 'Bearer $jwt'},
+          body: credentials,
+        )).status,
+        200,
+      );
+      await Future<void>.delayed(Duration.zero);
+      await sub.cancel();
+      expect(logins, isEmpty);
+    });
+
+    test('forceBasicAuth challenges a request of no JWT', () async {
+      var got = await site.send('GET', '/basic');
+      expect(got.status, 401);
+      var jwt = site.jwt(AuthToken(userId: 'alice'));
+      got = await site.send(
+        'GET',
+        '/basic',
+        headers: {'authorization': 'Bearer $jwt'},
+      );
+      expect(got.status, 200);
+    });
+
+    test('no strategy runs after one that answered the request', () async {
+      var got = await site.send(
+        'POST',
+        '/chain',
+        headers: {
+          'authorization': 'Basic ${base64.encode(utf8.encode('alice:x'))}',
+        },
+      );
+      expect(got.status, 401);
+      expect(otherRan, isFalse);
+    });
+
+    test('onLogin is told of a login of a redirect', () async {
+      var login = site.auth.onLogin.first;
+      var got = await site.send(
+        'POST',
+        '/login-redirect',
+        body: {'username': 'alice', 'password': 'pässwörd'},
+      );
+      expect(got.status, 302);
+      expect(await login.timeout(Duration(seconds: 1)), 'Alice');
+    });
+
+    test('no handler runs after a logout that redirected', () async {
+      var got = await site.send('POST', '/logout-redirect');
+      expect(got.status, 302);
+      expect(got.body, isNot(contains('bye')));
+    });
+
+    test('loginById of a user that does not exist is a 403', () async {
+      expect((await site.send('GET', '/as/alice')).status, 200);
+      expect((await site.send('GET', '/as/nobody')).status, 403);
+    });
+
+    test('the popup page escapes its event name', () async {
+      var got = await site.send('GET', '/popup');
+      expect(got.body, isNot(contains('</script>x')));
+      // Of `<` as a JSON escape: a backslash, then `u003c`.
+      var backslash = String.fromCharCode(92);
+      expect(got.body, contains('"${backslash}u003c/script>x"'));
+    });
+  });
+
+  test('configureServer may be called again', () async {
+    var site = Site();
+    await site.start();
+    await site.app.configure(site.auth.configureServer);
+  });
+
+  test(
+    'configureServer of another instance, of the same user, throws',
+    () async {
+      var site = Site();
+      await site.start();
+      expect(
+        () => site.app.configure(Site().auth.configureServer),
+        throwsStateError,
+      );
+    },
+  );
+}
+
+/// A strategy that records that it ran, and authenticates no one.
+class _Recording extends AuthStrategy<String?> {
+  final void Function() ran;
+
+  _Recording(this.ran);
+
+  @override
+  Future<String?> authenticate(
+    RequestContext req,
+    ResponseContext res, [
+    AngelAuthOptions<String?>? options,
+  ]) async {
+    ran();
+    return null;
+  }
 }

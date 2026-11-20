@@ -63,7 +63,7 @@ class AngelAuth<User> {
   /// This is a security provision. Even if a user's JWT is stolen, a remote attacker will not be able to impersonate anyone.
   final bool enforceIp;
 
-  /// The endpoint to mount [reviveJwt] at. If `null`, then no revival route is mounted. Default: `/auth/token`.
+  /// The endpoint to mount the JWT revival route at. Default: `/auth/token`.
   String reviveTokenEndpoint;
 
   /// How long after a JWT has expired it may still be revived at
@@ -134,38 +134,43 @@ class AngelAuth<User> {
   /// whenever an instance of [User] is injected.
   Future<void> configureServer(Angel app) async {
     var appContainer = app.container;
+    // Of an app that this instance configured already: of no second
+    // registration, revival route or shutdown hook. Another instance, of
+    // the same [User], throws, as it would not be used.
+    if (appContainer.has<AngelAuth<User>>() &&
+        identical(appContainer.make<AngelAuth<User>>(), this)) {
+      return;
+    }
 
     appContainer.registerSingleton(this);
     if (runtimeType != AngelAuth) {
       appContainer.registerSingleton(this, as: AngelAuth);
     }
 
-    if (!appContainer.has<_AuthResult<User>>()) {
-      appContainer.registerLazySingleton<Future<_AuthResult<User>>>((
-        container,
-      ) async {
-        var req = container.make<RequestContext>();
-        var res = container.make<ResponseContext>();
+    appContainer.registerLazySingleton<Future<_AuthResult<User>>>((
+      container,
+    ) async {
+      var req = container.make<RequestContext>();
+      var res = container.make<ResponseContext>();
 
-        var result = await _decodeJwt(req, res);
-        if (result != null) {
-          return result;
-        } else {
-          _log.warning('JWT is null');
-          throw AngelHttpException.forbidden();
-        }
-      });
+      var result = await _decodeJwt(req, res);
+      if (result != null) {
+        return result;
+      } else {
+        _log.warning('JWT is null');
+        throw AngelHttpException.forbidden();
+      }
+    });
 
-      appContainer.registerLazySingleton<Future<User>>((container) async {
-        var result = await container.makeAsync<_AuthResult<User>>();
-        return result.user;
-      });
+    appContainer.registerLazySingleton<Future<User>>((container) async {
+      var result = await container.makeAsync<_AuthResult<User>>();
+      return result.user;
+    });
 
-      appContainer.registerLazySingleton<Future<AuthToken>>((container) async {
-        var result = await container.makeAsync<_AuthResult<User>>();
-        return result.token;
-      });
-    }
+    appContainer.registerLazySingleton<Future<AuthToken>>((container) async {
+      var result = await container.makeAsync<_AuthResult<User>>();
+      return result.token;
+    });
 
     app.post(reviveTokenEndpoint, _reviveJwt);
 
@@ -214,6 +219,12 @@ class AngelAuth<User> {
         message: 'JWT cannot be accessed from this IP address.',
       );
     }
+  }
+
+  /// Adds [user] to [stream], unless it was closed, as on the shutdown of an
+  /// app, of an instance that is configured again.
+  static void _emit<User>(StreamController<User> stream, User user) {
+    if (!stream.isClosed) stream.add(user);
   }
 
   /// The user of [userId], or a 403 if there is none (any more).
@@ -419,11 +430,17 @@ class AngelAuth<User> {
             }
 
             var r = await authOption.tokenCallback!(req, res, token, result);
-            if (r != null) return r;
+            if (r != null) {
+              if (!hasExisting) _emit(_onLogin, result);
+              return r;
+            }
             jwt = token.serialize(_hs256);
           }
 
           _apply(req, res, token, result, setCookie: false);
+          // Of a new login, once it is accepted, however it is answered; not
+          // of a user who is signed in already.
+          if (!hasExisting) _emit(_onLogin, result);
 
           if (allowCookie) {
             _addProtectedCookie(res, 'token', jwt);
@@ -439,20 +456,17 @@ class AngelAuth<User> {
             return false;
           } else if (authOption.canRespondWithJson &&
               req.accepts('application/json')) {
-            var user = hasExisting
-                ? result
-                : await deserializer(await serializer(result));
-            _onLogin.add(user);
+            var user = hasExisting ? result : await deserializer(userId);
             return {'data': user, 'token': jwt};
           }
 
           return true;
         } else {
-          if (i < names.length - 1) continue;
           // A strategy that answered the request itself, as with an error
-          // page, or a redirect.
-          if (!res.isOpen ||
-              res.statusCode == 301 ||
+          // page, or a redirect: no other is tried.
+          if (!res.isOpen) return false;
+          if (i < names.length - 1) continue;
+          if (res.statusCode == 301 ||
               res.statusCode == 302 ||
               res.headers.containsKey('location')) {
             return false;
@@ -468,27 +482,35 @@ class AngelAuth<User> {
     };
   }
 
-  /// Log a user in on-demand.
+  /// Log a user in on-demand, of [token], which is trusted: verify one of a
+  /// request first, as by [AuthToken.validate], since [AuthToken.parse] does
+  /// not check its signature. Throws a 403 if its user does not exist.
+  ///
+  /// Of a request whose user is known already, as of its JWT, the request
+  /// keeps that user and token: the new one is of the cookie, and so of the
+  /// next request.
   Future login(AuthToken token, RequestContext req, ResponseContext res) async {
-    var user = await deserializer(token.userId);
+    var user = await _userOf(token.userId);
     _apply(req, res, token, user);
-    _onLogin.add(user);
+    _emit(_onLogin, user);
   }
 
-  /// Log a user in on-demand.
+  /// Log a user in on-demand, of [userId]. Throws a 403 if the user does
+  /// not exist. As with [login], a request whose user is known already
+  /// keeps that user; the new one is of the next request.
   Future loginById(
     String userId,
     RequestContext req,
     ResponseContext res,
   ) async {
-    var user = await deserializer(userId);
+    var user = await _userOf(userId);
     var token = AuthToken(
       userId: userId,
       lifeSpan: _jwtLifeSpan,
       ipAddress: req.ip,
     );
     _apply(req, res, token, user);
-    _onLogin.add(user);
+    _emit(_onLogin, user);
   }
 
   /// Log an authenticated user out: the `token` cookie, if [allowCookie], is
@@ -500,7 +522,7 @@ class AngelAuth<User> {
       if (req.container?.has<User>() == true) {
         var user = req.container?.make<User>();
         if (user != null) {
-          _onLogout.add(user);
+          _emit(_onLogout, user);
         }
       }
 
@@ -521,7 +543,8 @@ class AngelAuth<User> {
         await res.redirect(options.successRedirect);
       }
 
-      return true;
+      // Of no handler after it, once it has redirected.
+      return res.isOpen;
     };
   }
 }

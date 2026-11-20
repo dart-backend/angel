@@ -128,7 +128,8 @@ void main() async {
     print(response.headers);
     print(response.body);
     expect(response.headers['location'], equals('/failure'));
-    expect(response.statusCode, equals(401));
+    // Not a 401, of which browsers follow no `Location`.
+    expect(response.statusCode, equals(302));
   });
 
   test('basic auth without authorization', () async {

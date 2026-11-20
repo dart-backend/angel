@@ -87,8 +87,8 @@ class ExternalAuthOptions {
   bool operator ==(other) =>
       other is ExternalAuthOptions &&
       other.clientId == clientId &&
-      other.clientSecret == other.clientSecret &&
-      other.redirectUri == other.redirectUri &&
+      other.clientSecret == clientSecret &&
+      other.redirectUri == redirectUri &&
       const SetEquality<String>().equals(other.scopes, scopes);
 
   /// Creates a copy of this object, with the specified changes.

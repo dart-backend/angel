@@ -1,5 +1,20 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Logout:** Once `logout` redirects to `successRedirect`, no handler after it runs
+* **Local strategy:** Its `failureRedirect` is a 302, which browsers follow, where it was a 401
+* **`authenticate`:** No strategy runs after one that has answered the request, which wrote to the closed response. The JSON answer of a login no longer serializes the user twice
+* **`onLogin`:** Told of every new login once it is accepted, however it is answered, as by a redirect or a callback, where it was only of one answered with JSON; not of a login that `tokenCallback` refuses, nor of a user who is signed in already. A login or logout of an instance whose app has shut down is not an error
+* **Basic authentication:** `forceBasicAuth` sends its `WWW-Authenticate: Basic` challenge, a 401, to a request of no JWT, where it was a 403 once `AngelAuth` was configured; a JWT that is not valid, as one that has expired, is still a 403
+* **`requireAuthentication`:** Called with `throwError: false`, it returns `false` for a request of no JWT, where it threw a 403
+* **`login` and `loginById`:** A user that does not exist is a 403, where it was logged in as `null`. `login` trusts its token, which the caller must have verified, as by `AuthToken.validate`. A request whose user is known already keeps that user; the new one is of the next request
+* **`configureServer`:** Configuring an app again with the same instance does nothing, where it threw a `StateError`; another instance of the same user type still throws
+* **`ExternalAuthOptions`:** `==` compares `clientSecret` and `redirectUri`, which it compared with themselves
+* **Popup page:** `confirmPopupAuthentication` escapes `<` in its script, so an `eventName` of `</script>` cannot end it
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

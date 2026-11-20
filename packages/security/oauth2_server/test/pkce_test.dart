@@ -175,6 +175,8 @@ void main() {
             isJson({'token_type': 'bearer', 'access_token': 'yes'}),
           ),
         );
+        // Of the stored challenge, not of the request, which has none.
+        expect(_Server.tokenHadPkce, isFalse);
       });
 
       test('with incorrect verifier', () async {
@@ -281,6 +283,9 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
 
   bool get lenient => !requires;
 
+  /// Whether the container of the last token request had a [Pkce].
+  static bool? tokenHadPkce;
+
   @override
   FutureOr<PseudoApplication> findClient(String? clientId) {
     return pseudoApplication;
@@ -322,6 +327,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
     RequestContext req,
     ResponseContext res,
   ) async {
+    tokenHadPkce = req.container!.has<Pkce>();
     var codeVerifier = await getPkceCodeVerifier(req);
     // The challenge stored with the code.
     var pkce = lenient ? Pkce('plain', 'hello') : Pkce('S256', _challenge);

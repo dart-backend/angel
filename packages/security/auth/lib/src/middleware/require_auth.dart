@@ -2,20 +2,14 @@ import 'dart:async';
 
 import 'package:angel3_framework/angel3_framework.dart';
 
+import '../plugin.dart';
+
 /// Forces Basic authentication over the requested resource, with the given [realm] name, if no JWT is present.
 ///
 /// [realm] defaults to `'angel3_auth'`.
 RequestHandler forceBasicAuth<User>({String? realm}) {
   return (RequestContext req, ResponseContext res) async {
-    if (req.container != null) {
-      var reqContainer = req.container!;
-      if (reqContainer.has<User>()) {
-        return true;
-      } else if (reqContainer.has<Future<User>>()) {
-        await reqContainer.makeAsync<User>();
-        return true;
-      }
-    }
+    if (await _hasUser<User>(req)) return true;
 
     res.headers['www-authenticate'] = 'Basic realm="${realm ?? 'angel_auth'}"';
     throw AngelHttpException.notAuthenticated();
@@ -38,18 +32,26 @@ RequestHandler requireAuthentication<User>() {
       }
     }
 
-    if (req.container != null) {
-      var reqContainer = req.container!;
-      if (reqContainer.has<User>() || req.method == 'OPTIONS') {
-        return true;
-      } else if (reqContainer.has<Future<User>>()) {
-        await reqContainer.makeAsync<User>();
-        return true;
-      } else {
-        return reject(res);
-      }
-    } else {
-      return reject(res);
-    }
+    if (req.method == 'OPTIONS' || await _hasUser<User>(req)) return true;
+    return reject(res);
   };
+}
+
+/// Whether [req] has a [User]: `false` if it sent no JWT. A JWT that is
+/// not valid, as one that has expired, throws its error, a 403.
+///
+/// The `Future<User>` of [AngelAuth] is registered in the container of the
+/// app, so for every request, and throws without a JWT: whether one was
+/// sent is asked of the [AngelAuth] first.
+Future<bool> _hasUser<User>(RequestContext req) async {
+  var container = req.container;
+  if (container == null) return false;
+  if (container.has<User>()) return true;
+  if (!container.has<Future<User>>()) return false;
+  if (container.has<AngelAuth<User>>() &&
+      container.make<AngelAuth<User>>().getJwt(req) == null) {
+    return false;
+  }
+  await container.makeAsync<User>();
+  return true;
 }

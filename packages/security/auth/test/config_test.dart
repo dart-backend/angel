@@ -36,6 +36,11 @@ void main() {
 
     test('not equal to original if different', () {
       expect(options.copyWith(clientId: 'hey'), isNot(options));
+      expect(options.copyWith(clientSecret: 'other'), isNot(options));
+      expect(
+        options.copyWith(redirectUri: 'https://other.example'),
+        isNot(options),
+      );
     });
   });
 
