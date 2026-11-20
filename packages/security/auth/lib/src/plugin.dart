@@ -20,6 +20,13 @@ class AngelAuth<User> {
   // Broadcast, so that what no one listens to is not kept.
   final StreamController<User> _onLogin = StreamController<User>.broadcast(),
       _onLogout = StreamController<User>.broadcast();
+
+  /// The apps that this instance configured, which have not shut down: the
+  /// streams close once the last one does.
+  int _apps = 0;
+
+  /// The streams of which a dropped event was warned about, once each.
+  final Set<StreamController<User>> _warnedClosed = {};
   final Random _random = Random.secure();
   final RegExp _rgxBearer = RegExp(r'^Bearer\s+(.+)$', caseSensitive: false);
 
@@ -82,10 +89,15 @@ class AngelAuth<User> {
 
   /// Fires the result of [deserializer] whenever a user signs in to the
   /// application, to those listening then.
+  ///
+  /// It closes once every app that this instance configured has shut down;
+  /// a login after that, of an app it configures again, is not told of,
+  /// and is warned about once.
   Stream<User> get onLogin => _onLogin.stream;
 
   /// Fires `req.user`, which is usually the result of [deserializer],
   /// whenever a user signs out of the application, to those listening then.
+  /// It closes as [onLogin] does.
   Stream<User> get onLogout => _onLogout.stream;
 
   /// The [Hmac] being used to encode JWT's.
@@ -174,7 +186,11 @@ class AngelAuth<User> {
 
     app.post(reviveTokenEndpoint, _reviveJwt);
 
+    // Of the streams of this instance, which other apps it configured may
+    // still use: closed with the last of them.
+    _apps++;
     app.shutdownHooks.add((_) async {
+      if (--_apps > 0) return;
       await _onLogin.close();
       await _onLogout.close();
     });
@@ -221,10 +237,19 @@ class AngelAuth<User> {
     }
   }
 
-  /// Adds [user] to [stream], unless it was closed, as on the shutdown of an
-  /// app, of an instance that is configured again.
-  static void _emit<User>(StreamController<User> stream, User user) {
-    if (!stream.isClosed) stream.add(user);
+  /// Adds [user] to [stream], unless it was closed, as once every app that
+  /// this instance configured has shut down; that is warned about once, so
+  /// that no event is dropped unknown, and the login or logout goes on.
+  void _emit(StreamController<User> stream, User user) {
+    if (!stream.isClosed) {
+      stream.add(user);
+    } else if (_warnedClosed.add(stream)) {
+      _log.warning(
+        'An event of ${identical(stream, _onLogin) ? 'onLogin' : 'onLogout'} '
+        'was dropped: its stream closed when the apps that this AngelAuth '
+        'configured shut down. Create an AngelAuth for each app.',
+      );
+    }
   }
 
   /// The user of [userId], or a 403 if there is none (any more).

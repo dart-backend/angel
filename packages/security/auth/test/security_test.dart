@@ -29,7 +29,12 @@ class Site {
     bool allowTokenInQuery = false,
     Duration reviveGracePeriod = Duration.zero,
     String? jwtKey = 'key',
+    AngelAuth<String?>? sharing,
   }) {
+    if (sharing != null) {
+      auth = sharing;
+      return;
+    }
     auth = AngelAuth<String?>(
       jwtKey: jwtKey,
       serializer: (user) =>
@@ -220,6 +225,53 @@ void main() {
       await allowing.start();
       jwt = allowing.jwt(AuthToken(userId: 'bob'));
       expect((await allowing.send('GET', '/me?token=$jwt')).body, 'Bob');
+    });
+  });
+
+  group('an AngelAuth of two apps', () {
+    var credentials = {'username': 'alice', 'password': 'pässwörd'};
+
+    test('tells of logins until the last app shuts down', () async {
+      var a = Site();
+      var b = Site(sharing: a.auth);
+      await a.start();
+      await b.start();
+      var logins = <String?>[];
+      var done = false;
+      a.auth.onLogin.listen(logins.add, onDone: () => done = true);
+
+      await a.http.close();
+      await b.send('POST', '/login', body: credentials);
+      await Future<void>.delayed(Duration.zero);
+      expect(logins, ['Alice']);
+      expect(done, isFalse);
+
+      await b.http.close();
+      await Future<void>.delayed(Duration.zero);
+      expect(done, isTrue);
+    });
+
+    test('warns once of logins it can no longer tell of', () async {
+      var a = Site();
+      await a.start();
+      await a.http.close();
+      // Configured again, of a new app, once its streams are closed.
+      var b = Site(sharing: a.auth);
+      await b.start();
+
+      var warnings = <String>[];
+      var sub = Logger('AngelAuth').onRecord
+          .where((r) => r.level == Level.WARNING)
+          .map((r) => r.message)
+          .where((m) => m.contains('was dropped'))
+          .listen(warnings.add);
+      for (var i = 0; i < 2; i++) {
+        var got = await b.send('POST', '/login', body: credentials);
+        expect(got.status, 200);
+      }
+      await sub.cancel();
+      expect(warnings, hasLength(1));
+      expect(warnings.single, contains('onLogin'));
     });
   });
 
