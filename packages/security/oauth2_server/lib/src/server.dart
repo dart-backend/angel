@@ -336,13 +336,54 @@ abstract class AuthorizationServer<Client, User> {
 
   /// Of any case, as an authentication scheme (RFC 7235 §2.1).
   static final RegExp _rgxBasic = RegExp(
-    r'^Basic\s+(\S+)\s*$',
+    r'^\s*Basic\s+(\S+)\s*$',
     caseSensitive: false,
   );
 
+  /// A header of the `Basic` scheme, malformed or not.
+  static final RegExp _rgxBasicScheme = RegExp(
+    r'^\s*Basic(\s|$)',
+    caseSensitive: false,
+  );
+
+  /// The `Authorization` header of [req] of the `Basic` scheme, of all its
+  /// values, as a proxy may add one of another scheme, which is not of the
+  /// client; or `null` if there is none. Throws `invalid_request` if there
+  /// are several.
+  ///
+  /// Each value is split at its commas too, as `HttpClient` and the shelf
+  /// driver join headers of one name with them: Basic credentials, of
+  /// base64, have none, and the parts of the parameters of another scheme
+  /// are not of the `Basic` scheme.
+  static String? _basicHeader(RequestContext req, String state) {
+    var basic = [
+      for (var value in req.headers!['authorization'] ?? const <String>[])
+        for (var part in value.split(','))
+          if (_rgxBasicScheme.hasMatch(part)) part,
+    ];
+    if (basic.length > 1) {
+      throw AuthorizationException(
+        ErrorResponse(
+          ErrorResponse.invalidRequest,
+          'More than one Basic "Authorization" header.',
+          state,
+        ),
+        statusCode: 400,
+      );
+    }
+    return basic.firstOrNull;
+  }
+
+  /// The parameter [name] of the form [body], or `null` if it is empty, as
+  /// an empty one is of none.
+  static String? _formValue(Map<String, dynamic> body, String name) {
+    var value = body[name]?.toString();
+    return value == null || value.isEmpty ? null : value;
+  }
+
   /// The client id and secret of an `Authorization: Basic` [header], split
   /// at the first `:`, as an id has none, but a secret may; or `null` if it
-  /// is malformed.
+  /// is malformed, or its id is empty.
   ///
   /// Each is percent-decoded, as clients encode them (RFC 6749 §2.3.1),
   /// unless that fails, as of a `%` sent unencoded; a `+` is kept, as
@@ -359,17 +400,21 @@ abstract class AuthorizationServer<Client, User> {
       return null;
     }
     var colon = credentials.indexOf(':');
-    if (colon < 0) return null;
+    if (colon <= 0) return null;
     return (
       _percentDecoded(credentials.substring(0, colon)),
       _percentDecoded(credentials.substring(colon + 1)),
     );
   }
 
+  /// [value] percent-decoded, or as it is if it is not valid: of a `%` of
+  /// no two hex digits, or of escapes that are not of UTF-8, as `%FF`.
   static String _percentDecoded(String value) {
     try {
       return Uri.decodeComponent(value);
     } on ArgumentError {
+      return value;
+    } on FormatException {
       return value;
     }
   }
@@ -391,12 +436,14 @@ abstract class AuthorizationServer<Client, User> {
     );
   }
 
-  /// The client of a request to the token endpoint, authenticated by its
-  /// `Authorization: Basic` header, or, without one, by the `client_id` and
-  /// `client_secret` of its form (RFC 6749 §2.3.1), of which a public
-  /// client, as of PKCE alone, gives no secret: [verifyClient] is given
-  /// `null`, as for an empty one, and decides whether the client may have
-  /// none.
+  /// The client of a request to the token endpoint, of any grant, device
+  /// code requests among them, authenticated by its `Authorization: Basic`
+  /// header, or, without one, as with one of another scheme, by the
+  /// `client_id` and `client_secret` of its form (RFC 6749 §2.3.1), of
+  /// which a public client, as of PKCE or a device, gives no secret:
+  /// [verifyClient] is given `null`, as for an empty one, and decides
+  /// whether the client may have none. A `client_id` of the form, given
+  /// with the header, must be of its client.
   ///
   /// Also whether the client gave a secret, as a confidential client does.
   Future<(Client, bool)> _authenticateClient(
@@ -405,11 +452,11 @@ abstract class AuthorizationServer<Client, User> {
     Map<String, dynamic> body,
     String state,
   ) async {
-    var header = req.headers!.value('authorization');
+    var header = _basicHeader(req, state);
+    // Whether the client used Basic authentication, as of a challenge.
+    var challenge = header != null;
     String clientId;
     String? clientSecret;
-    // Whether the client used Basic authentication, or gave nothing.
-    bool challenge;
     if (header != null) {
       var credentials = _basicCredentials(header);
       if (credentials == null) {
@@ -421,23 +468,23 @@ abstract class AuthorizationServer<Client, User> {
         );
       }
       (clientId, clientSecret) = credentials;
-      challenge = true;
+      // As of `Basic id:`, as of none.
+      if (clientSecret.isEmpty) clientSecret = null;
     } else {
-      var id = body['client_id']?.toString();
-      if (id == null || id.isEmpty) {
+      var id = _formValue(body, 'client_id');
+      if (id == null) {
         throw _invalidClient(
           res,
-          'No "Authorization" header, nor "client_id" parameter.',
+          'No client credentials: no Basic "Authorization" header, nor '
+          '"client_id" parameter.',
           state,
+          // Of no credentials, which Basic would give.
           challenge: true,
         );
       }
       clientId = id;
-      clientSecret = body['client_secret']?.toString();
-      challenge = false;
+      clientSecret = _formValue(body, 'client_secret');
     }
-    // As of `Basic id:` or `client_secret=`, as of none.
-    if (clientSecret != null && clientSecret.isEmpty) clientSecret = null;
 
     var client = await findClient(clientId);
     if (client == null) {
@@ -456,27 +503,41 @@ abstract class AuthorizationServer<Client, User> {
         challenge: challenge,
       );
     }
+    if (header != null) _checkFormOfHeader(body, clientId, clientSecret, state);
     return (client, clientSecret != null);
   }
 
-  /// The client of the `client_id` of the form of a device code request or
-  /// grant, which is not authenticated otherwise.
-  Future<Client> _deviceCodeClient(
-    RequestContext req,
-    ResponseContext res,
+  /// Throws `invalid_request` if the form of a request that authenticated
+  /// by its `Authorization: Basic` header has a `client_id` or a
+  /// `client_secret` that is not the header's, once the header is known to
+  /// be of a client: RFC 8628 has a client give its `client_id`, and some
+  /// give the secret too, but a request has one method of authentication
+  /// (RFC 6749 §2.3).
+  static void _checkFormOfHeader(
+    Map<String, dynamic> body,
+    String clientId,
+    String? clientSecret,
     String state,
-  ) async {
-    var clientId = await _getParam(req, 'client_id', state, body: true);
-    var client = await findClient(clientId);
-    if (client == null) {
-      throw _invalidClient(
-        res,
-        'Unknown client "$clientId".',
-        state,
-        challenge: false,
+  ) {
+    var formId = _formValue(body, 'client_id');
+    var formSecret = _formValue(body, 'client_secret');
+    String? differs;
+    if (formId != null && formId != clientId) {
+      differs = 'client_id';
+    } else if (formSecret != null && formSecret != clientSecret) {
+      differs = 'client_secret';
+    }
+    if (differs != null) {
+      throw AuthorizationException(
+        ErrorResponse(
+          ErrorResponse.invalidRequest,
+          'The "$differs" parameter is not that of the "Authorization" '
+          'header.',
+          state,
+        ),
+        statusCode: 400,
       );
     }
-    return client;
   }
 
   /// A request handler that either exchanges authorization codes for authorization tokens,
@@ -503,9 +564,33 @@ abstract class AuthorizationServer<Client, User> {
       // `grant_type=` is no grant type.
       if (grantType != null && grantType.isEmpty) grantType = null;
 
+      ExtensionGrant? extensionGrant;
+      if (grantType != null) {
+        // Before the client is authenticated, which it need not be to learn
+        // that its grant is not supported.
+        if (!_grantTypes.contains(grantType)) {
+          extensionGrant =
+              extensionGrants[grantType] ??
+              (throw AuthorizationException(
+                ErrorResponse(
+                  ErrorResponse.unsupportedGrantType,
+                  'Unsupported "grant_type" parameter: "$grantType".',
+                  state,
+                ),
+                statusCode: 400,
+              ));
+        }
+      }
+
+      var (client, confidential) = await _authenticateClient(
+        req,
+        res,
+        body,
+        state,
+      );
+
       if (grantType == null) {
         // A device code request.
-        var client = await _deviceCodeClient(req, res, state);
         var scopes = await _getScopes(req, body: true);
         var deviceCodeResponse = await requestDeviceCode(
           client,
@@ -516,25 +601,8 @@ abstract class AuthorizationServer<Client, User> {
         return deviceCodeResponse.toJson();
       }
 
-      // Before the client is authenticated, which it need not be to learn
-      // that its grant is not supported.
-      var extensionGrant = _grantTypes.contains(grantType)
-          ? null
-          : extensionGrants[grantType];
-      if (!_grantTypes.contains(grantType) && extensionGrant == null) {
-        throw AuthorizationException(
-          ErrorResponse(
-            ErrorResponse.unsupportedGrantType,
-            'Unsupported "grant_type" parameter: "$grantType".',
-            state,
-          ),
-          statusCode: 400,
-        );
-      }
-
       AuthorizationTokenResponse response;
       if (grantType == _deviceCodeGrantType) {
-        var client = await _deviceCodeClient(req, res, state);
         var deviceCode = await _getParam(req, 'device_code', state, body: true);
         response = await exchangeDeviceCodeForToken(
           client,
@@ -544,13 +612,6 @@ abstract class AuthorizationServer<Client, User> {
           res,
         );
       } else {
-        var (client, confidential) = await _authenticateClient(
-          req,
-          res,
-          body,
-          state,
-        );
-
         if (grantType == 'authorization_code') {
           var code = await _getParam(req, 'code', state, body: true);
           var redirectUri = await _getParam(

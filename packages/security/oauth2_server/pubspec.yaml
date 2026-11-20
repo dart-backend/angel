@@ -12,10 +12,10 @@ dependencies:
   angel3_framework: ^10.0.0
   angel3_http_exception: ^10.0.0
   crypto: ^3.0.1
-  collection: ^1.17.0
   logging: ^1.2.0
 dev_dependencies:
   angel3_test: ^10.0.0
+  collection: ^1.17.0
   http: ^1.0.0
   oauth2: ^2.0.0
   lints: ^6.0.0

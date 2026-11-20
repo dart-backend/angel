@@ -169,7 +169,7 @@ void main() {
         },
         body: {
           'grant_type': 'authorization_code',
-          'client_id': 'freddie mercury',
+          'client_id': 'foo',
           'redirect_uri': 'https://freddie.mercu.ry',
           'code': 'ok',
           'code_verifier': 'hello',
@@ -197,7 +197,7 @@ void main() {
         },
         body: {
           'grant_type': 'authorization_code',
-          'client_id': 'freddie mercury',
+          'client_id': 'foo',
           'redirect_uri': 'https://freddie.mercu.ry',
           'code': 'ok',
           'code_verifier': 'foo',
@@ -230,7 +230,7 @@ void main() {
         },
         body: {
           'grant_type': 'authorization_code',
-          'client_id': 'freddie mercury',
+          'client_id': 'foo',
           'redirect_uri': 'https://freddie.mercu.ry',
           'code': 'ok',
         },

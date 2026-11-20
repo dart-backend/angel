@@ -6,6 +6,14 @@ import 'package:angel3_oauth2_server/angel3_oauth2_server.dart';
 import 'package:logging/logging.dart';
 
 /// Serves the device code flow on http://localhost:3000/oauth2.
+///
+/// A device, a public client, gives its `client_id` alone:
+///
+/// ```sh
+/// curl -d client_id=device http://localhost:3000/oauth2/token
+/// curl -d grant_type=urn:ietf:params:oauth:grant-type:device_code \
+///   -d client_id=device -d device_code=foo http://localhost:3000/oauth2/token
+/// ```
 Future<void> main() async {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
@@ -48,7 +56,10 @@ class _AuthorizationServer
 
   @override
   PseudoApplication? findClient(String? clientId) {
-    return clientId == pseudoApplication.id ? pseudoApplication : null;
+    return [
+      pseudoApplication,
+      deviceApplication,
+    ].where((client) => client.id == clientId).firstOrNull;
   }
 
   @override
@@ -56,6 +67,8 @@ class _AuthorizationServer
     PseudoApplication client,
     String? clientSecret,
   ) async {
+    // A public client, stored without a secret, gives none: `null`.
+    if (client.secret.isEmpty) return clientSecret == null;
     return client.secret == clientSecret;
   }
 
@@ -106,6 +119,13 @@ class _AuthorizationServer
 const PseudoApplication pseudoApplication = PseudoApplication(
   'foo',
   'bar',
+  'http://foo.bar/baz',
+);
+
+/// A public client, of a device, without a secret.
+const PseudoApplication deviceApplication = PseudoApplication(
+  'device',
+  '',
   'http://foo.bar/baz',
 );
 

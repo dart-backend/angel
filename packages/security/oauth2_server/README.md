@@ -40,7 +40,7 @@ class MyServer extends oauth2.AuthorizationServer<Client, User> {}
 
 Then, implement the `findClient` and `verifyClient` to ensure that the server class can not only identify a client application via a `client_id`, but that it can also verify its identity via a `client_secret`.
 
-At the token endpoint, a client authenticates with an `Authorization: Basic` header, or, without one, with `client_id` and `client_secret` in the form of the request (RFC 6749 §2.3.1). A public client, such as a mobile app with PKCE, gives its `client_id` alone, and `verifyClient` is given a `null` secret, as it is for an empty one: return `true` for it only for clients that may have none. A client that is not authenticated gets `invalid_client`, a 401. A client without a secret may use the authorization code, password and refresh token grants, but not the client credentials grant, which is for confidential clients: it gets `unauthorized_client`.
+At the token endpoint, a client authenticates with an `Authorization: Basic` header, or, without one (a header of another scheme is ignored), with `client_id` and `client_secret` in the form of the request (RFC 6749 §2.3.1). A public client, such as a mobile app with PKCE, gives its `client_id` alone, and `verifyClient` is given a `null` secret, as it is for an empty one: return `true` for it only for clients that may have none. A client that is not authenticated gets `invalid_client`, a 401. A `client_id` or `client_secret` given in the form with the header must be the header's. A client without a secret may use the authorization code, password and refresh token grants, but not the client credentials grant, which is for confidential clients: it gets `unauthorized_client`.
 
 ```dart
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
@@ -54,6 +54,8 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
   @override
   Future<bool> verifyClient(
       PseudoApplication client, String? clientSecret) async {
+    // A public client, stored without a secret, gives none: `null`.
+    if (client.secret.isEmpty) return clientSecret == null;
     return client.secret == clientSecret;
   }
 }
@@ -105,7 +107,7 @@ The `authorizationEndpoint` and `tokenEndpoint` handle all OAuth2 grant types.
 
 ## Other Grants
 
-By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `unsupported_grant_type` OAuth2 error at the token endpoint, or `unsupported_response_type` for an authorization request. A request to the token endpoint without a `grant_type` is a device code request, which is `invalid_request` unless `requestDeviceCode` is implemented. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
+By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `unsupported_grant_type` OAuth2 error at the token endpoint, or `unsupported_response_type` for an authorization request. A request to the token endpoint without a `grant_type` is a device code request, which is `invalid_request` unless `requestDeviceCode` is implemented. Device code requests and grants authenticate their client as the other grants do: a public client, as of a device, gives its `client_id` alone, and `verifyClient` is given a `null` secret. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
 
 - `refreshAuthorizationToken`
 - `resourceOwnerPasswordCredentialsGrant`
@@ -124,8 +126,7 @@ secret.
 
 In such a case, you may consider using [PKCE](https://tools.ietf.org/html/rfc7636). Such a client sends its `client_id` in the form of its token request, with no secret, which `verifyClient` receives as `null`.
 
-Both the `authorizationEndpoint` and `tokenEndpoint` inject a `Pkce` factory into the request, so it
-can be used as follows:
+The `authorizationEndpoint` injects a `Pkce` of the `code_challenge` and `code_challenge_method` of the request into its container. At the token endpoint, whose request has a `code_verifier` and no challenge, build a `Pkce` of the stored challenge instead, as below:
 
 ```dart
 @override

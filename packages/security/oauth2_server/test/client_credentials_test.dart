@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:angel3_oauth2_server/angel3_oauth2_server.dart';
@@ -90,6 +92,111 @@ void main() {
     expectInvalidClient(
       await withBasic('XBasic ${base64.encode('foo:bar'.codeUnits)}'),
     );
+  });
+
+  test('a secret of escapes that are not UTF-8 is kept, not a 500', () async {
+    expect(
+      await withBasic('Basic ${base64.encode(utf8.encode('raw:a%FFb'))}'),
+      hasStatus(200),
+    );
+    expectInvalidClient(
+      await withBasic('Basic ${base64.encode(utf8.encode('foo:a%FFb'))}'),
+    );
+  });
+
+  test('a Basic header may have leading spaces', () async {
+    expect(
+      await withBasic('  Basic ${base64.encode('foo:bar'.codeUnits)}'),
+      hasStatus(200),
+    );
+  });
+
+  test('an empty client id is invalid_client', () async {
+    expectInvalidClient(
+      await withBasic('Basic ${base64.encode(utf8.encode(':bar'))}'),
+    );
+  });
+
+  test('a header of another scheme is ignored for the form', () async {
+    var response = await client.post(
+      Uri.parse('/oauth2/token'),
+      headers: {'Authorization': 'Bearer of-a-proxy'},
+      body: {
+        'grant_type': 'client_credentials',
+        'client_id': 'foo',
+        'client_secret': 'bar',
+      },
+    );
+    expect(response, hasStatus(200));
+  });
+
+  group('over dart:io, whose headers may have several values', () {
+    late AngelHttp http;
+
+    setUp(() async {
+      var app = Angel();
+      app.post('/oauth2/token', _AuthorizationServer().tokenEndpoint);
+      app.errorHandler = (e, req, res) async {
+        res.statusCode = e.statusCode;
+        res.json(e.toJson());
+      };
+      http = AngelHttp(app);
+      await http.startServer('127.0.0.1', 0);
+    });
+
+    tearDown(() => http.close());
+
+    /// The status and body of a client credentials grant of the
+    /// `Authorization` headers [values], each on a line of its own, as a
+    /// proxy may send them, which `HttpClient` would join; of HTTP/1.0, so
+    /// that the response is not chunked.
+    Future<(int, Map)> post(List<String> values) async {
+      var socket = await Socket.connect(http.uri.host, http.uri.port);
+      try {
+        var form = 'grant_type=client_credentials';
+        socket.write(
+          'POST /oauth2/token HTTP/1.0\r\n'
+          'Host: ${http.uri.host}\r\n'
+          '${[for (var value in values) 'Authorization: $value\r\n'].join()}'
+          'Content-Type: application/x-www-form-urlencoded\r\n'
+          'Content-Length: ${form.length}\r\n'
+          'Connection: close\r\n'
+          '\r\n'
+          '$form',
+        );
+        var response = await utf8.decoder.bind(socket).join();
+        var status = int.parse(response.split(' ')[1]);
+        var body = response.substring(response.indexOf('{'));
+        return (status, json.decode(body) as Map);
+      } finally {
+        socket.destroy();
+      }
+    }
+
+    var basic = 'Basic ${base64.encode('foo:bar'.codeUnits)}';
+
+    test('a Basic header is read beside one of another scheme', () async {
+      var (status, body) = await post(['Bearer of-a-proxy', basic]);
+      expect(status, 200, reason: '$body');
+    });
+
+    test('a Basic header joined with one of another scheme is read, as the '
+        'shelf driver joins them', () async {
+      var (status, body) = await post(['Digest a="1", b="2",$basic']);
+      expect(status, 200, reason: '$body');
+    });
+
+    test('two Basic headers joined in one value are invalid_request', () async {
+      var (status, body) = await post(['$basic,$basic']);
+      expect(status, 400);
+      expect(body, containsPair('error', 'invalid_request'));
+    });
+
+    test('two Basic headers are invalid_request, not a 500', () async {
+      var (status, body) = await post([basic, basic]);
+      expect(status, 400);
+      expect(body, containsPair('error', 'invalid_request'));
+    });
   });
 
   test('a secret may have a \$ and a :', () async {
@@ -188,6 +295,16 @@ void main() {
       expectInvalidClient(await withForm({}));
     });
 
+    test('a header of another scheme is not taken for credentials', () async {
+      var response = await client.post(
+        Uri.parse('/oauth2/token'),
+        headers: {'Authorization': 'Bearer of-a-proxy'},
+        body: {'grant_type': 'client_credentials'},
+      );
+      expectInvalidClient(response);
+      expect(response.body, contains('No client credentials'));
+    });
+
     test('an unknown grant type is unsupported_grant_type, before the client '
         'is authenticated', () async {
       var response = await client.post(
@@ -204,8 +321,13 @@ void main() {
     test('a device code request the server does not implement is '
         'invalid_request, of a missing grant type', () async {
       for (var body in [
-        {'client_id': 'foo', 'state': 'xyz'},
-        {'client_id': 'foo', 'grant_type': '', 'state': 'xyz'},
+        {'client_id': 'foo', 'client_secret': 'bar', 'state': 'xyz'},
+        {
+          'client_id': 'foo',
+          'client_secret': 'bar',
+          'grant_type': '',
+          'state': 'xyz',
+        },
       ]) {
         var response = await client.post(
           Uri.parse('/oauth2/token'),
@@ -280,6 +402,9 @@ void main() {
 const _dollarClient = PseudoApplication('dollar', r'a$b:c', 'http://foo.bar');
 const _spaceClient = PseudoApplication('space', 'p@ss wörd+', 'http://foo.bar');
 
+/// A client of a secret that is not valid percent-encoding.
+const _rawClient = PseudoApplication('raw', 'a%FFb', 'http://foo.bar');
+
 /// A client without a secret.
 const _publicClient = PseudoApplication('public', '', 'http://foo.bar');
 
@@ -292,6 +417,9 @@ class _AuthorizationServer
       'dollar' => _dollarClient,
       'space' => _spaceClient,
       'public' => _publicClient,
+      'raw' => _rawClient,
+      // A lenient lookup, which an empty id must not reach.
+      '' => pseudoApplication,
       _ => null,
     };
   }

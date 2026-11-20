@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:angel3_oauth2_server/angel3_oauth2_server.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
@@ -52,7 +54,7 @@ void main() {
     test('valid client id, no scopes', () async {
       var response = await client.post(
         Uri.parse('/oauth2/token'),
-        body: {'client_id': 'foo'},
+        body: {'client_id': 'device'},
       );
       print(response.body);
       expect(
@@ -72,7 +74,7 @@ void main() {
     test('valid client id, with scopes', () async {
       var response = await client.post(
         Uri.parse('/oauth2/token'),
-        body: {'client_id': 'foo', 'scope': 'bar baz quux'},
+        body: {'client_id': 'device', 'scope': 'bar baz quux'},
       );
       print(response.body);
       expect(
@@ -98,7 +100,7 @@ void main() {
         Uri.parse('/oauth2/token'),
         body: {
           'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
-          'client_id': 'foo',
+          'client_id': 'device',
           'device_code': 'bar',
         },
       );
@@ -113,6 +115,112 @@ void main() {
       );
     });
 
+    Future<http.Response> exchange(
+      Map<String, String> body, {
+      Map<String, String>? headers,
+    }) => client.post(
+      Uri.parse('/oauth2/token'),
+      headers: headers,
+      body: {
+        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
+        'device_code': 'bar',
+        ...body,
+      },
+    );
+
+    test('a client that gives a secret is authenticated', () async {
+      expect(
+        await exchange({'client_id': 'foo', 'client_secret': 'bar'}),
+        hasStatus(200),
+      );
+      var response = await exchange({
+        'client_id': 'foo',
+        'client_secret': 'wrong',
+      });
+      expect(response, hasStatus(401));
+      expect(response.body, contains('invalid_client'));
+    });
+
+    test('a confidential client must give its secret', () async {
+      for (var body in [
+        {'client_id': 'foo'},
+        {'client_id': 'foo', 'client_secret': ''},
+      ]) {
+        var response = await exchange(body);
+        expect(response, hasStatus(401));
+        expect(response.body, contains('invalid_client'));
+        var request = await client.post(Uri.parse('/oauth2/token'), body: body);
+        expect(request, hasStatus(401));
+      }
+    });
+
+    test('a client_id of the form must be of the Basic header', () async {
+      var basic = 'Basic ${base64.encode('foo:bar'.codeUnits)}';
+      var response = await exchange(
+        {'client_id': 'device'},
+        headers: {'Authorization': basic},
+      );
+      expect(response, hasStatus(400));
+      expect(response.body, contains('invalid_request'));
+      expect(
+        await exchange({'client_id': 'foo'}, headers: {'Authorization': basic}),
+        hasStatus(200),
+      );
+    });
+
+    test('the header is verified before the form is compared', () async {
+      var wrong = 'Basic ${base64.encode('foo:wrong'.codeUnits)}';
+      var response = await exchange(
+        {'client_id': 'device'},
+        headers: {'Authorization': wrong},
+      );
+      expect(response, hasStatus(401));
+      expect(response.headers['www-authenticate'], 'Basic realm="oauth2"');
+      expect(response.body, contains('invalid_client'));
+    });
+
+    test('a client_secret of the form must be of the Basic header', () async {
+      var basic = 'Basic ${base64.encode('foo:bar'.codeUnits)}';
+      var response = await exchange(
+        {'client_id': 'foo', 'client_secret': 'other'},
+        headers: {'Authorization': basic},
+      );
+      expect(response, hasStatus(400));
+      expect(response.body, contains('invalid_request'));
+      expect(
+        await exchange(
+          {'client_id': 'foo', 'client_secret': 'bar'},
+          headers: {'Authorization': basic},
+        ),
+        hasStatus(200),
+      );
+    });
+
+    test('a client may authenticate with Basic, without client_id', () async {
+      var basic = 'Basic ${base64.encode('foo:bar'.codeUnits)}';
+      expect(
+        await exchange({}, headers: {'Authorization': basic}),
+        hasStatus(200),
+      );
+      var wrong = 'Basic ${base64.encode('foo:wrong'.codeUnits)}';
+      expect(
+        await exchange({}, headers: {'Authorization': wrong}),
+        hasStatus(401),
+      );
+    });
+
+    test(
+      'a device code request with a wrong secret is invalid_client',
+      () async {
+        var response = await client.post(
+          Uri.parse('/oauth2/token'),
+          body: {'client_id': 'foo', 'client_secret': 'wrong'},
+        );
+        expect(response, hasStatus(401));
+        expect(response.body, contains('invalid_client'));
+      },
+    );
+
     // The rationale for only testing one possible error response is that
     // they all only differ in terms of the `code` string sent down,
     // which is chosen by the end user.
@@ -124,7 +232,7 @@ void main() {
         Uri.parse('/oauth2/token'),
         body: {
           'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
-          'client_id': 'foo',
+          'client_id': 'device',
           'device_code': 'brute',
         },
       );
@@ -151,7 +259,11 @@ class _AuthorizationServer
 
   @override
   PseudoApplication? findClient(String? clientId) {
-    return clientId == pseudoApplication.id ? pseudoApplication : null;
+    return switch (clientId) {
+      'foo' => pseudoApplication,
+      'device' => _deviceClient,
+      _ => null,
+    };
   }
 
   @override
@@ -159,7 +271,10 @@ class _AuthorizationServer
     PseudoApplication client,
     String? clientSecret,
   ) async {
-    return client.secret == clientSecret;
+    // A public client gives no secret.
+    return identical(client, _deviceClient)
+        ? clientSecret == null
+        : client.secret == clientSecret;
   }
 
   @override
@@ -205,3 +320,6 @@ class _AuthorizationServer
     return AuthorizationTokenResponse('foo');
   }
 }
+
+/// A public client, of a device, without a secret.
+const _deviceClient = PseudoApplication('device', '', 'http://foo.bar');
