@@ -4,6 +4,13 @@ import 'package:crypto/crypto.dart';
 
 import 'exception.dart';
 
+final _rgxTrailingPadding = RegExp(r'=+$');
+
+/// [challenge], an `S256` challenge, without the `=` padding of base64 at its
+/// end, which earlier clients gave it, and RFC 7636 does not.
+String unpaddedChallenge(String challenge) =>
+    challenge.replaceFirst(_rgxTrailingPadding, '');
+
 /// A class that facilitates verification of challenges for
 /// [Proof Key for Code Exchange](https://oauth.net/2/pkce/).
 class Pkce {
@@ -67,10 +74,10 @@ class Pkce {
     if (isS256) {
       // BASE64URL without padding (RFC 7636); a padded challenge, which
       // earlier versions required, is accepted too.
-      foreignChallenge = base64Url
-          .encode(sha256.convert(utf8.encode(codeVerifier)).bytes)
-          .replaceAll('=', '');
-      challenge = challenge.replaceAll('=', '');
+      foreignChallenge = unpaddedChallenge(
+        base64Url.encode(sha256.convert(utf8.encode(codeVerifier)).bytes),
+      );
+      challenge = unpaddedChallenge(challenge);
     } else {
       foreignChallenge = codeVerifier;
     }

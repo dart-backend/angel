@@ -197,6 +197,7 @@ void main() {
           'https://app.example/cb?a=b',
           'http://localhost:8080/cb',
           'http://127.0.0.1/cb',
+          'http://[::1]:8080/cb',
           'com.example.app:/oauth2redirect',
         ],
       });

@@ -17,11 +17,15 @@ const _challenge = 'ZtNPunH49FD35FWYhT5Tv8I7vRKQJ8uxMaL0_9eHjNA';
 void main() {
   late TestClient testClient;
 
-  /// Connects to a server, [lenient] of PKCE, as of 9.x, or by default.
-  Future<void> connect({required bool lenient}) async {
+  /// Connects to a server, [lenient] of PKCE, as of 9.x, or by default; or
+  /// that requires PKCE, but [allowsPlain].
+  Future<void> connect({required bool lenient, bool? allowsPlain}) async {
     var app = Angel();
     app.container.registerSingleton(AuthCodes());
-    var server = _Server(lenient: lenient);
+    var server = _Server(
+      requires: !lenient,
+      allowsPlain: allowsPlain ?? lenient,
+    );
     app.group('/oauth2', (router) {
       router
         ..get('/authorize', server.authorizationEndpoint)
@@ -186,6 +190,26 @@ void main() {
     });
   });
 
+  group('required, of plain allowed', () {
+    setUp(() => connect(lenient: false, allowsPlain: true));
+
+    test('a plain challenge is accepted, of no padding', () async {
+      expect(
+        await authorize({
+          'code_challenge': 'a' * 43,
+          'code_challenge_method': 'plain',
+        }),
+        hasStatus(200),
+      );
+      var response = await authorize({
+        'code_challenge': '${'a' * 43}=',
+        'code_challenge_method': 'plain',
+      });
+      expect(response, hasStatus(400));
+      expect(response.body, contains('43 to 128 characters'));
+    });
+  });
+
   group('lenient, as of requiresPkce and allowsPlainPkce', () {
     setUp(() => connect(lenient: true));
 
@@ -207,6 +231,23 @@ void main() {
       );
     });
 
+    test('an unknown method is refused all the same', () async {
+      expectInvalidRequest(
+        await authorize({
+          'code_challenge': 'foo',
+          'code_challenge_method': 'bar',
+        }),
+        'The "code_challenge_method" parameter must be "S256" or "plain".',
+      );
+    });
+
+    test('an empty verifier is missing', () async {
+      expectInvalidRequest(
+        await token({'code_verifier': ''}),
+        'Missing `code_verifier` parameter.',
+      );
+    });
+
     test('a short plain verifier is left to the server', () async {
       expect(await token({'code_verifier': 'hello'}), hasStatus(200));
       expectInvalidRequest(
@@ -218,9 +259,11 @@ void main() {
 }
 
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
-  final bool lenient;
+  final bool requires, allowsPlain;
 
-  _Server({required this.lenient});
+  _Server({required this.requires, required this.allowsPlain});
+
+  bool get lenient => !requires;
 
   @override
   FutureOr<PseudoApplication> findClient(String? clientId) {
@@ -236,10 +279,10 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
   }
 
   @override
-  bool requiresPkce(PseudoApplication client) => !lenient;
+  bool requiresPkce(PseudoApplication client) => requires;
 
   @override
-  bool get allowsPlainPkce => lenient;
+  bool get allowsPlainPkce => allowsPlain;
 
   @override
   Future requestAuthorizationCode(

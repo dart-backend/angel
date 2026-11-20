@@ -23,6 +23,15 @@ void main() {
     Pkce('S256', padded).validate(verifier);
   });
 
+  test('only the padding at the end of a challenge is dropped', () {
+    Pkce('S256', '$unpadded==').validate(verifier);
+    var inner = '${unpadded.substring(0, 10)}=${unpadded.substring(10)}';
+    expect(
+      () => Pkce('S256', inner).validate(verifier),
+      throwsA(isA<AuthorizationException>()),
+    );
+  });
+
   test('a wrong verifier is refused', () {
     expect(
       () => Pkce('S256', unpadded).validate('${verifier}x'),

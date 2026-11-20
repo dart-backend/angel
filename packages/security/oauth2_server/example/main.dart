@@ -76,6 +76,12 @@ class _ExampleAuthorizationServer
   }
 
   @override
+  FutureOr<bool> mayIntrospect(ThirdPartyApp caller, RequestContext req) {
+    // TODO: Return true of the clients that are your resource servers.
+    return false;
+  }
+
+  @override
   bool get managesClientRegistrations => true;
 
   @override

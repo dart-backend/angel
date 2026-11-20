@@ -346,12 +346,15 @@ void main() {
       () => _NotManaging().registrationManagementEndpoint(_metadata),
       throwsArgumentError,
     );
-    expect(
-      () => _Server().registrationManagementEndpoint(
-        ServerMetadata(issuer: _issuer),
-      ),
-      throwsArgumentError,
-    );
+    for (var endpoint in [
+      _Server().registrationManagementEndpoint,
+      _Server().registrationEndpoint,
+    ]) {
+      expect(
+        () => endpoint(ServerMetadata(issuer: _issuer)),
+        throwsArgumentError,
+      );
+    }
   });
 }
 

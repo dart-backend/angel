@@ -97,6 +97,7 @@ void main() {
         throwsArgumentError,
       );
       ServerMetadata(issuer: Uri.parse('http://localhost:3000'));
+      ServerMetadata(issuer: Uri.parse('http://[::1]:3000'));
     });
 
     test('must have no query nor fragment', () {

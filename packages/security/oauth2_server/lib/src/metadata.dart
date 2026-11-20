@@ -1,5 +1,10 @@
 import 'server.dart';
 
+/// The hosts of the machine itself, of which an `http` URL is accepted, as
+/// of an issuer, or a redirect URI of a native app (RFC 8252 §7.3). Of
+/// [Uri.host], which drops the brackets of `[::1]`.
+const loopbackHosts = {'localhost', '127.0.0.1', '::1'};
+
 /// The metadata of an authorization server (RFC 8414), which
 /// [AuthorizationServer.metadataEndpoint] serves, so that clients find its
 /// endpoints and what it supports.
@@ -76,7 +81,7 @@ class ServerMetadata {
     this.serviceDocumentation,
     this.extra = const {},
   }) {
-    var local = const {'localhost', '127.0.0.1', '::1'}.contains(issuer.host);
+    var local = loopbackHosts.contains(issuer.host);
     if (!(issuer.isScheme('https') || (issuer.isScheme('http') && local)) ||
         issuer.host.isEmpty) {
       throw ArgumentError.value(

@@ -95,7 +95,14 @@ abstract class AuthorizationServer<Client, User> {
   /// Finds the [Client] application associated with the given [clientId].
   FutureOr<Client>? findClient(String? clientId);
 
-  /// Verify that a [client] is the one identified by the [clientSecret].
+  /// Verify that a [client] is the one identified by the [clientSecret]:
+  /// `null` if the request gives none.
+  ///
+  /// Return `true` of a `null` secret only for a public client, which has
+  /// none, and of a secret only for a confidential client, whose secret it
+  /// is: never of any secret for a public client, as anyone may give its
+  /// id, and a client that gives a secret is taken to be confidential, as
+  /// of the client credentials grant and of introspection.
   FutureOr<bool> verifyClient(Client client, String? clientSecret);
 
   /// Retrieves the PKCE `code_verifier` parameter from a [RequestContext], or throws.
@@ -108,7 +115,7 @@ abstract class AuthorizationServer<Client, User> {
     var data = await _paramsOf(req, body: body);
     var codeVerifier = data['code_verifier'];
 
-    if (codeVerifier == null) {
+    if (codeVerifier == null || codeVerifier == '') {
       throw AuthorizationException(
         ErrorResponse(
           ErrorResponse.invalidRequest,
@@ -194,11 +201,19 @@ abstract class AuthorizationServer<Client, User> {
       return;
     }
     var method = params['code_challenge_method']?.toString() ?? 'plain';
-    if (!allowsPlainPkce && method != 'S256' && method != 's256') {
-      throw invalid('The "code_challenge_method" parameter must be "S256".');
+    var s256 = method == 'S256' || method == 's256';
+    if (!s256 && (method != 'plain' || !allowsPlainPkce)) {
+      throw invalid(
+        allowsPlainPkce
+            ? 'The "code_challenge_method" parameter must be "S256" or '
+                  '"plain".'
+            : 'The "code_challenge_method" parameter must be "S256".',
+      );
     }
-    // Of the padding that earlier clients gave an S256 challenge.
-    if (required && !_rgxPkce.hasMatch(challenge.replaceAll('=', ''))) {
+    // Of the padding that earlier clients gave an S256 challenge; a plain
+    // one is the verifier, which has none.
+    var unpadded = s256 ? unpaddedChallenge(challenge) : challenge;
+    if (required && !_rgxPkce.hasMatch(unpadded)) {
       throw invalid(
         'The "code_challenge" parameter must be of 43 to 128 characters of '
         'A-Z, a-z, 0-9, "-", ".", "_" and "~".',
@@ -278,23 +293,14 @@ abstract class AuthorizationServer<Client, User> {
         );
       }
 
-      if (tokens.isEmpty) {
-        // No error, as of a request that did not authenticate (RFC 6750
-        // §3.1).
-        res.headers['www-authenticate'] = 'Bearer realm="$realm"';
-        throw AngelHttpException.notAuthenticated(
-          message: 'An access token is required.',
-        );
-      }
-      if (tokens.length > 1) {
-        throw refuse(
-          ErrorResponse.invalidRequest,
-          'More than one access token.',
-          400,
-        );
-      }
+      var tokenString = _requiredBearerToken(
+        tokens,
+        res,
+        realm,
+        'An access token is required.',
+      );
 
-      var token = await findAccessToken(tokens.single, req);
+      var token = await findAccessToken(tokenString, req);
       if (token == null || token.isExpiredAt(DateTime.now())) {
         throw refuse(
           ErrorResponse.invalidToken,
@@ -344,6 +350,47 @@ abstract class AuthorizationServer<Client, User> {
       ErrorResponse(error, description, null),
       statusCode: statusCode,
     );
+  }
+
+  /// The one token of [tokens], or `null` if there is none; throws
+  /// `invalid_request` if there are several.
+  static String? _optionalBearerToken(
+    List<String> tokens,
+    ResponseContext res,
+    String realm,
+  ) {
+    if (tokens.length > 1) {
+      throw _bearerError(
+        res,
+        realm,
+        ErrorResponse.invalidRequest,
+        'More than one access token.',
+        400,
+      );
+    }
+    return tokens.firstOrNull;
+  }
+
+  /// The one token of [tokens]; throws `invalid_request` if there are
+  /// several, and the 401 challenge of [missing] if there is none.
+  static String _requiredBearerToken(
+    List<String> tokens,
+    ResponseContext res,
+    String realm,
+    String missing,
+  ) =>
+      _optionalBearerToken(tokens, res, realm) ??
+      (throw _bearerChallenge(res, realm, missing));
+
+  /// The 401 challenge of a request that gives no token, without an error,
+  /// as it did not try to authenticate (RFC 6750 §3.1).
+  static AngelHttpException _bearerChallenge(
+    ResponseContext res,
+    String realm,
+    String message,
+  ) {
+    res.headers['www-authenticate'] = 'Bearer realm="$realm"';
+    return AngelHttpException.notAuthenticated(message: message);
   }
 
   /// The tokens of the `Authorization: Bearer` headers of [req]; throws
@@ -497,7 +544,8 @@ abstract class AuthorizationServer<Client, User> {
       'token_type': 'bearer',
     });
 
-    if (state != null) queryParameters['state'] = state;
+    // Only of a request that gave one (RFC 6749 §4.2.2).
+    if (state != null && state.isNotEmpty) queryParameters['state'] = state;
 
     if (token.expiresIn != null) {
       queryParameters['expires_in'] = token.expiresIn.toString();
@@ -1008,13 +1056,22 @@ abstract class AuthorizationServer<Client, User> {
     RequestContext req,
   ) => findAccessToken(token, req);
 
+  /// Whether [caller], a client with a secret, may introspect tokens at the
+  /// [introspectionEndpoint], as a resource server of the server does; one
+  /// that may not is `access_denied`, a 403 (RFC 7662 §4).
+  ///
+  /// By default, `false`: no client may, as any client with a secret, such
+  /// as a web app, would otherwise learn of the tokens of others. Return
+  /// `true` of the clients that are resource servers.
+  FutureOr<bool> mayIntrospect(Client caller, RequestContext req) => false;
+
   /// What an introspection response of the active [token] gives [caller],
   /// besides `active`, `scope`, `exp` and `iat`, which the server adds: such
   /// as `client_id`, `username`, `sub`, `aud`, `iss`, `token_type` or `jti`
   /// (RFC 7662 §2.2); or `null` if [caller] may not learn of the token, as
   /// one of a resource server that it is not for, which is then inactive.
   ///
-  /// By default, nothing more, to any caller with a secret.
+  /// By default, nothing more, to any caller that [mayIntrospect].
   FutureOr<Map<String, dynamic>?> introspectionClaims(
     Client caller,
     AccessToken<Client, User> token,
@@ -1030,7 +1087,8 @@ abstract class AuthorizationServer<Client, User> {
   ///
   /// Its caller is authenticated as a client, as at the [tokenEndpoint],
   /// and must give a secret, as anyone may give the id of a public client:
-  /// one without is `invalid_client`. It gives the `token` of the form, and
+  /// one without is `invalid_client`. It must be one that [mayIntrospect],
+  /// or it is `access_denied`, a 403. It gives the `token` of the form, and
   /// its `token_type_hint`, to [introspectToken], and answers `{"active":
   /// false}` for one that is unknown, revoked or expired, or that
   /// [introspectionClaims] does not give to the caller; or else `active`,
@@ -1062,6 +1120,16 @@ abstract class AuthorizationServer<Client, User> {
           'A client without a secret may not introspect tokens.',
           state,
           challenge: true,
+        );
+      }
+      if (!await mayIntrospect(caller, req)) {
+        throw AuthorizationException(
+          ErrorResponse(
+            ErrorResponse.accessDenied,
+            'This client may not introspect tokens.',
+            state,
+          ),
+          statusCode: 403,
         );
       }
       var tokenString = _formValue(body, 'token');
@@ -1162,7 +1230,20 @@ abstract class AuthorizationServer<Client, User> {
   /// its [ClientRegistration.toJson]; or an error, a 400 of
   /// `invalid_client_metadata` or `invalid_redirect_uri`, or a 401 of a
   /// missing or refused initial access token.
+  ///
+  /// Throws an [ArgumentError] if [managesClientRegistrations], and
+  /// [metadata] does not give its `registrationEndpoint`.
   RequestHandler registrationEndpoint(ServerMetadata metadata) {
+    // Once, so that the requests are of what was checked.
+    var manages = managesClientRegistrations;
+    if (manages && metadata.registrationEndpoint == null) {
+      throw ArgumentError.value(
+        metadata,
+        'metadata',
+        'Must give the registrationEndpoint, of which the URL of each '
+            'registration is a path, as managesClientRegistrations',
+      );
+    }
     var server = metadataOf(metadata);
     return (req, res) async {
       res.headers
@@ -1170,22 +1251,17 @@ abstract class AuthorizationServer<Client, User> {
         ..['pragma'] = 'no-cache';
       try {
         const realm = 'oauth2';
-        var tokens = _bearerHeaderTokens(req, res, realm);
-        if (tokens.length > 1) {
-          throw _bearerError(
-            res,
-            realm,
-            ErrorResponse.invalidRequest,
-            'More than one access token.',
-            400,
-          );
-        }
-        var token = tokens.firstOrNull;
+        var token = _optionalBearerToken(
+          _bearerHeaderTokens(req, res, realm),
+          res,
+          realm,
+        );
         if (!await mayRegisterClient(token, req)) {
           if (token == null) {
-            res.headers['www-authenticate'] = 'Bearer realm="$realm"';
-            throw AngelHttpException.notAuthenticated(
-              message: 'An initial access token is required.',
+            throw _bearerChallenge(
+              res,
+              realm,
+              'An initial access token is required.',
             );
           }
           throw _bearerError(
@@ -1199,7 +1275,7 @@ abstract class AuthorizationServer<Client, User> {
 
         var body = await _jsonObjectOf(req);
         var registration = _registrationOf(body, server, metadata);
-        if (managesClientRegistrations) {
+        if (manages) {
           registration = _withRegistrationAccess(
             registration,
             metadata,
@@ -1260,9 +1336,11 @@ abstract class AuthorizationServer<Client, User> {
   ) => null;
 
   /// Stores [updated], the registration that replaces [current], of a PUT to
-  /// the [registrationManagementEndpoint]: of its secret and registration
-  /// access token only if they are new, not `null`, as of a rotation, or of
-  /// a client that is no longer public; a public one has no secret.
+  /// the [registrationManagementEndpoint]. Its secret and registration access
+  /// token are `null` unless they are new, as of a rotation, or of a client
+  /// that is no longer public: store them only then, and keep the current
+  /// ones otherwise; but if its [ClientRegistration.tokenEndpointAuthMethod]
+  /// is `none`, the client is now public: delete its secret.
   ///
   /// Throw `invalid_client_metadata` or `invalid_redirect_uri` to refuse a
   /// value, or change [ClientRegistration.metadata] to register another.
@@ -1357,26 +1435,16 @@ abstract class AuthorizationServer<Client, User> {
         ..['pragma'] = 'no-cache';
       try {
         const realm = 'oauth2';
-        var tokens = _bearerHeaderTokens(req, res, realm);
-        if (tokens.isEmpty) {
-          res.headers['www-authenticate'] = 'Bearer realm="$realm"';
-          throw AngelHttpException.notAuthenticated(
-            message: 'A registration access token is required.',
-          );
-        }
-        if (tokens.length > 1) {
-          throw _bearerError(
-            res,
-            realm,
-            ErrorResponse.invalidRequest,
-            'More than one access token.',
-            400,
-          );
-        }
+        var token = _requiredBearerToken(
+          _bearerHeaderTokens(req, res, realm),
+          res,
+          realm,
+          'A registration access token is required.',
+        );
         var clientId = req.params['client_id']?.toString() ?? '';
         var found = clientId.isEmpty
             ? null
-            : await findRegistration(clientId, tokens.single, req);
+            : await findRegistration(clientId, token, req);
         if (found == null || found.clientId != clientId) {
           throw _bearerError(
             res,
@@ -1621,13 +1689,7 @@ abstract class AuthorizationServer<Client, User> {
       String? problem;
       if (uri == null || !uri.isAbsolute || uri.hasFragment) {
         problem = 'must be absolute, of no fragment';
-      } else if (uri.isScheme('http') &&
-          !const {
-            'localhost',
-            '127.0.0.1',
-            '[::1]',
-            '::1',
-          }.contains(uri.host)) {
+      } else if (uri.isScheme('http') && !loopbackHosts.contains(uri.host)) {
         problem = 'must be https, or http of localhost';
       } else if ((uri.isScheme('https') || uri.isScheme('http')) &&
           uri.host.isEmpty) {

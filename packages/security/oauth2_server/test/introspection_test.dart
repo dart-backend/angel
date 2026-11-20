@@ -16,6 +16,9 @@ const _publicClient = PseudoApplication('public', '', 'http://foo.bar');
 /// A resource server, which tokens of the `admin` scope are not for.
 const _otherApi = PseudoApplication('other-api', 'secret', 'http://foo.bar');
 
+/// A confidential client that is no resource server.
+const _webApp = PseudoApplication('web-app', 'secret', 'http://foo.bar');
+
 final _issuedAt = DateTime.utc(2026, 1, 1);
 final _expiresAt = DateTime.now().add(Duration(hours: 1));
 
@@ -127,6 +130,35 @@ void main() {
     );
   });
 
+  test('a client that is no resource server may not introspect', () async {
+    var response = await introspect({
+      'token': 'access',
+    }, credentials: 'web-app:secret');
+    expect(response, hasStatus(403));
+    expect(json.decode(response.body), containsPair('error', 'access_denied'));
+  });
+
+  test('no client may introspect by default', () async {
+    var app = Angel()..post('/i', _DefaultServer().introspectionEndpoint);
+    app.errorHandler = (e, req, res) async {
+      res.statusCode = e.statusCode;
+      res.json(e.toJson());
+    };
+    var other = await connectTo(app);
+    try {
+      var response = await other.post(
+        Uri.parse('/i'),
+        headers: {
+          'authorization': 'Basic ${base64.encode('foo:bar'.codeUnits)}',
+        },
+        body: {'token': 'access'},
+      );
+      expect(response, hasStatus(403));
+    } finally {
+      await other.close();
+    }
+  });
+
   test('a request without a token is invalid_request', () async {
     var response = await introspect({});
     expect(response, hasStatus(400));
@@ -157,8 +189,13 @@ class _Server extends AuthorizationServer<PseudoApplication, PseudoUser> {
     'foo' => pseudoApplication,
     'public' => _publicClient,
     'other-api' => _otherApi,
+    'web-app' => _webApp,
     _ => null,
   };
+
+  @override
+  bool mayIntrospect(PseudoApplication caller, RequestContext req) =>
+      !identical(caller, _webApp);
 
   @override
   bool verifyClient(PseudoApplication client, String? clientSecret) =>
@@ -199,4 +236,17 @@ class _Server extends AuthorizationServer<PseudoApplication, PseudoUser> {
       'active': false,
     };
   }
+}
+
+class _DefaultServer
+    extends AuthorizationServer<PseudoApplication, PseudoUser> {
+  @override
+  PseudoApplication? findClient(String? clientId) => pseudoApplication;
+
+  @override
+  bool verifyClient(PseudoApplication client, String? clientSecret) =>
+      client.secret == clientSecret;
+
+  @override
+  _Token? findAccessToken(String token, RequestContext req) => _tokens[token];
 }

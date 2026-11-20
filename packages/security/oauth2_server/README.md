@@ -316,7 +316,18 @@ A resource server that runs apart from the authorization server, and is given op
 router.post('/introspect', server.introspectionEndpoint);
 ```
 
-Its caller authenticates as a client, as at the `tokenEndpoint`, and must give a secret, as anyone may give the id of a public client: register each resource server as a confidential client. It looks the `token` up by `introspectToken`, which, by default, is `findAccessToken`; override it to find refresh tokens too, by the `token_type_hint`. A token that is unknown, revoked or expired is `{"active": false}`, of nothing more. An active one gives `active`, its `scope`, its `exp` and `iat`, of the `expiresAt` and `issuedAt` of its `AccessToken`, and what `introspectionClaims` adds:
+Its caller authenticates as a client, as at the `tokenEndpoint`, and must give a secret, as anyone may give the id of a public client: register each resource server as a confidential client. No client may introspect unless `mayIntrospect` returns `true` of it, so that a client that is no resource server, such as a web app, does not learn of the tokens of others; one that may not is `access_denied`, a 403:
+
+```dart
+/// The ids of the clients that are resource servers.
+const resourceServers = {'orders-api', 'billing-api'};
+
+@override
+bool mayIntrospect(PseudoApplication caller, RequestContext req) =>
+    resourceServers.contains(caller.id);
+```
+
+It looks the `token` up by `introspectToken`, which, by default, is `findAccessToken`; override it to find refresh tokens too, by the `token_type_hint`. A token that is unknown, revoked or expired is `{"active": false}`, of nothing more. An active one gives `active`, its `scope`, its `exp` and `iat`, of the `expiresAt` and `issuedAt` of its `AccessToken`, and what `introspectionClaims` adds:
 
 ```dart
 @override

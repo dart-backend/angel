@@ -29,6 +29,24 @@ void main() {
 
   tearDown(() => client.close());
 
+  test('the redirect has no state, of a request without one', () async {
+    var response = await client.get(
+      Uri.parse(
+        '/oauth2/authorize?response_type=token&client_id=foo&redirect_uri=http://foo.com',
+      ),
+    );
+    expect(
+      response,
+      allOf(
+        hasStatus(302),
+        hasHeader(
+          'location',
+          'http://foo.com#access_token=foo&token_type=bearer',
+        ),
+      ),
+    );
+  });
+
   test('authenticate via implicit grant', () async {
     var response = await client.get(
       Uri.parse(
