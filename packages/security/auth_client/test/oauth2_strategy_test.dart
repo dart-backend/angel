@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show ContentType, Cookie, SameSite;
+import 'dart:io' show ContentType, Cookie, HandshakeException, SameSite;
 
 import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_auth_client/angel3_auth_client.dart';
@@ -32,6 +32,10 @@ void main() {
   var unreachable = false;
   // Of a token endpoint that answers with an error page of its own.
   var errorPage = false;
+  // Of a token endpoint whose TLS fails, as of a bad certificate.
+  var tlsFailure = false;
+  // The user of the verifier, or none, as of one the app refuses.
+  String? verified = 'alice';
   var loginTimeout = const Duration(minutes: 10);
 
   setUp(() async {
@@ -39,8 +43,11 @@ void main() {
     tokenRequests = [];
     unreachable = false;
     errorPage = false;
+    tlsFailure = false;
+    verified = 'alice';
     provider = MockClient((request) async {
       if (unreachable) throw http.ClientException('down', request.url);
+      if (tlsFailure) throw HandshakeException('bad certificate');
       if (errorPage) {
         return http.Response(
           '<html>Down for maintenance</html>',
@@ -72,7 +79,7 @@ void main() {
       ),
       authorizationEndpoint,
       tokenEndpoint,
-      (client, req, res) => 'alice',
+      (client, req, res) => verified,
       (e, req, res) {
         errors.add(e.error);
         res.statusCode = 400;
@@ -494,6 +501,70 @@ void main() {
     expect(cookie.maxAge, 2);
   });
 
+  test('a TLS failure of the token endpoint is a 502', () async {
+    tlsFailure = true;
+    var (url, cookie) = await start();
+    var state = url.queryParameters['state'];
+    var got = await get(
+      '/auth/callback?code=c0de&state=$state',
+      cookie: cookie,
+    );
+    expect(got.status, 502);
+  });
+
+  test('a verifier may refuse a user, of null, as a failed login', () async {
+    verified = null;
+    var (url, cookie) = await start();
+    var state = url.queryParameters['state'];
+    var got = await get(
+      '/auth/callback?code=c0de&state=$state',
+      cookie: cookie,
+    );
+    expect(got.status, 401);
+    expect(got.cookies.where((c) => c.name == 'token'), isEmpty);
+  });
+
+  group('cookiePath', () {
+    OAuth2Strategy<String> strategyOf(String path) => OAuth2Strategy<String>(
+      ExternalAuthOptions(
+        clientId: 'id',
+        clientSecret: 'secret',
+        redirectUri: 'https://host.example/app/auth/callback',
+      ),
+      authorizationEndpoint,
+      tokenEndpoint,
+      (client, req, res) => 'alice',
+      (e, req, res) => null,
+      cookiePath: path,
+    );
+
+    test('is the path of the cookies of logins', () async {
+      var strategy = strategyOf('/app/auth');
+      var app = Angel();
+      // As behind a proxy, which takes `/app` off.
+      app.get('/auth/start', (req, res) => strategy.authenticate(req, res));
+      var rq = MockHttpRequest('GET', Uri.parse('/auth/start'));
+      await rq.close();
+      await AngelHttp(app).handleRequest(rq);
+      expect(rq.response.cookies.single.path, '/app/auth');
+    });
+
+    test('must start with /', () {
+      expect(() => strategyOf('app/auth'), throwsArgumentError);
+    });
+
+    test('is warned of, if not above the redirect URI', () {
+      var warnings = <String>[];
+      var sub = Logger.root.onRecord
+          .where((r) => r.level == Level.WARNING)
+          .listen((r) => warnings.add(r.message));
+      addTearDown(sub.cancel);
+      strategyOf('/elsewhere');
+      strategyOf('/app');
+      expect(warnings, [contains('/elsewhere')]);
+    });
+  });
+
   test('a callback of no code is invalid_request', () async {
     var (url, cookie) = await start();
     var state = url.queryParameters['state'];
@@ -823,6 +894,26 @@ void moreTests() {
       expect(json.decode(await cb.response.transform(utf8.decoder).join()), {
         'error': 'invalid_request',
       });
+    },
+  );
+
+  test(
+    'a posted form that starts a login, of a field named code, starts it',
+    () async {
+      var http = AngelHttp(await mapApp());
+      var rq = MockHttpRequest('POST', Uri.parse('/start'))
+        ..headers.contentType = ContentType(
+          'application',
+          'x-www-form-urlencoded',
+        );
+      rq.write('code=invite-123');
+      await rq.close();
+      await http.handleRequest(rq);
+      expect(rq.response.statusCode, 302);
+      expect(
+        rq.response.headers.value('location'),
+        startsWith('$authorizationEndpoint'),
+      );
     },
   );
 

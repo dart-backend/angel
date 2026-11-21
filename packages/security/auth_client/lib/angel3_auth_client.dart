@@ -2,7 +2,7 @@ library;
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Cookie, SameSite;
+import 'dart:io' show Cookie, IOException, SameSite;
 import 'dart:math';
 
 import 'package:angel3_auth/angel3_auth.dart';
@@ -50,10 +50,12 @@ class _Failed extends _Outcome {
 class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// A callback that uses the third-party service to authenticate a [User].
   ///
-  /// As always, return `null` if authentication fails. The client is closed
-  /// once it returns, unless [httpClient] was given: keep the credentials,
-  /// not the client.
-  final FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext)
+  /// As always, return `null` if authentication fails, as of a user that
+  /// the app refuses: [AngelAuth.authenticate] then tries its next strategy,
+  /// or answers a 401, or redirects to its `failureRedirect`. The client is
+  /// closed once it returns, unless [httpClient] was given: keep the
+  /// credentials, not the client.
+  final FutureOr<User?> Function(oauth2.Client, RequestContext, ResponseContext)
   verifier;
 
   /// A callback that is triggered when an OAuth2 error occurs (i.e. the user
@@ -122,6 +124,17 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// cookies of the oldest. Default: 5.
   final int maxLogins;
 
+  /// The path of the cookies of logins, which must be that of the redirect
+  /// URI or above it, so that the callback is sent them; by default, the
+  /// path that the route that starts a login shares with the redirect URI,
+  /// so that the start is sent them too.
+  ///
+  /// Behind a proxy that maps another path to the app's, such as
+  /// `https://host/app/auth/github` to `/auth/github`, the path the app sees
+  /// is not the browser's: give the browser's, such as `/app/auth/github`,
+  /// or the cookies are of `/`, and sent to every app of the host.
+  final String? cookiePath;
+
   /// The key that signs the cookie; by default, derived from the client
   /// secret, so that every instance of the app signs alike, or random, for
   /// a client without a secret.
@@ -144,8 +157,21 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     this.cookieSameSite = SameSite.lax,
     this.loginTimeout = const Duration(minutes: 10),
     this.maxLogins = 5,
+    this.cookiePath,
     List<int>? cookieKey,
   }) : _cookieKey = cookieKey ?? _defaultCookieKey(options.clientSecret) {
+    if (cookiePath case var path?) {
+      if (!path.startsWith('/')) {
+        throw ArgumentError.value(path, 'cookiePath', 'must start with "/"');
+      }
+      if (_sharedPath(path, _redirectPath) != _sharedPath(path, path)) {
+        _log.warning(
+          'The cookiePath $path is not the redirect URI\'s path, or above it: '
+          'the callback is not sent the cookies of logins, and every login '
+          'fails.',
+        );
+      }
+    }
     if (maxLogins < 1) {
       throw ArgumentError.value(maxLogins, 'maxLogins', 'must be at least 1');
     }
@@ -268,15 +294,24 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// callback that is posted (`response_mode=form_post`), of its form; and
   /// why a posted body cannot be read, as of a malformed, too large, or not
   /// UTF-8 form, if it cannot, of which the parameters are of the query.
-  static Future<(Map<String, String>, String?)> _parametersOf(
-    RequestContext req,
-  ) async {
+  ///
+  /// The fields of a posted form are of a callback, if [callback], as of
+  /// [authenticateCallback], if [_postsCallbacks], or if it has a `state`,
+  /// which a callback always has: else, as of a form that starts a login,
+  /// such as one of a field named `code`, they are not the provider's.
+  Future<(Map<String, String>, String?)> _parametersOf(
+    RequestContext req, {
+    bool callback = false,
+  }) async {
     var parameters = {...?req.uri?.queryParameters};
     if (req.method == 'POST') {
       try {
         await req.parseBody();
-        for (var MapEntry(:key, :value) in req.bodyAsMap.entries) {
-          if (value is String) parameters[key] = value;
+        var body = req.bodyAsMap;
+        if (callback || _postsCallbacks || body['state'] is String) {
+          for (var MapEntry(:key, :value) in body.entries) {
+            if (value is String) parameters[key] = value;
+          }
         }
       } on FormatException catch (e) {
         return (parameters, e.message);
@@ -392,7 +427,9 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     // too, as its cookie is of the path it shares with the callback.
     _expireOlderLogins(req, res, keep: maxLogins - 1);
 
-    var path = _sharedPath(req.uri?.path ?? '/', options.redirectUri.path);
+    var path =
+        cookiePath ??
+        _sharedPath(req.uri?.path ?? '/', options.redirectUri.path);
     res.cookies.add(
       _cookie(
         _cookieNameOf(state),
@@ -458,7 +495,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     ResponseContext res, [
     AngelAuthOptions? options,
   ]) async {
-    var (parameters, unreadable) = await _parametersOf(req);
+    var (parameters, unreadable) = await _parametersOf(req, callback: true);
     var outcome = unreadable != null
         ? await _unreadable(req, res, unreadable)
         : await _callback(req, res, parameters);
@@ -562,7 +599,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
             message: "The OAuth2 provider's token response cannot be read.",
             error: e,
           );
-        case http.ClientException():
+        // Of the network, as of a bad certificate, or of no answer in time.
+        case http.ClientException() || IOException() || TimeoutException():
           throw AngelHttpException(
             statusCode: 502,
             message: 'The OAuth2 provider could not be reached.',
