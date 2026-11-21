@@ -164,6 +164,9 @@ abstract class RequestContext<RawRequest> {
   /// Empty for any other body, such as JSON, whose repeated keys are not
   /// kept by its parser, or one set with [bodyAsObject].
   ///
+  /// It is of the body as it was parsed: a change that a handler or
+  /// middleware makes to [bodyAsMap], which is mutable, is not seen here.
+  ///
   /// Note that [parseBody] must be called first.
   Map<String, List<String>> get bodyFieldsAll {
     if (!_bodyReadable) {

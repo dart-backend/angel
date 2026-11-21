@@ -6,6 +6,10 @@
 
 * **Request bodies:** `RequestContext.bodyFieldsAll` gives every value of each field of a form body, `x-www-form-urlencoded` or the text parts of `multipart/form-data`, in order, as `Uri.queryParametersAll` does for the query. `bodyAsMap` still keeps only the last value of a field given more than once; `bodyFieldsAll` lets a handler read every value, or refuse a repeated field. It is empty for JSON and other bodies
 
+### Fixes in 10.1.0
+
+* **Docs:** The README's Kelicap sample compiles, the package table lists `angel3_oidc_server`, and the migration guide lists the `bool` id change again
+
 ## 10.0.1
 
 ### Fixes in 10.0.1
