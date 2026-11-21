@@ -262,6 +262,29 @@ void main() {
       expect(expiredNames, isEmpty);
     });
 
+    test(
+      'of a login started ahead of now, as of a clock ahead, is refused',
+      () async {
+        var state = 'qrstuvwxyzabcdef' * 2;
+        var name = 'angel3_oauth2_${state.substring(0, 12)}';
+        jar[name] = Cookie(
+          name,
+          signed({
+            's': state,
+            'v': 'v' * 64,
+            't': DateTime.now()
+                .add(const Duration(hours: 1))
+                .millisecondsSinceEpoch,
+            'p': '/auth',
+            'c': 'id',
+          }),
+        )..path = '/auth';
+        var got = await browse('/auth/callback?code=c&state=$state');
+        expect(got.body, {'error': 'invalid_state'});
+        expect(jar, isNot(contains(name)));
+      },
+    );
+
     test('of a login that timed out is cleared, as it is refused', () async {
       var state = 'abcdefghijklmnop' * 2;
       var name = 'angel3_oauth2_${state.substring(0, 12)}';
@@ -553,6 +576,10 @@ void main() {
       expect(() => strategyOf('app/auth'), throwsArgumentError);
     });
 
+    test('must be a path a cookie may have', () {
+      expect(() => strategyOf('/app;x'), throwsArgumentError);
+    });
+
     test('is warned of, if not above the redirect URI', () {
       var warnings = <String>[];
       var sub = Logger.root.onRecord
@@ -561,7 +588,13 @@ void main() {
       addTearDown(sub.cancel);
       strategyOf('/elsewhere');
       strategyOf('/app');
-      expect(warnings, [contains('/elsewhere')]);
+      strategyOf('/app/auth/callback');
+      // Of a trailing slash, of which the callback is not sent it.
+      strategyOf('/app/auth/callback/');
+      expect(warnings, [
+        contains('/elsewhere'),
+        contains('/app/auth/callback/'),
+      ]);
     });
   });
 

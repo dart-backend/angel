@@ -98,8 +98,11 @@ void main() async {
     // This function is called when the user ACCEPTS the request to sign in with Github.
     (client, req, res) async {
       var response = await client.get(Uri.parse('https://api.github.com/user'));
-      var ghUser = json.decode(response.body);
-      var id = ghUser['id'] as int?;
+      // Of no user, as of bad credentials or a rate limit: refused, as one
+      // of no id would be the same user of every such login.
+      if (response.statusCode != 200) return null;
+      var id = (json.decode(response.body) as Map)['id'];
+      if (id is! int) return null;
 
       var matchingUsers = await mappedUserService.index({
         'query': {'github_id': id},

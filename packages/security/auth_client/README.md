@@ -37,12 +37,14 @@ After getting authenticated against the remote server, we need to be able to ide
 ```dart
 /// You might use a pure function to create a verifier that queries a
 /// given service.
-FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext)
+FutureOr<User?> Function(oauth2.Client, RequestContext, ResponseContext)
     oauth2verifier(Service<String, User> userService) {
   return (client, req, res) async {
     var response = await client.get(Uri.parse('https://api.github.com/user'));
-    var ghUser = json.decode(response.body) as Map;
-    var id = ghUser['id'] as int;
+    // Refuse a login of no user, as of bad credentials or a rate limit.
+    if (response.statusCode != 200) return null;
+    var id = (json.decode(response.body) as Map)['id'];
+    if (id is! int) return null;
 
     var matchingUsers = await userService.index({
       'query': {'github_id': id}

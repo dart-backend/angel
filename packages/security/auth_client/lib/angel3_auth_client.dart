@@ -133,6 +133,10 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// `https://host/app/auth/github` to `/auth/github`, the path the app sees
   /// is not the browser's: give the browser's, such as `/app/auth/github`,
   /// or the cookies are of `/`, and sent to every app of the host.
+  ///
+  /// Give one that covers the route that starts a login too, which is then
+  /// sent the cookies, so that it expires those beyond [maxLogins]: of one
+  /// of the redirect URI alone, only the callback does.
   final String? cookiePath;
 
   /// The key that signs the cookie; by default, derived from the client
@@ -164,7 +168,13 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       if (!path.startsWith('/')) {
         throw ArgumentError.value(path, 'cookiePath', 'must start with "/"');
       }
-      if (_sharedPath(path, _redirectPath) != _sharedPath(path, path)) {
+      try {
+        // Of the characters a cookie's path may have, as dart:io checks.
+        Cookie('x', '').path = path;
+      } on FormatException catch (e) {
+        throw ArgumentError.value(path, 'cookiePath', e.message);
+      }
+      if (!_pathMatches(_redirectPath, path)) {
         _log.warning(
           'The cookiePath $path is not the redirect URI\'s path, or above it: '
           'the callback is not sent the cookies of logins, and every login '
@@ -620,9 +630,21 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   /// Whether a login that was [started], in milliseconds since the epoch,
   /// has taken longer than [loginTimeout].
+  ///
+  /// So is one that was started more than [loginTimeout] ahead of now, as of
+  /// an instance whose clock is ahead, which would else be taken until the
+  /// browser drops its cookie.
   bool _timedOut(int started) =>
-      DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(started)) >
+      DateTime.now()
+          .difference(DateTime.fromMillisecondsSinceEpoch(started))
+          .abs() >
       loginTimeout;
+
+  /// Whether a cookie of [cookiePath] is sent to [path] (RFC 6265 §5.1.4).
+  static bool _pathMatches(String path, String cookiePath) =>
+      path == cookiePath ||
+      (path.startsWith(cookiePath) &&
+          (cookiePath.endsWith('/') || path[cookiePath.length] == '/'));
 
   /// The login of a cookie's [value], if this strategy signed it: its
   /// `state`, code verifier, when it was started, in milliseconds, and the
