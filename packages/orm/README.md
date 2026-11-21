@@ -7,8 +7,7 @@
 
 Source-generated ORM for use with the [Angel3 framework](https://github.com/dart-backend/angel). Now you can combine the power and flexibility of Angel3 with a strongly-typed ORM.
 
-Documentation for migrations can be found here:
-[ORM Migration](https://angel3-docs.dukefirehawk.com/guides/orm/migrations)
+Documentation for migrations can be found here: [ORM Migration](https://angel3-docs.dukefirehawk.com/guides/orm/migrations)
 
 - [Angel3 ORM](#angel3-orm)
   - [Usage](#usage)
@@ -71,11 +70,9 @@ abstract class NoMigrationsEntity extends Model {}
 
 Models can use the `@SerializableField()` annotation; `package:angel3_orm` obeys it.
 
-After building, you'll have access to a `Car` model and a `CarQuery` class with strongly-typed methods that
-allow to run asynchronous queries without a headache. The generated classes are named without the `Entity` suffix.
+After building, you'll have access to a `Car` model and a `CarQuery` class with strongly-typed methods that allow to run asynchronous queries without a headache. The generated classes are named without the `Entity` suffix.
 
-Remember that if you don't need automatic id-and-date fields, you can
-simply just not extend `Model`:
+Remember that if you don't need automatic id-and-date fields, you can simply just not extend `Model`:
 
 ```dart
 @serializable
@@ -135,8 +132,7 @@ Routes like these need no reflection. A `Controller` with `@Expose` methods need
 - `@BelongsTo()` (one-to-one)
 - `@ManyToMany()` (many-to-many, using a "pivot" table)
 
-The annotations can be abbreviated with the default options (ex. `@hasOne`), or supplied
-with custom parameters (ex. `@HasOne(foreignKey: 'foreign_id')`).
+The annotations can be abbreviated with the default options (ex. `@hasOne`), or supplied with custom parameters (ex. `@HasOne(foreignKey: 'foreign_id')`).
 
 ```dart
 @serializable
@@ -262,8 +258,7 @@ abstract class FooEntity extends Model {
 
 ### Default Values
 
-It is also possible to specify the default value of a field.
-**Note that this only works with primitive objects.**
+It is also possible to specify the default value of a field. **Note that this only works with primitive objects.**
 
 If a default value is supplied, the generated migration includes it in the schema; queries do not need it. A `String` default is a literal, which is quoted and escaped; for SQL, such as the current time, give a `RawSql` (e.g. `currentTimestamp`).
 

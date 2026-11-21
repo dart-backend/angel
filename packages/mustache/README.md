@@ -34,8 +34,7 @@ configureServer(Angel app) async {
 
 ## Options
 
-- **partialsPath**: A path within the viewsDirectory to search for partials in.
-    Default is `./partials`.
+- **partialsPath**: A path within the viewsDirectory to search for partials in. Default is `./partials`.
 - **fileExtension**: The file extension to search for. Default is `.mustache`.
 
 ## Migrating from 9.x to 10.0.0

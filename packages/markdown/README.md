@@ -96,9 +96,7 @@ Version 10.0.0 changes how views are rendered, which can change the output of ex
 
 ## Templates
 
-Markdown is frequently used to build the *content* of sites, but not the templates.
-You might want to wrap the content of pages in a custom template to apply pretty
-CSS and JS, etc:
+Markdown is frequently used to build the *content* of sites, but not the templates. You might want to wrap the content of pages in a custom template to apply pretty CSS and JS, etc:
 
 ```dart
 import 'dart:convert';

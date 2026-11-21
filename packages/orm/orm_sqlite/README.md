@@ -4,18 +4,39 @@
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/orm_sqlite/LICENSE)
 
-SQLite support for Angel3 ORM. SQLite 3.35 or later is required. It has two executors:
+SQLite support for Angel3 ORM. It needs SQLite 3.35 or later.
+
+- [Choosing an executor](#choosing-an-executor)
+- [Usage](#usage)
+  - [With sqlite3](#with-sqlite3)
+  - [One connection, or in memory](#one-connection-or-in-memory)
+  - [Closing](#closing)
+  - [Migrations](#migrations)
+- [Transactions](#transactions)
+  - [Which executor to use inside a transaction](#which-executor-to-use-inside-a-transaction)
+  - [Nested transactions and savepoints](#nested-transactions-and-savepoints)
+  - [Statements run one at a time](#statements-run-one-at-a-time)
+  - [Ending a transaction](#ending-a-transaction)
+- [How values are stored](#how-values-are-stored)
+  - [Placeholders](#placeholders)
+- [Known limitations](#known-limitations)
+
+## Choosing an executor
+
+The package has two executors:
 
 | | `SqliteAsyncExecutor` | `SqliteExecutor` |
-|---|---|---|
+| --- | --- | --- |
 | Driver | [`sqlite_async`](https://pub.dev/packages/sqlite_async) | [`sqlite3`](https://pub.dev/packages/sqlite3) |
-| Statements run | in background isolates: they do not block the isolate that gives them | on the isolate that gives them, which waits for each |
-| Connections | a pool of one that writes and several that read, in WAL mode | one |
-| A query that reads, outside a transaction | runs at once, on a connection that reads, and sees the rows as they were before the transaction; on one connection, waits for the transaction to end | waits for the transaction to end |
-| In-memory database | only on one connection (see below) | yes |
-| Use it for | a server | tests, command-line programs, scripts |
+| Where statements run | In background isolates, so they don't block your isolate | On your isolate, which waits for each one |
+| Connections | A pool in WAL mode: one connection writes, several read | One |
+| A read outside a transaction, while a transaction runs | Runs at once on a reading connection, and sees the rows as they were before the transaction. With a single connection, it waits for the transaction to end | Waits for the transaction to end |
+| In-memory database | Only with a single connection (see below) | Yes |
+| Use it for | A server | Tests, command-line programs, scripts |
 
-Both store values the same way, so a database written by one can be read by the other. Do not open the same connection with both at once: each executor tracks the transactions of the database object it is given, so transactions of the two would not wait for each other.
+Both store values the same way, so a database written by one can be read by the other.
+
+Don't open the same database object with both at once. Each executor tracks the transactions of the database object it is given, so transactions of one wouldn't wait for those of the other.
 
 ## Usage
 
@@ -42,7 +63,7 @@ Future<void> main() async {
 }
 ```
 
-Or, with `sqlite3`:
+### With sqlite3
 
 ```dart
 import 'package:angel3_orm_sqlite/angel3_orm_sqlite.dart';
@@ -51,9 +72,11 @@ import 'package:sqlite3/sqlite3.dart';
 var executor = SqliteExecutor(sqlite3.open('app.db'));
 ```
 
-`sqlite3` opens a database with no busy timeout: if another connection or process holds its write lock, a transaction fails at once with `database is locked`. To wait for it instead, set one, e.g. `database.execute('PRAGMA busy_timeout = 5000')`. `sqlite_async` sets its own.
+`sqlite3` opens a database with no busy timeout. If another connection or process holds the write lock, a transaction fails at once with `database is locked`. To wait instead, set a timeout, for example `database.execute('PRAGMA busy_timeout = 5000')`. `sqlite_async` sets its own.
 
-`SqliteAsyncExecutor` also takes one connection of a `sqlite3` database, such as one in memory for tests. On one connection, a query that reads waits for a transaction too, as with `SqliteExecutor`:
+### One connection, or in memory
+
+`SqliteAsyncExecutor` can also run on a single connection of a `sqlite3` database, such as one in memory for tests. With a single connection, a read waits for a running transaction, as with `SqliteExecutor`.
 
 ```dart
 import 'package:angel3_orm_sqlite/angel3_orm_sqlite.dart';
@@ -67,11 +90,15 @@ var executor = SqliteAsyncExecutor(
 );
 ```
 
-`close()` closes the database once its transactions, and the queries given before it, have ended; calling it again returns the same close. A query or a transaction given outside a transaction after it is called fails at once: it returns a `Future` that fails with a `StateError`.
+### Closing
+
+`close()` closes the database once its transactions, and the queries given before the call, have ended. Calling it again returns the same `Future`.
+
+After `close()` is called, a query or transaction given outside a transaction fails at once. It returns a `Future` that fails with a `StateError`.
 
 ### Migrations
 
-Create the tables with the migrations of the models and `SqliteMigrationRunner` of `angel3_migration_runner` 10.1.0 or later, which takes a database of `sqlite3`. For `SqliteAsyncExecutor`, run them on the file before opening it with `sqlite_async`:
+Create the tables with your models' migrations and the `SqliteMigrationRunner` of `angel3_migration_runner` 10.1.0 or later. The runner takes a `sqlite3` database. For `SqliteAsyncExecutor`, run the migrations on the file before you open it with `sqlite_async`:
 
 ```dart
 import 'package:angel3_migration_runner/sqlite.dart';
@@ -87,34 +114,73 @@ Future<SqliteAsyncExecutor> open() async {
 }
 ```
 
-### Transactions
+## Transactions
 
-`executor.transaction` begins with `BEGIN IMMEDIATE`, so it holds the write lock of the database for its whole length. A query given outside it that writes waits for it to end. One that only reads, a `SELECT`, does too with `SqliteExecutor`, whose one connection the transaction holds, but not with `SqliteAsyncExecutor`, which reads on a connection of its own, unless it has one connection.
+`executor.transaction` starts with `BEGIN IMMEDIATE`, so it holds the database's write lock for as long as it runs.
 
-* Give the queries of a transaction to the executor its callback gets. They run in the transaction from anywhere, such as a stream listener made before it. A query given to another executor of the database runs in it only from the code of the callback; from elsewhere it is outside it, and one that waits for it to end, as above, must not be awaited by it. With `SqliteAsyncExecutor`, do not give statements to the `SqliteDatabase` itself in a transaction: `sqlite_async` throws a `LockError` for them.
-* A transaction in a transaction is a `SAVEPOINT`, rolled back alone if its callback fails. An update or a delete of the ORM makes one. Savepoints run one at a time: a statement of the transaction given while one runs, as of `Future.wait` of several updates, waits for it to end. So a savepoint's callback must not wait for a statement given to the transaction's executor from outside its own code, such as by a stream listener made before it: the statement waits for the savepoint, and the savepoint for it.
-* With `SqliteAsyncExecutor`, the statements of a transaction run one at a time, so that none runs after one that SQLite rolled the transaction back for. Transactions of separate requests run one after the other, as SQLite writes one at a time; the reads outside them do not wait.
-* The transaction waits for the queries given in it that were not awaited before it commits. A statement given to it while it commits or rolls back, or to its executor afterwards, fails with a `StateError`, rather than running outside it. Code of its callback that runs later, such as a timer, and gives a statement or a transaction to another executor of the database, or closes it, fails with a `StateError` while the transaction commits or rolls back. Once it has ended, with `SqliteExecutor` the statement runs outside it, as code after `await executor.transaction(...)` does; with `SqliteAsyncExecutor` it fails with a `LockError` of `sqlite_async`, which remembers its lock in the zone of the callback.
-* If SQLite rolls back the whole transaction after an error, as `RAISE(ROLLBACK)` of a trigger does, the transaction runs no more statements and throws a `StateError`, rather than running the rest outside it.
+- **A write** given outside the transaction waits for it to end.
+- **A read (`SELECT`)** given outside the transaction depends on the executor:
+  - With `SqliteExecutor`, it also waits, because the transaction holds the only connection.
+  - With `SqliteAsyncExecutor`, it doesn't wait, because it runs on a reading connection of its own. The exception is a single connection, where it waits too.
 
-### How values are stored
+### Which executor to use inside a transaction
+
+Give the transaction's queries to the executor that its callback receives. Those queries run inside the transaction wherever they are given from, even from a stream listener created before the transaction.
+
+A query given to another executor of the same database works differently:
+
+- It runs inside the transaction only when it is given from the callback's own code.
+- From anywhere else, it runs outside the transaction. If it is one that waits for the transaction to end (see above), the transaction must not await it, or the two wait for each other.
+
+With `SqliteAsyncExecutor`, don't give statements to the `SqliteDatabase` itself during a transaction. `sqlite_async` throws a `LockError` for them.
+
+### Nested transactions and savepoints
+
+A transaction inside a transaction is a `SAVEPOINT`. If its callback fails, only the savepoint is rolled back. The ORM's updates and deletes each make one.
+
+Savepoints run one at a time. A statement given to the transaction while a savepoint runs, for example from `Future.wait` over several updates, waits for the savepoint to end.
+
+So a savepoint's callback must not wait for a statement that was given to the transaction's executor from outside the callback's own code, such as by a stream listener created earlier. That statement waits for the savepoint, and the savepoint would wait for it.
+
+### Statements run one at a time
+
+- **Within a transaction.** With `SqliteAsyncExecutor`, a transaction's statements run one at a time. That way, nothing runs after a statement that made SQLite roll the transaction back.
+- **Across requests.** Transactions from separate requests run one after another, because SQLite allows only one writer at a time. Reads outside them don't wait.
+
+### Ending a transaction
+
+- **Before it commits.** The transaction waits for the queries given in it that weren't awaited.
+- **While it commits or rolls back:**
+  - A statement given to the transaction fails with a `StateError`, rather than running outside it.
+  - Some code of the callback runs later, such as a timer. If that code gives a statement or a transaction to another executor of the database, or closes it, the call also fails with a `StateError`.
+- **After it has ended.** A statement given to its executor fails with a `StateError`. Code from the callback that runs later and uses another executor of the database behaves differently by executor:
+  - With `SqliteExecutor`, the statement runs outside the transaction, like code after `await executor.transaction(...)`.
+  - With `SqliteAsyncExecutor`, it fails with a `LockError` from `sqlite_async`, which remembers its lock in the callback's zone.
+- **When SQLite rolls the whole transaction back after an error,** as a trigger's `RAISE(ROLLBACK)` does, the transaction runs no more statements and throws a `StateError`, rather than running the rest outside it.
+
+## How values are stored
 
 | Dart | SQLite |
-|---|---|
-| `DateTime` | UTC text, `2024-03-10 12:34:56.000000Z`, which sorts in time order; a year before 0 or after 9999 throws an `ArgumentError` |
+| --- | --- |
+| `DateTime` | UTC text, such as `2024-03-10 12:34:56.000000Z`, which sorts in time order. A year before 0 or after 9999 throws an `ArgumentError` |
 | `bool` | `0` or `1` |
 | `Uint8List` | BLOB |
-| `Map`, `List` (a `List<int>` too) | JSON text, in which a `DateTime` is text as above |
+| `Map`, `List` (including a `List<int>`) | JSON text, in which a `DateTime` is text as above |
 
-A field of a `binary`, `varBinary` or `varBinaryMax` column must be a `Uint8List` to be stored as a BLOB: the executor does not know the type of a column, so it stores any other `List<int>` as JSON text.
+A field of a `binary`, `varBinary` or `varBinaryMax` column must be a `Uint8List` to be stored as a BLOB. The executor doesn't know the column types, so it stores any other `List<int>` as JSON text.
 
-A query's `@name` placeholders are bound by position; a query with one that has no value fails with an `ArgumentError`, as SQLite would read it as a parameter of its own. This includes an `@word` in an SQL comment of raw SQL, such as `-- @todo`, or in a name in square brackets, such as `[col@x]`; quote such a name with double quotes instead. One in a quoted string is not a placeholder.
+### Placeholders
+
+A query's `@name` placeholders are bound by position. A query with a placeholder that has no value fails with an `ArgumentError`, because SQLite would read it as a parameter of its own.
+
+- **Comments and bracketed names count.** An `@word` in an SQL comment of raw SQL, such as `-- @todo`, is a placeholder. So is one in a name in square brackets, such as `[col@x]`. Quote such a name with double quotes instead.
+- **Quoted strings don't count.** An `@word` inside a quoted string is not a placeholder.
 
 ## Known limitations
 
-* **Connection state with `SqliteAsyncExecutor`:** Outside a transaction, a `SELECT` runs on any connection that reads, so one of the state of the connection that writes, such as `SELECT last_insert_rowid()` or `changes()`, gives the wrong value. Run it in a transaction, with the statement it is of
-* **Backslashes in raw SQL:** The placeholders of raw SQL are found by the parser of `angel3_orm`, which reads `\'` in a quoted string as an escaped quote, as MySQL does, though SQLite does not. A string that ends in a backslash, such as `'C:\'`, hides the placeholders after it: bind the string as a value instead
-* **Savepoint rollback with `SqliteAsyncExecutor`:** If a savepoint fails and rolling it back fails too, which is rare, `sqlite_async` ignores the error of the rollback, so the writes of the savepoint may be committed with the transaction. `SqliteExecutor` rolls back the whole transaction instead
-* **Dates:** The parts of a date (`where.createdAt.year`, ...) use `EXTRACT`, which SQLite does not have, and a comparison without the time (`includeTime: false`) compares text, which matches no stored time with `equals`
-* **JSON:** The JSON queries (`where.data.property`, ...) are of PostgreSQL. A JSON column is read back as text, not as a `Map` or a `List`
-* **`skipLocked`:** It has no effect, as SQLite locks the whole database, not rows
+- **Connection state with `SqliteAsyncExecutor`.** Outside a transaction, a `SELECT` runs on any reading connection. So a query about the writing connection's state, such as `SELECT last_insert_rowid()` or `changes()`, gives the wrong value. Run it in a transaction, together with the statement it is about.
+- **Backslashes in raw SQL.** The placeholders of raw SQL are found by the parser of `angel3_orm`. It reads `\'` in a quoted string as an escaped quote, as MySQL does, though SQLite doesn't. So a string that ends in a backslash, such as `'C:\'`, hides the placeholders after it. Bind the string as a value instead.
+- **Savepoint rollback with `SqliteAsyncExecutor`.** In rare cases a savepoint fails, and rolling it back fails too. `sqlite_async` then ignores the rollback error, so the savepoint's writes may be committed with the transaction. `SqliteExecutor` rolls back the whole transaction instead.
+- **Dates.** The date-part queries (`where.createdAt.year` and so on) use `EXTRACT`, which SQLite doesn't have. A comparison without the time (`includeTime: false`) compares text, so with `equals` it matches no stored time.
+- **JSON.** The JSON queries (`where.data.property` and so on) are written for PostgreSQL. A JSON column is read back as text, not as a `Map` or a `List`.
+- **`skipLocked`.** It has no effect, because SQLite locks the whole database, not rows.

@@ -5,13 +5,23 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/security/auth_server/LICENSE)
 
-A class containing handlers that can be used within [Angel3](https://angel3-framework.web.app/) to build a spec-compliant OAuth 2.0 server, including PKCE support.
+Build a spec-compliant OAuth 2.0 authorization server with [Angel3](https://angel3-framework.web.app/). You subclass `AuthorizationServer`, fill in the parts that touch your data (clients, users, codes and tokens), and route its endpoints. The server handles the protocol: parameter checks, PKCE, client authentication, error responses and headers.
+
+It covers the authorization code grant with PKCE, refresh tokens, the password and client credentials grants, the device authorization grant, extension grants, protected resources, token revocation and introspection, server metadata, and dynamic client registration. [`angel3_oidc_server`](https://pub.dev/packages/angel3_oidc_server) builds OpenID Connect on top of it.
 
 - [Angel3 Auth Server](#angel3-auth-server)
   - [Installation](#installation)
   - [Usage](#usage)
+    - [Clients](#clients)
+    - [The authorization endpoint](#the-authorization-endpoint)
+    - [The token endpoint](#the-token-endpoint)
+    - [Routes](#routes)
+  - [Client Authentication](#client-authentication)
   - [Redirect URIs](#redirect-uris)
+    - [Repeated parameters](#repeated-parameters)
   - [Other Grants](#other-grants)
+    - [Implicit grant](#implicit-grant)
+    - [Extension grants](#extension-grants)
   - [Device Authorization](#device-authorization)
   - [PKCE](#pkce)
   - [Protecting Resources](#protecting-resources)
@@ -19,6 +29,7 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
   - [Introspecting Tokens](#introspecting-tokens)
   - [Server Metadata](#server-metadata)
   - [Client Registration](#client-registration)
+    - [Metadata checks](#metadata-checks)
     - [Managing Registrations](#managing-registrations)
   - [Extending](#extending)
 
@@ -28,18 +39,20 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^10.0.0
+  angel3_framework: ^10.1.0
   angel3_auth_server: ^10.0.0
 ```
 
 ## Usage
 
-Your server needs to have definitions of at least two types:
+The server is generic over two types of your own:
 
-- One model that represents a third-party application (client) trying to access a user's profile.
-- One that represents a user logged into the application.
+- `Client`: a third-party application that asks to access a user's account.
+- `User`: a user who is signed in to your application.
 
-Define a server class as such:
+### Clients
+
+Subclass `AuthorizationServer` and implement `findClient` and `verifyClient`. `findClient` looks a client up by its `client_id`. `verifyClient` checks its `client_secret`.
 
 ```dart
 import 'dart:async';
@@ -56,9 +69,7 @@ class MyServer extends oauth2.AuthorizationServer<Client, User> {
 }
 ```
 
-Then, implement the `findClient` and `verifyClient` to ensure that the server class can not only identify a client application via a `client_id`, but that it can also verify its identity via a `client_secret`.
-
-At the token endpoint, a client authenticates with an `Authorization: Basic` header, or, without one (a header of another scheme is ignored), with `client_id` and `client_secret` in the form of the request (RFC 6749 §2.3.1). A public client, such as a mobile app with PKCE, gives its `client_id` alone, and `verifyClient` is given a `null` secret, as it is for an empty one: return `true` for it only for clients that may have none. A client that is not authenticated gets `invalid_client`, a 401. A `client_id` or `client_secret` given in the form with the header must be the header's. A client without a secret may use the authorization code, password and refresh token grants, but not the client credentials grant, which is for confidential clients: it gets `unauthorized_client`.
+A public client, such as a mobile app, has no secret. `verifyClient` is then given `null`, and also when the secret is empty. Return `true` for `null` only for clients that are allowed to have no secret:
 
 ```dart
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
@@ -79,7 +90,11 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
 }
 ```
 
-Next, write some logic to be executed whenever a user visits the authorization endpoint. In many cases, you will want to show a dialog. `implicit` is `true` when the client asks for an implicit grant, which it may only if `allowsImplicitGrant` allows it (see [Other Grants](#other-grants)):
+See [Client Authentication](#client-authentication) for how the token endpoint reads the client's credentials.
+
+### The authorization endpoint
+
+When a user arrives at the authorization endpoint, the server checks the request and calls `requestAuthorizationCode`. This is usually where you show a consent dialog. `implicit` is `true` when the client asks for an implicit grant, which only happens if `allowsImplicitGrant` allows it (see [Implicit grant](#implicit-grant)).
 
 ```dart
 @override
@@ -95,7 +110,11 @@ Future<void> requestAuthorizationCode(
 }
 ```
 
-Once the user grants access, issue a code, store it with the client, the `redirect_uri` and the scopes, and redirect the user with `completeAuthorizationCode`, which adds the `code` and `state` to the redirect URI (RFC 6749 §4.1.2); for an implicit grant, `completeImplicitGrant` does the same with a token:
+Once the user grants access:
+
+1. Issue a code.
+2. Store it with the client, the `redirect_uri`, the scopes and the PKCE challenge (see [PKCE](#pkce)).
+3. Redirect the user with `completeAuthorizationCode`. It adds the `code` and the `state` to the redirect URI and keeps the URI's own query (RFC 6749 §4.1.2).
 
 ```dart
 await res.redirect(
@@ -103,7 +122,14 @@ await res.redirect(
 );
 ```
 
-Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token. `redirectUri` is `null` if the token request gives none: if the authorization request of the code gave one, the token request must give the same (RFC 6749 §4.1.3), so check it against the one stored with the code. The server checks only that the request gives a `code_verifier`: compare it with the challenge stored with the code, or PKCE protects nothing, and refuse a verifier for a code that was issued without a challenge, as the challenge may have been stripped from its request (see [PKCE](#pkce)).
+For an implicit grant, `completeImplicitGrant` does the same with a token, which goes in the fragment.
+
+### The token endpoint
+
+The client then exchanges the code for an access token, and optionally a refresh token, in `exchangeAuthorizationCodeForToken`. Two things are up to you:
+
+- **The redirect URI.** `redirectUri` is `null` if the token request gives none. If the authorization request gave one, the token request must give the same one (RFC 6749 §4.1.3), so compare it with the one stored with the code.
+- **The PKCE verifier.** The server only checks that the request gives a `code_verifier`. Compare it with the challenge stored with the code, or PKCE protects nothing. Also refuse a verifier for a code that was issued without a challenge, because the challenge may have been stripped from the authorization request (RFC 9700 §4.8.2).
 
 ```dart
 @override
@@ -120,12 +146,12 @@ Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
     Pkce(stored.codeChallengeMethod, stored.codeChallenge)
         .validate(await getPkceCodeVerifier(req));
   } else if (req.bodyAsMap['code_verifier'] != null) {
-    // A verifier of a code of no challenge: the challenge may have been
-    // stripped from its request (RFC 9700 §4.8.2).
+    // A verifier for a code without a challenge: the challenge may have
+    // been stripped from its request (RFC 9700 §4.8.2).
     throw AuthorizationException(
       ErrorResponse(
         ErrorResponse.invalidGrant,
-        'The code was not issued of a "code_challenge".',
+        'The code was not issued with a "code_challenge".',
         '',
       ),
     );
@@ -134,7 +160,9 @@ Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
 }
 ```
 
-Now, set up some routes to point the server.
+### Routes
+
+Route the two endpoints:
 
 ```dart
 void pseudoCode() {
@@ -147,15 +175,35 @@ void pseudoCode() {
 }
 ```
 
-The `authorizationEndpoint` reads its parameters from the query, or from the form of a POST (RFC 6749 §3.1).
+- The `authorizationEndpoint` reads its parameters from the query, or from the form of a POST (RFC 6749 §3.1).
+- Between them, `authorizationEndpoint` and `tokenEndpoint` handle every grant type.
+- Responses from the `tokenEndpoint` have `Cache-Control: no-store` and `Pragma: no-cache`. A token's `scope` is a single string of space-separated scopes (RFC 6749 §5.1).
 
-The `authorizationEndpoint` and `tokenEndpoint` handle all OAuth2 grant types. The responses of the `tokenEndpoint` have `Cache-Control: no-store` and `Pragma: no-cache`, and the `scope` of a token is a string, of space-separated scopes (RFC 6749 §5.1).
+## Client Authentication
+
+At the token endpoint, a client authenticates in one of two ways (RFC 6749 §2.3.1):
+
+- with an `Authorization: Basic` header;
+- without that header, with `client_id` and `client_secret` in the request's form. An `Authorization` header with another scheme is ignored.
+
+The rules:
+
+- A public client, such as a mobile app using PKCE, sends only its `client_id`. `verifyClient` is given a `null` secret.
+- A client that fails authentication gets `invalid_client`, with status 401.
+- If the request has the header and also a `client_id` or `client_secret` in the form, those must match the header.
+- A client without a secret may use the authorization code, password and refresh token grants. It may not use the client credentials grant, which is only for confidential clients. It gets `unauthorized_client` instead.
+
+The device authorization, revocation and introspection endpoints authenticate clients the same way.
 
 ## Redirect URIs
 
-By default, the server does not know the redirect URIs of its clients: an authorization request must give a `redirect_uri`, which `requestAuthorizationCode` is to check, and its errors are thrown, not redirected, as the URI may be an attacker's.
+By default, the server does not know your clients' redirect URIs. So an authorization request must give a `redirect_uri`, and `requestAuthorizationCode` must check it. Errors are thrown rather than redirected, because the URI might belong to an attacker.
 
-Implement `registeredRedirectUri` to check it instead. Return the registered URI that the request gives, or, if it gives none, the client's registered one; throw an `AuthorizationException` if it is not registered, which is not redirected. Once it returns one, the request may leave out its `redirect_uri`, and its errors, such as an `access_denied` thrown by `requestAuthorizationCode` or an unsupported `response_type`, are redirected to the URI, and any other error as `server_error`, which is logged, with their `error`, `error_description` and the request's `state`: in the query, or, for an implicit grant, in the fragment (RFC 6749 §4.1.2.1, §4.2.2.1).
+To have the server check the URI instead, implement `registeredRedirectUri`:
+
+- If the request gives a `redirect_uri` that is registered for the client, return it.
+- If the request gives none, return the client's registered URI.
+- If the URI is not registered, throw an `AuthorizationException`. This error is not redirected.
 
 ```dart
 @override
@@ -174,27 +222,52 @@ Uri? registeredRedirectUri(PseudoApplication client, String? redirectUri) {
 }
 ```
 
-A request that gives a parameter more than once, such as two `redirect_uri`s, in its query or in its form, is `invalid_request` (RFC 6749 §3.1). An authorization request refused this way is never redirected. Otherwise the server would use the last value, while a proxy or filter in front of it might read the first. Forms are checked with `RequestContext.bodyFieldsAll` of `angel3_framework` 10.1.0. `requireToken` refuses only a repeated `access_token`, since the rest of a protected endpoint's form is the app's own. A JSON body can't be checked, because its parser keeps only the last of a repeated key.
+Once `registeredRedirectUri` returns a URI:
+
+- the request may leave out its `redirect_uri`;
+- errors are redirected to the URI. This includes an `access_denied` thrown by `requestAuthorizationCode` and an unsupported `response_type`. Any other error is logged and redirected as `server_error`.
+- The redirect carries `error`, `error_description` and the request's `state`. They go in the query, or in the fragment for an implicit grant (RFC 6749 §4.1.2.1, §4.2.2.1).
+
+### Repeated parameters
+
+A request that gives the same parameter more than once in its query or its form, such as two `redirect_uri`s, gets `invalid_request` (RFC 6749 §3.1). An authorization request refused for this reason is never redirected. Without this check, the server would use the last value while a proxy or filter in front of it might read the first.
+
+- Forms are checked with `RequestContext.bodyFieldsAll`, which is why `angel3_framework` 10.1.0 is needed.
+- `requireToken` refuses only a repeated `access_token`, because the rest of a protected endpoint's form belongs to your app.
+- A JSON body can't be checked, because the JSON parser keeps only the last value of a repeated key.
 
 ## Other Grants
 
-By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `unsupported_grant_type` OAuth2 error at the token endpoint, or `unsupported_response_type` for an authorization request. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
+By default, every grant method throws a `400 Bad Request`. At the token endpoint the error is `unsupported_grant_type`; for an authorization request it is `unsupported_response_type`. To support a grant, implement its method. Apart from the authorization code grant described above, these are available:
 
 - `refreshAuthorizationToken`
 - `resourceOwnerPasswordCredentialsGrant`
-- `clientCredentialsGrant`, given the `scope` of the request
-- `requestDeviceCode` and `exchangeDeviceCodeForToken`, of the [device authorization grant](#device-authorization)
+- `clientCredentialsGrant`, which is given the request's `scope`
+- `requestDeviceCode` and `exchangeDeviceCodeForToken`, for the [device authorization grant](#device-authorization)
 
-An implicit grant, of `response_type=token`, is refused by default, as `unsupported_response_type`: OAuth 2.1 removes it, and RFC 9700 advises against it, as its access token is given in the fragment of the redirect URI, where it may leak, as by the browser history. Clients use the authorization code grant with PKCE instead. For clients that still use it, override `allowsImplicitGrant`; it is then requested through `requestAuthorizationCode`, with `implicit` set to `true`, and list `token` in the `responseTypes` of the `ServerMetadata`:
+The [OAuth 2.0 specification](https://tools.ietf.org/html/rfc6749) describes each grant type in depth.
+
+### Implicit grant
+
+An implicit grant (`response_type=token`) is refused by default with `unsupported_response_type`. OAuth 2.1 removes it, and RFC 9700 advises against it. Its access token is sent in the fragment of the redirect URI, where it can leak, for example through the browser history. Clients should use the authorization code grant with PKCE instead.
+
+For clients that still need it:
+
+1. Override `allowsImplicitGrant`. The grant then goes through `requestAuthorizationCode` with `implicit` set to `true`.
+2. List `token` in the `responseTypes` of your `ServerMetadata`.
 
 ```dart
 @override
 bool allowsImplicitGrant(PseudoApplication client) => client.id == 'legacy-spa';
 ```
 
-The `extensionGrants` map other grant types to their handlers. A handler runs once the client is authenticated, as for the other grants, by `Authorization: Basic` or by `client_id` and `client_secret` in the form, so a grant that authenticates the client another way, such as by a `client_assertion` (RFC 7523), is refused before it runs; it is given the request and the response, not the client, which it finds again by `findClient` if it needs it.
+### Extension grants
 
-Read the [OAuth2 specification](https://tools.ietf.org/html/rfc6749) for in-depth information on each grant type.
+`extensionGrants` maps other grant types to handlers. A handler runs only after the client has been authenticated, as for the other grants, by `Authorization: Basic` or by `client_id` and `client_secret` in the form. This means a grant that authenticates the client another way, such as a `client_assertion` (RFC 7523), is refused before the handler runs.
+
+A handler is given the request and the response, but not the client. Call `findClient` if you need it.
+
+A key that names a grant the server implements itself, such as `password`, is never called; a warning is logged once. Override that grant's method instead.
 
 ## Device Authorization
 
@@ -204,20 +277,27 @@ A device without a browser, such as a TV or a command line tool, asks the `devic
 router.post('/device', server.deviceAuthorizationEndpoint);
 ```
 
-It authenticates the client as the `tokenEndpoint` does: a public client, as a device usually is, gives its `client_id` alone, and `verifyClient` is given a `null` secret. It gives the `DeviceCodeResponse` of `requestDeviceCode`, of the `scope` of the request: show the user its `userCode`, and the `verificationUri`, on which they authorize the device on another one. The device then polls the `tokenEndpoint` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` and its `device_code`, which `exchangeDeviceCodeForToken` answers with a token, once the user has authorized it, or with `authorization_pending`, `slow_down`, `access_denied` or `expired_token` (`ErrorResponse.authorizationPending`, and so on). Without `requestDeviceCode`, it is `unsupported_grant_type`.
+The flow:
 
-Earlier versions took a device code request at the `tokenEndpoint`, without a `grant_type`; it is now `invalid_request`, as is any request there without one: route a `deviceAuthorizationEndpoint`, and point device clients at it.
+1. The endpoint authenticates the client as the `tokenEndpoint` does. A device is usually a public client, so it gives only its `client_id`, and `verifyClient` is given a `null` secret.
+2. It returns the `DeviceCodeResponse` from `requestDeviceCode`, which is given the request's `scope`. The device shows the user its `userCode` and the `verificationUri`, where the user authorizes the device from another device.
+3. The device polls the `tokenEndpoint` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` and its `device_code`.
+4. `exchangeDeviceCodeForToken` answers with a token once the user has authorized the device. Until then, it throws `authorization_pending`, `slow_down`, `access_denied` or `expired_token` (`ErrorResponse.authorizationPending` and so on).
+
+If `requestDeviceCode` is not implemented, the endpoint answers `unsupported_grant_type`.
+
+Earlier versions accepted a device code request at the `tokenEndpoint` without a `grant_type`. That request, like any token request without a `grant_type`, is now `invalid_request`. Route a `deviceAuthorizationEndpoint` and point device clients at it.
 
 ## PKCE
 
-An authorization code grant must use [PKCE](https://tools.ietf.org/html/rfc7636) with the `S256` method, by default, as OAuth 2.1 and RFC 9700 have it, so that an intercepted authorization code cannot be redeemed:
+By default, an authorization code grant must use [PKCE](https://tools.ietf.org/html/rfc7636) with the `S256` method, as OAuth 2.1 and RFC 9700 require. This means an intercepted authorization code cannot be redeemed.
 
-- The authorization request must give a `code_challenge`, of 43 characters, the base64url of a SHA-256 hash, and `code_challenge_method=S256`, or it is `invalid_request`: one without a method is `plain`, which is refused.
-- The token request must give a `code_verifier`, of 43 to 128 characters, or it is `invalid_request`.
+- The authorization request must give a `code_challenge` of 43 characters (the base64url of a SHA-256 hash) and `code_challenge_method=S256`. Otherwise it gets `invalid_request`. A request without a method means `plain`, which is refused.
+- The token request must give a `code_verifier` of 43 to 128 characters. Otherwise it gets `invalid_request`.
 
-`package:oauth2` and other standard clients do so. A public client, such as a mobile app, which has no secret, sends its `client_id` in the form of its token request, which `verifyClient` receives as `null`.
+`package:oauth2` and other standard clients already do this. A public client has no secret, so it sends its `client_id` in the form of its token request, and `verifyClient` is given `null`.
 
-The server checks that PKCE is given; compare the verifier with the challenge stored with the code in `exchangeAuthorizationCodeForToken`, as below. For clients that cannot use PKCE, or `S256`, yet, relax it:
+The server only checks that PKCE is present. You compare the verifier with the stored challenge in `exchangeAuthorizationCodeForToken`, as below. For clients that can't use PKCE, or can't use `S256` yet, relax the rules:
 
 ```dart
 @override
@@ -227,7 +307,12 @@ bool requiresPkce(PseudoApplication client) => client.id != 'legacy-app';
 bool get allowsPlainPkce => true;
 ```
 
-The `authorizationEndpoint` injects a `Pkce` of the `code_challenge` and `code_challenge_method` of the request into its container, for a code request: an implicit one has no PKCE, and making it throws `invalid_request` without a challenge, as of a client that `requiresPkce` exempts and that sent none. The `tokenEndpoint` injects none: its request has a `code_verifier` and no challenge, so build a `Pkce` of the stored challenge instead, as below:
+For a code request, the `authorizationEndpoint` puts a `Pkce`, built from the request's `code_challenge` and `code_challenge_method`, in the request's container:
+
+- An implicit request has no PKCE.
+- If the request has no challenge, because `requiresPkce` exempts the client, making the `Pkce` throws `invalid_request`.
+
+The `tokenEndpoint` puts no `Pkce` in the container, because its request has a `code_verifier` but no challenge. Build a `Pkce` from the stored challenge instead:
 
 ```dart
 @override
@@ -242,13 +327,12 @@ Future<void> requestAuthorizationCode(
   // An implicit grant has no PKCE.
   if (implicit) return handleImplicitGrantSomehow(client, redirectUri, state);
 
-  // Of a code request, checked by the server. A client exempted by
-  // `requiresPkce` may send no challenge, which this throws for.
+  // Checked by the server, for a code request. A client that `requiresPkce`
+  // exempts may send no challenge, and then this throws.
   var pkce = req.container!.make<Pkce>();
 
-  // At this point, store `pkce.codeChallenge` and `pkce.codeChallengeMethod`,
-  // so that when it's time to exchange the auth code for a token, we can
-  // create a [Pkce] object, and verify the client.
+  // Store the challenge and its method, so that the token request can be
+  // checked against them later.
   await storeChallengeSomehow(client, pkce.codeChallenge, pkce.codeChallengeMethod);
 }
 
@@ -259,33 +343,27 @@ Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
     String? redirectUri,
     RequestContext req,
     ResponseContext res) async {
-  // When exchanging the authorization code for a token, we'll need
-  // a `code_verifier` from the client, so that we can ensure
-  // that the correct client is trying to use the auth code.
-  //
-  // If none is present, an OAuth2 exception is thrown.
+  // The `code_verifier` of the request. If there is none, this throws an
+  // OAuth2 error.
   var codeVerifier = await getPkceCodeVerifier(req);
 
-  // Next, we'll need to retrieve the code challenge and code challenge method
-  // from earlier.
+  // The challenge and method stored with the code.
   var codeChallenge = await getTheChallenge();
   var codeChallengeMethod = await getTheChallengeMethod();
 
-  // Make a [Pkce] object.
-  var pkce = Pkce(codeChallengeMethod, codeChallenge);
+  // `validate` throws an OAuth2 error if the verifier doesn't match.
+  Pkce(codeChallengeMethod, codeChallenge).validate(codeVerifier);
 
-  // Call `validate`. If the client is invalid, it throws an OAuth2 exception.
-  pkce.validate(codeVerifier);
-
-  // If we reach here, we know that the `code_verifier` was valid,
-  // so we can return our authorization token as per usual.
+  // The verifier is valid, so issue the token as usual.
   return AuthorizationTokenResponse('...');
 }
 ```
 
 ## Protecting Resources
 
-Once a client has an access token, it sends it to your API in an `Authorization: Bearer` header (RFC 6750). `requireToken` protects the handlers after it: implement `findAccessToken` to look up the tokens that your grant methods issue, with their client, user, scopes and expiry, or to return `null` for one that is unknown or revoked.
+Once a client has an access token, it sends the token to your API in an `Authorization: Bearer` header (RFC 6750). `requireToken` protects the handlers that come after it.
+
+Implement `findAccessToken` to look up the tokens your grant methods issue, with their client, user, scopes and expiry. Return `null` for a token that is unknown or revoked.
 
 ```dart
 @override
@@ -302,6 +380,8 @@ Future<AccessToken<PseudoApplication, PseudoUser>?> findAccessToken(
 }
 ```
 
+The handlers after `requireToken` find the `AccessToken` in the request's container:
+
 ```dart
 app.get('/me', chain([
   server.requireToken(scopes: ['profile']),
@@ -313,18 +393,26 @@ app.get('/me', chain([
 ]));
 ```
 
-A request that it refuses gets a `WWW-Authenticate: Bearer realm="oauth2"` challenge:
+A refused request gets a `WWW-Authenticate: Bearer realm="oauth2"` challenge. The realm can be changed with `realm`.
 
-- No token: a 401, without an error, as the client did not try to authenticate.
-- An unknown, revoked or expired token: `invalid_token`, a 401.
-- A token that does not grant the `scopes`: `insufficient_scope`, a 403, with the scopes required.
-- A malformed token, or more than one: `invalid_request`, a 400.
+| Request | Response |
+| --- | --- |
+| No token | 401, with no error, because the client did not try to authenticate |
+| An unknown, revoked or expired token | `invalid_token`, 401 |
+| A token that doesn't grant the `scopes` | `insufficient_scope`, 403, with the required scopes |
+| A malformed token, or more than one | `invalid_request`, 400 |
 
-The token is read from the header only, unless `allowFormParameter` is `true`, which reads the `access_token` of a form, of a request that is not a GET. A token in the query is never read, as it may be logged, and a warning is logged. Several `requireToken`, of a group and of its routes, may check one request, each for its own scopes.
+Where the token is read from:
+
+- By default, only from the header.
+- With `allowFormParameter: true`, also from the `access_token` field of a URL-encoded form, on any request that is not a GET.
+- Never from the query, where it may be logged. A token in the query is ignored, and a warning is logged.
+
+Several `requireToken`s can check one request, for example one on a group and one on a route, each for its own scopes.
 
 ## Revoking Tokens
 
-A client revokes an access or refresh token, as when its user logs out, at the `revocationEndpoint` (RFC 7009). Route a POST to it, and implement `revokeToken`:
+A client revokes an access or refresh token, for example when its user logs out, at the `revocationEndpoint` (RFC 7009). Route a POST to it and implement `revokeToken`:
 
 ```dart
 router.post('/revoke', server.revocationEndpoint);
@@ -339,24 +427,37 @@ Future<void> revokeToken(
     RequestContext req,
     ResponseContext res) async {
   var stored = await lookUpTokenSomehow(token, tokenTypeHint);
-  // Only a token of the client; nothing for an unknown one.
+  // Only a token of this client; nothing for an unknown one.
   if (stored != null && stored.clientId == client.id) {
     await revokeTokenAndItsGrantSomehow(stored);
   }
 }
 ```
 
-It authenticates the client as the `tokenEndpoint` does, a public client by its `client_id` alone, and answers a 200 without a body, whether the token was revoked or not, so that the caller learns nothing of tokens that are not its own. A request without a `token` is `invalid_request`. Look the token up by its `token_type_hint` first, and by the other type if it is not found; revoke the tokens of the same grant too, such as the access tokens of a refresh token. Throw `unsupported_token_type` (`ErrorResponse.unsupportedTokenType`) for a type of token that the server cannot revoke; without `revokeToken`, every request is.
+How it behaves:
+
+- It authenticates the client as the `tokenEndpoint` does. A public client gives only its `client_id`.
+- It answers 200 with no body, whether or not the token was revoked, so a caller learns nothing about tokens that aren't its own.
+- A request without a `token` gets `invalid_request`.
+
+In `revokeToken`:
+
+- Look the token up by its `token_type_hint` first. If it isn't found, try the other type.
+- Also revoke the other tokens of the same grant, such as the access tokens issued from a refresh token.
+- Throw `unsupported_token_type` (`ErrorResponse.unsupportedTokenType`) for a kind of token the server cannot revoke. If `revokeToken` is not implemented, every request gets this error.
 
 ## Introspecting Tokens
 
-A resource server that runs apart from the authorization server, and is given opaque tokens, asks the `introspectionEndpoint` whether a token is active, and of what (RFC 7662). Route a POST to it:
+A resource server that runs separately from the authorization server, and receives opaque tokens, asks the `introspectionEndpoint` whether a token is active and what it grants (RFC 7662). Route a POST to it:
 
 ```dart
 router.post('/introspect', server.introspectionEndpoint);
 ```
 
-Its caller authenticates as a client, as at the `tokenEndpoint`, and must give a secret, as anyone may give the id of a public client: register each resource server as a confidential client. No client may introspect unless `mayIntrospect` returns `true` of it, so that a client that is no resource server, such as a web app, does not learn of the tokens of others; one that may not is `access_denied`, a 403:
+Who may call it:
+
+- The caller authenticates as a client, as at the `tokenEndpoint`, but it must give a secret, since anyone can give a public client's id; without one it gets `invalid_client`. Register each resource server as a confidential client.
+- A client may introspect only if `mayIntrospect` returns `true` for it. This stops a client that isn't a resource server, such as a web app, from learning about other clients' tokens. A client that may not introspect gets `access_denied`, with status 403.
 
 ```dart
 /// The ids of the clients that are resource servers.
@@ -367,13 +468,17 @@ bool mayIntrospect(PseudoApplication caller, RequestContext req) =>
     resourceServers.contains(caller.id);
 ```
 
-It looks the `token` up by `introspectToken`, which, by default, is `findAccessToken`; override it to find refresh tokens too, by the `token_type_hint`. A token that is unknown, revoked or expired is `{"active": false}`, of nothing more. An active one gives `active`, its `scope`, its `exp` and `iat`, of the `expiresAt` and `issuedAt` of its `AccessToken`, and what `introspectionClaims` adds:
+What it answers:
+
+- It looks the `token` up with `introspectToken`, which calls `findAccessToken` by default. Override it to find refresh tokens as well, using the `token_type_hint`.
+- A token that is unknown, revoked or expired gives `{"active": false}` and nothing else.
+- An active token gives `active`, its `scope`, and its `exp` and `iat` (from the `expiresAt` and `issuedAt` of its `AccessToken`), plus whatever `introspectionClaims` adds. If `introspectionClaims` returns `null`, the token is reported as inactive to that caller.
 
 ```dart
 @override
 Map<String, dynamic>? introspectionClaims(
     PseudoApplication caller, AccessToken<PseudoApplication, PseudoUser> token) {
-  // A token that is not for the caller is inactive to it.
+  // A token that is not meant for the caller is inactive to it.
   if (!isAudienceSomehow(caller, token)) return null;
   return {
     'client_id': token.client?.id,
@@ -385,7 +490,7 @@ Map<String, dynamic>? introspectionClaims(
 
 ## Server Metadata
 
-Clients and SDKs find the endpoints of the server, and what it supports, from its metadata at `/.well-known/oauth-authorization-server` (RFC 8414). Give `ServerMetadata` the URLs at which you route the endpoints, and the grants that you implement, and route `metadataEndpoint`:
+Clients and SDKs discover the server's endpoints, and what it supports, from its metadata at `/.well-known/oauth-authorization-server` (RFC 8414). Give `ServerMetadata` the URLs where you route the endpoints and the grants you implement, then route `metadataEndpoint`:
 
 ```dart
 var issuer = Uri.parse('https://example.com');
@@ -398,24 +503,32 @@ var metadata = ServerMetadata(
   introspectionEndpoint: issuer.resolve('/oauth2/introspect'),
   registrationEndpoint: issuer.resolve('/oauth2/register'),
   grantTypes: ['authorization_code', 'refresh_token'],
-  // `none`, if the server has public clients.
+  // Add `none` if the server has public clients.
   clientAuthMethods: ['client_secret_basic', 'client_secret_post', 'none'],
   scopes: ['read', 'write'],
 );
 app.get(metadata.wellKnownPath, server.metadataEndpoint(metadata));
 ```
 
-The server adds what it knows of itself: the device code grant, if a `deviceAuthorizationEndpoint` is given, its `extensionGrants`, and its PKCE methods, `S256`, and `plain` if `allowsPlainPkce`. `extra` adds other metadata, last, so that it may replace any. The `issuer` must be an `https` URL, or an `http` one of `localhost`, of no query nor fragment; of a path, as of one server of several on a host, `wellKnownPath` follows the well-known path with it, as `/.well-known/oauth-authorization-server/tenant1`. `metadataOf` gives the metadata as a `Map`, as to sign it, or to serve it otherwise.
+- **What the server adds.** It adds what it knows about itself: the device code grant if a `deviceAuthorizationEndpoint` is given, its `extensionGrants`, and its PKCE methods (`S256`, plus `plain` if `allowsPlainPkce`).
+- **`extra`.** It adds other metadata. It is applied last, so it can replace any value.
+- **The `issuer`.** It must be an `https` URL, or an `http` URL on `localhost`, with no query or fragment. Otherwise the constructor throws an `ArgumentError`.
+- **An issuer with a path.** This happens with one of several servers on a host. `wellKnownPath` then puts the path after the well-known path, as in `/.well-known/oauth-authorization-server/tenant1`.
+- **`metadataOf`.** It gives the metadata as a `Map`, for example to sign it or to serve it some other way.
+- **`ServerMetadata.copyWith`.** See [Extending](#extending).
 
 ## Client Registration
 
-A client may register itself, and be given its id, and a secret unless it is public, at the `registrationEndpoint` (RFC 7591), as clients that are not known in advance do. It checks the metadata of the client against the `ServerMetadata` of the server, which the server metadata gives too:
+Clients that aren't known in advance can register themselves at the `registrationEndpoint` (RFC 7591). Each one gets a client id, plus a secret unless it is public. The endpoint checks the client's metadata against the server's `ServerMetadata`, which also supplies the endpoint's URL in the server metadata:
 
 ```dart
 router.post('/register', server.registrationEndpoint(metadata));
 ```
 
-No client may register unless `mayRegisterClient` accepts the initial access token of its `Authorization: Bearer` header, which you give its developer; return `true` of any, or of none, for open registration, which anyone may use, so limit how often. Implement `registerClient` to store the client, so that `findClient`, `verifyClient` and `registeredRedirectUri` find it:
+Implement two methods:
+
+- **`mayRegisterClient`.** No client may register unless it accepts the initial access token from the request's `Authorization: Bearer` header. You give this token to the client's developer. For open registration, return `true` for any token, or for none. Anyone can then register, so limit how often.
+- **`registerClient`.** It stores the client, so that `findClient`, `verifyClient` and `registeredRedirectUri` can find it.
 
 ```dart
 @override
@@ -427,7 +540,7 @@ Future<void> registerClient(
     ClientRegistration registration, RequestContext req) async {
   await storeClientSomehow(
     id: registration.clientId,
-    // `null` of a public client; store it hashed, as a password.
+    // `null` for a public client. Store it hashed, like a password.
     secretHash: hashSomehow(registration.clientSecret),
     redirectUris: registration.redirectUris,
     metadata: registration.metadata,
@@ -435,20 +548,55 @@ Future<void> registerClient(
 }
 ```
 
-The metadata is checked before `registerClient` is called; a refusal is a 400 of `invalid_client_metadata` or `invalid_redirect_uri`:
+`registerClient` may also:
 
-- `grant_types`, `response_types`, `token_endpoint_auth_method` and `scope` must be of those of the server: of its `grantTypes`, with its device code and extension grants, of its `responseTypes`, `clientAuthMethods` and `scopes`. Their defaults are `authorization_code`, or, of the `token` response type, `implicit` (and `authorization_code` of `code` too), the response types of the grant types, `client_secret_basic`, and none. A server of the `token` response type supports the `implicit` grant type.
-- The grant types and response types must be of each other: `authorization_code` of `code`, and `implicit` of `token` (RFC 7591 §2.1). A public client, of `none`, may not use `client_credentials`.
-- A client of a response type must register its `redirect_uris`: absolute, of no fragment, `https`, `http` only for `localhost`, or of the private-use scheme of a native app, a reverse domain name, such as `com.example.app:/cb` (RFC 8252 §7.1); any other scheme, as `myapp:` or `javascript:`, is refused.
-- The other metadata of RFC 7591 must be of its types; other metadata is kept. What the server issues, such as a `client_id`, and a `software_statement`, which it does not verify, are dropped.
+- throw `invalid_client_metadata` or `invalid_redirect_uri` itself;
+- change `registration.metadata` to register other values, such as a different `client_name`.
 
-The server checks the metadata only when the client registers: it does not know which registration a `Client` is of, so the token and authorization endpoints do not enforce it. Check the stored `grantTypes`, `responseTypes` and `tokenEndpointAuthMethod` of the client in the grant methods, such as `clientCredentialsGrant`, and `requestAuthorizationCode`, and throw `unauthorized_client` (`ErrorResponse.unauthorizedClient`) for one it did not register.
+Don't change a value the server checks, such as a grant type, in `metadata`; refuse it instead. The response gives those values from the registration's own fields (`grantTypes` and so on), which are what is stored.
 
-`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values, such as a `client_name`. Refuse a value that the server checks, such as a grant type, instead of changing it in `metadata`: the response gives those of the fields of the registration, `grantTypes` and so on, which are what is stored. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued.
+The response is a 201 containing:
+
+- the metadata;
+- the `client_id`;
+- the `client_secret`, which does not expire;
+- when they were issued.
+
+### Metadata checks
+
+The metadata is checked before `registerClient` is called. A refusal is a 400 with `invalid_client_metadata` or `invalid_redirect_uri`.
+
+- **Supported values.** `grant_types`, `response_types`, `token_endpoint_auth_method` and `scope` must be among the server's own, which are:
+  - `grantTypes`, plus the device code and extension grants;
+  - `responseTypes`;
+  - `clientAuthMethods`;
+  - `scopes`.
+
+  A server that supports the `token` response type also supports the `implicit` grant type.
+- **Defaults.**
+  - `grant_types`: `authorization_code`. With the `token` response type it is `implicit`, plus `authorization_code` if `code` is also given.
+  - `response_types`: the ones the grant types need.
+  - `token_endpoint_auth_method`: `client_secret_basic`.
+  - `scope`: none.
+- **Grant types and response types must match.** `authorization_code` goes with `code`, and `implicit` with `token` (RFC 7591 §2.1). A public client (`none`) may not use `client_credentials`.
+- **Redirect URIs.** A client with a response type must register `redirect_uris`. Each must be absolute, with no fragment, and one of:
+  - `https`;
+  - `http`, only on `localhost`;
+  - a native app's private-use scheme, which is a reverse domain name such as `com.example.app:/cb` (RFC 8252 §7.1).
+
+  Any other scheme, such as `myapp:` or `javascript:`, is refused.
+- **Other metadata.** Other RFC 7591 metadata must have the right types. Unknown metadata is kept. Values the server issues itself, such as a `client_id`, are dropped, and so is a `software_statement`, which the server does not verify.
+
+The server checks the metadata only at registration. It doesn't know which registration a `Client` came from, so the token and authorization endpoints don't enforce it. In your grant methods, such as `clientCredentialsGrant` and `requestAuthorizationCode`, check the client's stored `grantTypes`, `responseTypes` and `tokenEndpointAuthMethod`. Throw `unauthorized_client` (`ErrorResponse.unauthorizedClient`) for anything it didn't register.
 
 ### Managing Registrations
 
-A client may then read, update and delete its registration (RFC 7592, which is Experimental), if `managesClientRegistrations` is `true`. The `registrationEndpoint` then also issues it a `registration_access_token`, and its `registration_client_uri`, the `registrationEndpoint` of the `ServerMetadata`, followed by its `client_id`, which `registrationManagementEndpoint` serves:
+If `managesClientRegistrations` is `true`, a client can also read, update and delete its registration (RFC 7592, which is Experimental). The `registrationEndpoint` then also issues the client:
+
+- a `registration_access_token`;
+- a `registration_client_uri`: the `registrationEndpoint` of the `ServerMetadata` followed by the `client_id`.
+
+`registrationManagementEndpoint` serves that URI:
 
 ```dart
 var manage = server.registrationManagementEndpoint(metadata);
@@ -458,19 +606,36 @@ router
   ..delete('/register/:client_id', manage);
 ```
 
-Store the `registrationAccessToken` of each registration hashed, as its secret, in `registerClient`, and implement `findRegistration`, which gives the stored registration of a client if the token, of the `Authorization: Bearer` header, is its, compared in constant time; or `null`, which is `invalid_token`, a 401, whether the client exists or not, so that it tells nothing of other clients. Its `clientSecret` and `registrationAccessToken` are `null`, as only their hashes are kept.
+In `registerClient`, store each registration's `registrationAccessToken` hashed, like its secret.
 
-- A GET gives the registration, of its token, which the response must give (RFC 7592 §3), but not its secret, as only its hash is kept.
-- A PUT replaces it, of all its metadata, as a registration is checked: what it does not give is no longer registered. It must give the `client_id` of the client, and may give its `client_secret`, which `verifyClient` verifies, but not what the server issues, such as the `registration_access_token`; or it is `invalid_client_metadata`. `updateClient` stores the update, whose secret and token are `null` unless they are new: of a client that is no longer public, or of `rotatesClientSecretOnUpdate` and `rotatesRegistrationAccessToken`, which issue new ones on each update. The response gives the token, new or not.
-- A DELETE gives the registration to `deleteClient`, which deletes the client and revokes its tokens, and answers a 204.
+Implement `findRegistration`:
 
-By default, `updateClient` and `deleteClient` refuse, `access_denied`, a 403, so that a server may give only reads.
+- It is given the client id and the token from the `Authorization: Bearer` header. Compare the token with the stored hash in constant time.
+- If the token matches, return the stored registration. Its `clientSecret` and `registrationAccessToken` are `null`, because only their hashes are kept.
+- Otherwise return `null`. The request then gets `invalid_token`, with status 401, whether the client exists or not, so the response reveals nothing about other clients.
+
+The three methods:
+
+- **GET.** It returns the registration with its registration access token, which the response must include (RFC 7592 §3). The secret is not returned, because only its hash is kept.
+- **PUT.** It replaces the registration, with all of its metadata, and checks it like a new registration, so anything left out is no longer registered.
+  - The request must give the client's `client_id`.
+  - It may give the `client_secret`, which `verifyClient` checks.
+  - It may not give values the server issues, such as the `registration_access_token`; that gets `invalid_client_metadata`.
+  - `updateClient` stores the update. The update's secret and token are `null` unless new ones were issued: for a client that is no longer public, or because `rotatesClientSecretOnUpdate` or `rotatesRegistrationAccessToken` issues new ones on each update.
+  - The response includes the token, whether new or not.
+- **DELETE.** It passes the registration to `deleteClient`, which deletes the client and revokes its tokens. The response is a 204.
+
+By default, `updateClient` and `deleteClient` refuse with `access_denied`, a 403, so a server can offer reads only.
 
 ## Extending
 
-A protocol built on OAuth 2.0, such as OpenID Connect (`angel3_oidc_server`), can check parameters and metadata that the server does not know through these hooks. Call `super` when you override one, so that other extensions still run.
+A protocol built on OAuth 2.0, such as OpenID Connect (`angel3_oidc_server`), can check parameters and metadata the server doesn't know about through these hooks. Call `super` when you override one, so that other extensions still run.
 
-`checkAuthorizationRequest` is given the parameters of each authorization request, from the query or from the form of a POST, after the server has checked the client, the response type and PKCE, and before `requestAuthorizationCode`. Throw an `AuthorizationException`, such as `invalid_request`, to refuse the request. When the client has a registered redirect URI, from `registeredRedirectUri`, the error is redirected to it like the endpoint's other errors. Otherwise it is thrown.
+`checkAuthorizationRequest` is given the parameters of each authorization request, from the query or from the form of a POST:
+
+- **When it runs.** After the server has checked the client, the response type and PKCE, and before `requestAuthorizationCode`.
+- **To refuse.** Throw an `AuthorizationException`, such as `invalid_request`.
+- **Where the error goes.** If the client has a registered redirect URI (from `registeredRedirectUri`), the error is redirected there like the endpoint's other errors. Otherwise it is thrown.
 
 ```dart
 @override
@@ -484,7 +649,12 @@ FutureOr<void> checkAuthorizationRequest(PseudoApplication client,
 }
 ```
 
-`checkClientMetadata` is given the metadata of a registration, or of a PUT that updates one, once the request is authenticated and before the server checks its own metadata. Return the metadata, with any defaults added, or throw an `AuthorizationException` of `invalid_client_metadata` or `invalid_redirect_uri` with a status of 400. On an update, `current` is the registration as it is now, so a change can be refused; on a new registration it is `null`.
+`checkClientMetadata` is given the metadata of a new registration, or of a PUT that updates one:
+
+- **When it runs.** After the request is authenticated, and before the server checks its own metadata.
+- **What it returns.** The metadata, with any defaults added.
+- **To refuse.** Throw an `AuthorizationException` with `invalid_client_metadata` or `invalid_redirect_uri` and status 400.
+- **`current`.** On an update it is the registration as it is now, so you can refuse a change. On a new registration it is `null`.
 
 ```dart
 @override
@@ -497,4 +667,8 @@ FutureOr<Map<String, dynamic>> checkClientMetadata(
 }
 ```
 
-`redirectUriProblem` gives the reason a URI cannot be a redirect URI under the registration rules above, or `null` if it can, so that other redirect URIs, such as `post_logout_redirect_uris`, follow the same rules. `loopbackHosts` lists the hosts for which `http` is allowed. `ServerMetadata.copyWith` changes some of the metadata, such as adding a scope. A `null` argument keeps the current value, so to remove one, build a new `ServerMetadata`.
+Helpers:
+
+- **`redirectUriProblem`.** It returns why a URI can't be a redirect URI under the [registration rules](#metadata-checks), or `null` if it can. Use it so that other redirect URIs, such as `post_logout_redirect_uris`, follow the same rules.
+- **`loopbackHosts`.** It lists the hosts on which `http` is allowed: `localhost`, `127.0.0.1` and `::1`.
+- **`ServerMetadata.copyWith`.** It changes some of the metadata, for example to add a scope. A `null` argument keeps the current value, so to remove one, build a new `ServerMetadata`.
