@@ -71,13 +71,33 @@ class OpenIdRequest {
   /// The `state` of the request, of which its errors are redirected.
   final String state;
 
+  /// A key of the request, of its parameters, which is that of the request
+  /// sent again of the same parameters, as once the user signed in: keep
+  /// what was done of it in the session of the user, by this key, and give
+  /// it to [interactions] as `completed`.
+  final String key;
+
   OpenIdRequest({
     required this.isOpenId,
     this.nonce,
     this.prompt = const {},
     this.maxAge,
     this.state = '',
+    this.key = '',
   });
+
+  /// The [key] of a request of [params]: of all of them, sorted, so that a
+  /// request of another `acr_values`, `login_hint` or the like, which asks
+  /// for another login, is of another key.
+  static String _keyOf(Map<String, dynamic> params) {
+    var names = params.keys.toList()..sort();
+    var canonical = json.encode([
+      for (var name in names) [name, params[name]?.toString()],
+    ]);
+    return base64Url
+        .encode(sha256.convert(utf8.encode(canonical)).bytes)
+        .replaceAll('=', '');
+  }
 
   /// What the provider must do with the user before it issues a code of
   /// this request (OpenID Connect Core 1.0 §3.1.2.3), of whether they are
@@ -88,29 +108,46 @@ class OpenIdRequest {
   /// Of `prompt=none`, of which the user may not be prompted, it throws the
   /// error of what they would have had to do instead: `login_required`,
   /// `account_selection_required` or `consent_required`, which the
-  /// authorization endpoint redirects. Ask once, before the user is
-  /// prompted: of `prompt=login`, it is always [OpenIdInteraction.login].
+  /// authorization endpoint redirects.
+  ///
+  /// Of `prompt=login`, `select_account` or `consent`, or of `max_age=0`,
+  /// the user must be asked, whatever was done before: once they have
+  /// been, the app sends them back to the authorization endpoint, of a
+  /// request of the same parameters, which would ask them again, and again.
+  /// Give [completed], what the app did of the request of this [key], which
+  /// it keeps in the user's session, on the server: never of the request,
+  /// as of a parameter of the URL it returns to, which the user could set,
+  /// and so skip a login the client asked for. A login of it satisfies
+  /// `prompt=login` and `max_age` alike.
   Set<OpenIdInteraction> interactions({
     required bool signedIn,
     DateTime? authTime,
     bool consented = true,
     int? defaultMaxAge,
+    Set<OpenIdInteraction> completed = const {},
     DateTime? now,
   }) {
     var maxAge = this.maxAge ?? defaultMaxAge;
     var time = now ?? DateTime.now();
+    var loggedIn = signedIn && completed.contains(OpenIdInteraction.login);
     // Of max_age=0, as of prompt=login (OpenID Connect Core 1.0 §3.1.2.1),
-    // a login whenever the user authenticated.
+    // a login whenever the user authenticated, but one of this request. Of
+    // seconds, so that no max_age, however large, overflows a Duration.
     var stale =
         maxAge != null &&
-        (maxAge == 0 ||
-            authTime == null ||
-            time.difference(authTime) > Duration(seconds: maxAge));
+        (maxAge == 0
+            ? !loggedIn
+            : authTime == null || _olderThan(time, authTime, maxAge));
     var needed = {
-      if (!signedIn || stale || prompt.contains('login'))
+      if (!signedIn || stale || (prompt.contains('login') && !loggedIn))
         OpenIdInteraction.login,
-      if (prompt.contains('select_account')) OpenIdInteraction.selectAccount,
-      if (!consented || prompt.contains('consent')) OpenIdInteraction.consent,
+      if (prompt.contains('select_account') &&
+          !completed.contains(OpenIdInteraction.selectAccount))
+        OpenIdInteraction.selectAccount,
+      if (!consented ||
+          (prompt.contains('consent') &&
+              !completed.contains(OpenIdInteraction.consent)))
+        OpenIdInteraction.consent,
     };
     if (prompt.contains('none') && needed.isNotEmpty) {
       var (error, description) = switch (needed.first) {
@@ -135,7 +172,19 @@ class OpenIdRequest {
     return needed;
   }
 
+  /// Whether [authTime] is more than [seconds] before [time], of the
+  /// exact difference, not of whole seconds. Of more seconds than a
+  /// [Duration] holds, of some 292 thousand years, it is not.
+  static bool _olderThan(DateTime time, DateTime authTime, int seconds) =>
+      seconds <= _maxDurationSeconds &&
+      time.difference(authTime) > Duration(seconds: seconds);
+
+  /// The most seconds a [Duration] holds, of microseconds of 64 bits.
+  static const _maxDurationSeconds = 9223372036854;
+
   static const _prompts = {'none', 'login', 'consent', 'select_account'};
+  static final _whitespace = RegExp(r'\s+');
+  static final _digits = RegExp(r'^[0-9]+$');
 
   /// The OpenID Connect parameters of [params], of an authorization request
   /// of [state].
@@ -146,12 +195,21 @@ class OpenIdRequest {
           statusCode: 400,
         );
 
-    var scope = params['scope']?.toString() ?? '';
-    var isOpenId = scope.split(RegExp(r'\s+')).contains('openid');
+    // Of a blank scope as of none, as the server takes it.
+    var scope = params['scope']?.toString();
+    if (scope != null && scope.trim().isEmpty) scope = null;
+    var isOpenId = (scope ?? '').split(_whitespace).contains('openid');
+    var key = _keyOf(params);
+    // Of an OAuth2 request alone, of scopes of no `openid`: what it gives of
+    // them is not of OpenID Connect, so not checked. Of no scope, of which
+    // the app may grant `openid` by default, they are.
+    if (!isOpenId && scope != null) {
+      return OpenIdRequest(isOpenId: false, state: state, key: key);
+    }
     var nonce = params['nonce']?.toString();
 
     var prompt = {
-      for (var value in (params['prompt']?.toString() ?? '').split(' '))
+      for (var value in (params['prompt']?.toString() ?? '').split(_whitespace))
         if (value.isNotEmpty) value,
     };
     for (var value in prompt) {
@@ -165,8 +223,13 @@ class OpenIdRequest {
 
     int? maxAge;
     if (params['max_age'] case var value?) {
-      maxAge = int.tryParse(value.toString());
-      if (maxAge == null || maxAge < 0) {
+      // Of digits alone, not of hex nor a sign, as `int.tryParse` takes.
+      var text = value.toString();
+      // Of digits too many for an int, a max_age of no end.
+      maxAge = _digits.hasMatch(text)
+          ? int.tryParse(text) ?? _maxDurationSeconds + 1
+          : null;
+      if (maxAge == null) {
         throw invalid('The "max_age" parameter must be a number of seconds.');
       }
     }
@@ -176,6 +239,7 @@ class OpenIdRequest {
       prompt: prompt,
       maxAge: maxAge,
       state: state,
+      key: key,
     );
   }
 }
@@ -224,10 +288,11 @@ abstract class OpenIdServer<Client, User>
   /// `https` URL of no query or fragment (OpenID Connect Discovery §3).
   final Uri issuer;
 
-  /// The keys of the provider: the first signs the ID tokens, and the JSON
-  /// Web Key Set publishes all, so that tokens of a key that is being
-  /// replaced still verify. Rotate by putting the new key first, and
-  /// removing the old one once its tokens have expired.
+  /// The keys of the provider: the first of an algorithm signs the ID
+  /// tokens of it, and the JSON Web Key Set publishes all, so that tokens of
+  /// a key that is being replaced still verify. It cannot be changed: rotate
+  /// by building the server of the new key first, as on a restart, and
+  /// remove the old one once its tokens have expired.
   final List<OpenIdSigningKey> signingKeys;
 
   /// How long an ID token is valid. Default: 10 minutes.
@@ -235,9 +300,9 @@ abstract class OpenIdServer<Client, User>
 
   OpenIdServer({
     required this.issuer,
-    required this.signingKeys,
+    required List<OpenIdSigningKey> signingKeys,
     this.idTokenLifetime = const Duration(minutes: 10),
-  }) {
+  }) : signingKeys = List.unmodifiable(signingKeys) {
     if (signingKeys.isEmpty) {
       throw ArgumentError.value(
         signingKeys,
@@ -345,10 +410,18 @@ abstract class OpenIdServer<Client, User>
   /// of those of the token.
   ///
   /// Of a refresh token grant (§12.2), give no [nonce], and the [authTime]
-  /// of the first. Of [algorithm], or of [idTokenAlgorithmOf] of the client,
-  /// or of `RS256`, it is signed with the first key of it. Give
-  /// [requireAuthTime] of a request of `max_age`, or of a client of
-  /// `require_auth_time`, of which an [authTime] is required.
+  /// of the first, and no [request]: keep the time the user signed in with
+  /// the refresh token, as a client of `require_auth_time` or
+  /// `default_max_age` requires it of every ID token.
+  ///
+  /// Give the [request] stored with the code, and the [clientMetadata] of
+  /// the client, if it registered itself: of them, its `nonce`, whether its
+  /// `auth_time` is required, of a `max_age` of the request, or of a
+  /// `require_auth_time` or `default_max_age` of the client, and its
+  /// algorithm. Of [algorithm], or of the client's, of [idTokenAlgorithmOf],
+  /// or of `RS256`, it is signed with the first key of it. Of
+  /// [requireAuthTime], or of what requires it, it throws an
+  /// [ArgumentError] of no [authTime].
   String issueIdToken({
     required User user,
     required Client client,
@@ -359,13 +432,29 @@ abstract class OpenIdServer<Client, User>
     DateTime? now,
     String? algorithm,
     bool requireAuthTime = false,
+    OpenIdRequest? request,
+    OpenIdClientMetadata? clientMetadata,
   }) {
+    if (request != null && !request.isOpenId) {
+      throw ArgumentError.value(
+        request,
+        'request',
+        'is not of the openid scope, of which no ID token is issued',
+      );
+    }
+    // Of the request of the code, and of what the client registered.
+    nonce ??= request?.nonce;
+    requireAuthTime =
+        requireAuthTime ||
+        request?.maxAge != null ||
+        (clientMetadata?.requireAuthTime ?? false) ||
+        clientMetadata?.defaultMaxAge != null;
     if (requireAuthTime && authTime == null) {
       throw ArgumentError.value(
         authTime,
         'authTime',
         'is required, of a request of max_age, or a client of '
-            'require_auth_time',
+            'require_auth_time or default_max_age',
       );
     }
     var issued = now ?? DateTime.now();
@@ -373,7 +462,13 @@ abstract class OpenIdServer<Client, User>
     // Of the algorithm given, or the client's, of the first key of it.
     // Of RS256, of a client of none of its own, which the default of OpenID
     // Connect is, and which registration recorded for it.
-    var alg = algorithm ?? idTokenAlgorithmOf(client) ?? 'RS256';
+    // Of the hook before the metadata, whose algorithm is never `null`, of
+    // its default.
+    var alg =
+        algorithm ??
+        idTokenAlgorithmOf(client) ??
+        clientMetadata?.idTokenSignedResponseAlg ??
+        'RS256';
     var key = signingKeys.firstWhere(
       (key) => key.algorithm == alg,
       orElse: () => throw StateError(
@@ -413,7 +508,17 @@ abstract class OpenIdServer<Client, User>
   /// The left half of the SHA-256 of [value], in base64url, as `at_hash`
   /// is, of an RS256 or ES256 token (OpenID Connect Core 1.0 §3.1.3.6).
   static String _halfHash(String value) {
-    var digest = sha256.convert(ascii.encode(value)).bytes;
+    List<int> bytes;
+    try {
+      bytes = ascii.encode(value);
+    } on ArgumentError {
+      throw ArgumentError.value(
+        value,
+        'accessToken',
+        'must be of ASCII, as access tokens are (RFC 6749 §A.12)',
+      );
+    }
+    var digest = sha256.convert(bytes).bytes;
     return base64Url.encode(digest.sublist(0, 16)).replaceAll('=', '');
   }
 
@@ -433,12 +538,16 @@ abstract class OpenIdServer<Client, User>
     String state,
     RequestContext req,
   ) {
-    var container = req.container!;
-    if (!container.has<OpenIdRequest>()) {
-      container.registerSingleton<OpenIdRequest>(
-        OpenIdRequest.of(params, state),
-      );
+    // First, so that an override that reads it after `super` finds it,
+    // awaited or not; of each request, checked, even of one registered on
+    // a container above, as of the app, which `has` would find.
+    var request = OpenIdRequest.of(params, state);
+    try {
+      req.container!.registerSingleton<OpenIdRequest>(request);
+    } on StateError {
+      // Of this request already, of a call before.
     }
+    return super.checkAuthorizationRequest(client, params, state, req);
   }
 
   /// The JSON Web Key Set of the provider (RFC 7517 §5): the public keys of
@@ -548,6 +657,9 @@ abstract class OpenIdServer<Client, User>
       'claims_parameter_supported': false,
       'request_parameter_supported': false,
       'request_uri_parameter_supported': false,
+      // Of `extra` again, which [metadataOf] gave first: so that it may
+      // replace the fields of OpenID Connect too, as it does those of RFC
+      // 8414.
       ...metadata.extra,
     };
   }
@@ -596,6 +708,19 @@ abstract class OpenIdServer<Client, User>
     Map<String, dynamic> metadata,
     RequestContext req,
   ) {
+    // Of a Future of any type argument, as an override's may be.
+    var checked = super.checkClientMetadata(metadata, req) as Object;
+    if (checked is Future) {
+      return checked.then(
+        (value) =>
+            _checkOpenIdMetadata(Map<String, dynamic>.from(value as Map)),
+      );
+    }
+    return _checkOpenIdMetadata(checked as Map<String, dynamic>);
+  }
+
+  /// The OpenID Connect metadata of [metadata], of [checkClientMetadata].
+  Map<String, dynamic> _checkOpenIdMetadata(Map<String, dynamic> metadata) {
     AuthorizationException invalid(
       String description, {
       String error = ErrorResponse.invalidClientMetadata,
@@ -667,6 +792,13 @@ abstract class OpenIdServer<Client, User>
       'application_type': applicationType,
     };
   }
+
+  /// Of the `openid` scope too, of a [metadata] of scopes, as of every
+  /// endpoint of its metadata: of RFC 8414, of the OpenID Provider
+  /// configuration, and of registration.
+  @override
+  Map<String, dynamic> metadataOf(ServerMetadata metadata) =>
+      super.metadataOf(_withOpenIdScope(metadata));
 
   /// Of the `openid` scope too, which [openIdConfigurationOf] gives, of a
   /// [metadata] of scopes, so that a client may register it.

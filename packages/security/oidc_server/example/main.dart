@@ -183,9 +183,9 @@ class _Provider extends OpenIdServer<_Client, String> {
       idToken: issueIdToken(
         user: stored.user,
         client: client!,
-        nonce: stored.openId.nonce,
+        // Of its nonce, and of an auth_time that a max_age requires.
+        request: stored.openId,
         authTime: stored.authTime,
-        requireAuthTime: stored.openId.maxAge != null,
         accessToken: accessToken,
       ),
     );

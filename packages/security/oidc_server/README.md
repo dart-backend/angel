@@ -86,7 +86,7 @@ await storeSecretSomehow(json.encode(key.toJson()));
 var loaded = OpenIdSigningKey.fromJwk(json.decode(await readSecretSomehow()));
 ```
 
-The first key of a client's algorithm signs its ID tokens: of `idTokenAlgorithmOf` the client, or of `RS256`, the default of OpenID Connect, for a client of none. The JSON Web Key Set publishes all of them, of their public members alone. To rotate, put a new key first among those of its algorithm, and remove the old one once the ID tokens it signed have expired. A key whose private part is not of its public one, as of a stored key that was damaged or mis-pasted, is refused as it loads, of a test signature that its public key verifies, of `RS256` and `ES256` alike. RSA keys must be of at least 2048 bits, and the server must have an `RS256` key.
+The first key of a client's algorithm signs its ID tokens: of `idTokenAlgorithmOf` the client, or of `RS256`, the default of OpenID Connect, for a client of none. The JSON Web Key Set publishes all of them, of their public members alone. `signingKeys` cannot be changed: to rotate, build the server of a new key first among those of its algorithm, as on a restart, and remove the old one once the ID tokens it signed have expired. A key whose private part is not of its public one, as of a stored key that was damaged or mis-pasted, is refused as it loads, of a test signature that its public key verifies, of `RS256` and `ES256` alike. RSA keys must be of at least 2048 bits, and the server must have an `RS256` key.
 
 `RS256` signatures are made with RSA blinding, as BoringSSL and OpenSSL make them, so that the time a signature takes tells nothing of the key, and each is checked before it is given out, against a fault of the computation, which could leak a factor of the key. The arithmetic is of pure Dart, and is not constant-time otherwise. `ES256` signatures are of `package:jose_plus`, whose curve arithmetic is not constant-time: prefer `RS256` where timing attacks against the server are a concern.
 
@@ -107,14 +107,16 @@ Issue the ID token with the access token in `exchangeAuthorizationCodeForToken`,
 var idToken = issueIdToken(
   user: stored.user,
   client: client!,
-  nonce: stored.nonce,
+  // Of its nonce and max_age, and of what the client registered, if it did.
+  request: stored.openId,
+  clientMetadata: stored.clientMetadata,
   authTime: stored.authTime,
   accessToken: accessToken,
 );
 return IdTokenResponse(accessToken, idToken: idToken, expiresIn: 3600);
 ```
 
-It has the `iss`, `sub`, `aud`, `exp` and `iat` of OpenID Connect Core §2, which `claims` of your own, as `acr` or `amr`, may not set, nor its `nonce`, `auth_time` or `at_hash`, the `nonce` of the request, its `auth_time`, and the `at_hash` of the access token. Give `requireAuthTime: true` of a request of `max_age`, or a client of `require_auth_time`, of which the ID token must have an `auth_time`: it then throws an `ArgumentError` of no `authTime`, rather than issue a token without it. It is valid for `idTokenLifetime` (default 10 minutes). Of a refresh token grant, issue one of no `nonce`, and of the `authTime` of the first.
+It has the `iss`, `sub`, `aud`, `exp` and `iat` of OpenID Connect Core §2, which `claims` of your own, as `acr` or `amr`, may not set, nor its `nonce`, `auth_time` or `at_hash`, the `nonce` of the request, its `auth_time`, and the `at_hash` of the access token. Give it the `request` stored with the code, and the `clientMetadata` of a client that registered itself: of them, it takes the `nonce`, the client's algorithm, and whether the token must have an `auth_time`, of a `max_age` of the request, or of the client's `require_auth_time` or `default_max_age`, of which it throws an `ArgumentError` of no `authTime`, rather than issue a token without it. `requireAuthTime` and `algorithm` say so of your own. It is valid for `idTokenLifetime` (default 10 minutes). Of a refresh token grant, issue one of no `nonce`, and of the `authTime` of the first.
 
 ## UserInfo
 
@@ -136,7 +138,7 @@ if (needed.contains(OpenIdInteraction.login)) {
 }
 ```
 
-Ask once, before the user is prompted: of `prompt=login`, or `max_age=0`, it is always a login. Give the ID token the `authTime` of the session, which a request of `max_age`, or a client of `require_auth_time`, requires.
+Of `prompt=login`, `select_account` or `consent`, or of `max_age=0`, the user must be asked, whatever was done before; once they have been, the app sends them back to the authorization endpoint, of the same request, which would ask them again. Keep what was done of each request in the user's session, on the server, by the `key` of its `OpenIdRequest`, and give it to `interactions` as `completed`: a login of it satisfies `prompt=login` and `max_age=0`, while a larger `max_age` still needs a sign-in within it. Never take it of the request, as of the URL the app returns to, which the user could set, and so skip a login the client asked for. `max_age` is of digits alone. The OpenID Connect parameters of a request whose scopes have no `openid` are not checked, as they are not of OpenID Connect; those of a request of no scope, or a blank one, are, as the app may grant `openid` by default.
 
 ## Logout
 

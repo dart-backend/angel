@@ -75,6 +75,87 @@ void main() {
       );
     });
 
+    test('of what was completed of the request are not asked again', () {
+      var old = now.subtract(const Duration(days: 1));
+      for (var (r, done) in [
+        (request(prompt: {'login'}), OpenIdInteraction.login),
+        (request(maxAge: 0), OpenIdInteraction.login),
+        (request(prompt: {'consent'}), OpenIdInteraction.consent),
+        (request(prompt: {'select_account'}), OpenIdInteraction.selectAccount),
+      ]) {
+        expect(r.interactions(signedIn: true, authTime: old, now: now), {
+          done,
+        }, reason: '${r.prompt} ${r.maxAge}');
+        expect(
+          r.interactions(
+            signedIn: true,
+            authTime: old,
+            completed: {done},
+            now: now,
+          ),
+          isEmpty,
+          reason: '${r.prompt} ${r.maxAge}',
+        );
+      }
+      // Of a max_age of more than 0, of the time the user signed in, which a
+      // completed login does not stand in for.
+      expect(
+        request(maxAge: 60).interactions(
+          signedIn: true,
+          authTime: old,
+          completed: {OpenIdInteraction.login},
+          now: now,
+        ),
+        {OpenIdInteraction.login},
+      );
+      // Of the exact time, not of whole seconds.
+      expect(
+        request(maxAge: 60).interactions(
+          signedIn: true,
+          authTime: now.subtract(const Duration(milliseconds: 60900)),
+          now: now,
+        ),
+        {OpenIdInteraction.login},
+      );
+      // Of no user signed in, a login, whatever was completed.
+      expect(
+        request().interactions(
+          signedIn: false,
+          completed: {OpenIdInteraction.login},
+        ),
+        {OpenIdInteraction.login},
+      );
+    });
+
+    test('of a key of the request, the same of it sent again', () {
+      Map<String, String> params({String state = 'st'}) => {
+        'response_type': 'code',
+        'client_id': 'app',
+        'scope': 'openid',
+        'state': state,
+        'prompt': 'login',
+      };
+      var a = OpenIdRequest.of(params(), 'st');
+      expect(a.key, OpenIdRequest.of(params(), 'st').key);
+      expect(a.key, isNot(OpenIdRequest.of(params(state: 'x'), 'x').key));
+      // Of a step up, of other acr_values: another login, another key.
+      expect(
+        a.key,
+        isNot(OpenIdRequest.of({...params(), 'acr_values': 'mfa'}, 'st').key),
+      );
+    });
+
+    test('of a max_age of no Duration, overflow not', () {
+      var r = OpenIdRequest.of({
+        'scope': 'openid',
+        'max_age': '10000000000000',
+      }, 'st');
+      expect(
+        r.interactions(signedIn: true, authTime: recently, now: now),
+        isEmpty,
+      );
+    });
+
     test('of max_age=0 are a login, whenever the user authenticated', () {
       expect(
         request(maxAge: 0)
@@ -128,6 +209,70 @@ void main() {
             .interactions(signedIn: true, authTime: recently, now: now),
         isEmpty,
       );
+    });
+  });
+
+  group('the OpenID Connect parameters', () {
+    test('of a max_age of no digits alone are refused', () {
+      for (var value in ['0x10', '+5', '-1', '1.5', '']) {
+        expect(
+          () => OpenIdRequest.of({'scope': 'openid', 'max_age': value}, 's'),
+          throwsA(isA<AuthorizationException>()),
+          reason: value,
+        );
+      }
+    });
+
+    test('of a max_age of more digits than an int, of no end', () {
+      var r = OpenIdRequest.of({
+        'scope': 'openid',
+        'max_age': '99999999999999999999',
+      }, 's');
+      expect(
+        r.interactions(
+          signedIn: true,
+          authTime: DateTime(2000),
+          now: DateTime(2026),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('of a blank scope are checked, as of none', () {
+      expect(
+        () => OpenIdRequest.of({'scope': '  ', 'prompt': 'bogus'}, 's'),
+        throwsA(isA<AuthorizationException>()),
+      );
+    });
+
+    test('of prompt are of any whitespace', () {
+      var r = OpenIdRequest.of({
+        'scope': 'openid',
+        'prompt': 'login\tconsent',
+      }, 's');
+      expect(r.prompt, {'login', 'consent'});
+    });
+
+    test('of a request of no scope at all are checked, as the app may grant '
+        'openid by default', () {
+      expect(
+        () => OpenIdRequest.of({'prompt': 'bogus'}, 's'),
+        throwsA(isA<AuthorizationException>()),
+      );
+      var r = OpenIdRequest.of({'prompt': 'none', 'nonce': 'n'}, 's');
+      expect(r.isOpenId, isFalse);
+      expect(r.prompt, {'none'});
+      expect(r.nonce, 'n');
+    });
+
+    test('of an OAuth2 request, of no openid scope, are not checked', () {
+      var r = OpenIdRequest.of({
+        'scope': 'profile',
+        'prompt': 'bogus',
+        'max_age': 'soon',
+      }, 's');
+      expect(r.isOpenId, isFalse);
+      expect(r.prompt, isEmpty);
     });
   });
 
@@ -335,6 +480,137 @@ void main() {
       expect(claims, isNot(contains('auth_time')));
       expect(claims['sub'], 'alice');
       expect(claims['acr'], '1');
+    });
+
+    test('an ID token is of the request and client metadata given', () {
+      var token = provider.issueIdToken(
+        user: 'alice',
+        client: 'app',
+        request: OpenIdRequest(isOpenId: true, nonce: 'n-1', maxAge: 60),
+        authTime: DateTime.now(),
+        clientMetadata: OpenIdClientMetadata(idTokenSignedResponseAlg: 'ES256'),
+      );
+      expect(_headerOf(token)['alg'], 'ES256');
+      var claims = json.decode(
+        utf8.decode(base64Url.decode(base64Url.normalize(token.split('.')[1]))),
+      ) as Map;
+      expect(claims['nonce'], 'n-1');
+      // Of a max_age, or a client of require_auth_time or default_max_age:
+      // of no authTime, refused.
+      for (var (request, metadata) in [
+        (OpenIdRequest(isOpenId: true, maxAge: 60), null),
+        (null, OpenIdClientMetadata(requireAuthTime: true)),
+        (null, OpenIdClientMetadata(defaultMaxAge: 60)),
+      ]) {
+        expect(
+          () => provider.issueIdToken(
+            user: 'alice',
+            client: 'app',
+            request: request,
+            clientMetadata: metadata,
+          ),
+          throwsArgumentError,
+        );
+      }
+    });
+
+    test(
+      'the algorithm of idTokenAlgorithmOf comes before the metadata\'s',
+      () {
+        var token = provider.issueIdToken(
+          user: 'alice',
+          client: 'es-app',
+          clientMetadata: OpenIdClientMetadata(),
+        );
+        expect(_headerOf(token)['alg'], 'ES256');
+      },
+    );
+
+    test('an ID token of a request of no openid scope is an ArgumentError', () {
+      expect(
+        () => provider.issueIdToken(
+          user: 'alice',
+          client: 'app',
+          request: OpenIdRequest(isOpenId: false),
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('an access token that is not ASCII is an ArgumentError', () {
+      expect(
+        () => provider.issueIdToken(
+          user: 'alice',
+          client: 'app',
+          accessToken: 'tökén',
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    test('an override of a hook, of a plain return type, reads the '
+        'OpenIdRequest of super, not awaited', () async {
+      var sync = _Sync();
+      var app = Angel()..get('/authorize', sync.authorizationEndpoint);
+      app.errorHandler = (e, req, res) async {
+        res.statusCode = e.statusCode;
+        res.json(e.toJson());
+      };
+      var other = await connectTo(app);
+      var response = await other.get(
+        Uri(
+          path: '/authorize',
+          queryParameters: {
+            'response_type': 'code',
+            'client_id': 'app',
+            'redirect_uri': '$_redirectUri',
+            'scope': 'openid',
+            'code_challenge': _challenge,
+            'code_challenge_method': 'S256',
+          },
+        ),
+      );
+      await other.close();
+      // Past the hook, to requestAuthorizationCode's default refusal.
+      expect(response.body, contains('unsupported_response_type'));
+    });
+
+    test('each request is checked, of an OpenIdRequest registered on the '
+        'app', () async {
+      var sync = _Sync();
+      var app = Angel()..get('/authorize', sync.authorizationEndpoint);
+      app.container.registerSingleton(OpenIdRequest(isOpenId: true));
+      app.errorHandler = (e, req, res) async {
+        res.statusCode = e.statusCode;
+        res.json(e.toJson());
+      };
+      var other = await connectTo(app);
+      var response = await other.get(
+        Uri(
+          path: '/authorize',
+          queryParameters: {
+            'response_type': 'code',
+            'client_id': 'app',
+            'redirect_uri': '$_redirectUri',
+            'scope': 'openid',
+            'prompt': 'bogus',
+            'code_challenge': _challenge,
+            'code_challenge_method': 'S256',
+          },
+        ),
+      );
+      await other.close();
+      expect(response.statusCode, 400);
+      expect(response.body, contains('prompt'));
+    });
+
+    test('the signing keys cannot be changed', () {
+      expect(() => provider.signingKeys.add(_rsa), throwsUnsupportedError);
+    });
+
+    test('the metadata of RFC 8414 lists openid, of scopes', () {
+      var json = provider.metadataOf(_metadata.copyWith(scopes: ['profile']));
+      expect(json['scopes_supported'], ['openid', 'profile']);
     });
 
     test('an ID token of requireAuthTime must be given its authTime', () {
@@ -648,4 +924,34 @@ String _typed(String type) {
   );
   var input = '$header.$payload';
   return '$input.${b64(_rsa.sign(ascii.encode(input)))}';
+}
+
+/// A provider of hooks of plain return types, as the hooks of
+/// angel3_auth_server have them: of `FutureOr`, so that it compiles.
+class _Sync extends OpenIdServer<String, String> {
+  _Sync() : super(issuer: _issuer, signingKeys: [_rsa]);
+
+  @override
+  String? findClient(String? clientId) => clientId;
+
+  @override
+  bool verifyClient(String client, String? clientSecret) => true;
+
+  @override
+  String clientIdOf(String client) => client;
+
+  @override
+  String subjectOf(String user) => user;
+
+  @override
+  void checkAuthorizationRequest(
+    String client,
+    Map<String, dynamic> params,
+    String state,
+    RequestContext req,
+  ) {
+    super.checkAuthorizationRequest(client, params, state, req);
+    // Registered before super, awaited or not.
+    req.container!.make<OpenIdRequest>();
+  }
 }
