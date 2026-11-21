@@ -707,6 +707,63 @@ void main() {
     );
   });
 
+  test(
+    'a provider error of no state goes to onError, not to the provider',
+    () async {
+      var got = await get('/auth/callback?error=access_denied');
+      expect(got.status, 400);
+      expect(errors, ['invalid_state']);
+      expect(got.location, isNull);
+    },
+  );
+
+  test('tokenTimeout must be positive', () {
+    for (var timeout in [Duration.zero, const Duration(seconds: -1)]) {
+      expect(
+        () => OAuth2Strategy<String>(
+          ExternalAuthOptions(
+            clientId: 'id',
+            clientSecret: 'secret',
+            redirectUri: 'https://app.example/cb',
+          ),
+          authorizationEndpoint,
+          tokenEndpoint,
+          (client, req, res) => 'alice',
+          (e, req, res) => null,
+          tokenTimeout: timeout,
+        ),
+        throwsArgumentError,
+      );
+    }
+  });
+
+  test(
+    'a strategy that is closed answers 503, and creates no client',
+    () async {
+      var strategy = OAuth2Strategy<String>(
+        ExternalAuthOptions(
+          clientId: 'id',
+          clientSecret: 'secret',
+          redirectUri: 'https://app.example/cb',
+        ),
+        authorizationEndpoint,
+        tokenEndpoint,
+        (client, req, res) => 'alice',
+        (e, req, res) => null,
+      )..close();
+      var app = Angel();
+      app.get('/start', (req, res) => strategy.authenticate(req, res));
+      app.errorHandler = (e, req, res) {
+        res.statusCode = e.statusCode;
+        return e.message;
+      };
+      var rq = MockHttpRequest('GET', Uri.parse('/start'));
+      await rq.close();
+      await AngelHttp(app).handleRequest(rq);
+      expect(rq.response.statusCode, 503);
+    },
+  );
+
   test('a callback of no code is invalid_request', () async {
     var (url, cookie) = await start();
     var state = url.queryParameters['state'];

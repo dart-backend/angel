@@ -38,9 +38,10 @@ class _Failed extends _Outcome {
 /// An Angel [AuthStrategy] that signs users in via a third-party service that speaks OAuth 2.0.
 ///
 /// The same handler serves both legs of the flow, as `auth.authenticate(name)`
-/// (or `auth.authenticate(name, options)` on the callback): a request with a
-/// `code` or `error` query parameter is the provider's callback; any other
-/// request is redirected to the provider.
+/// (or `auth.authenticate(name, options)` on the callback): a request with
+/// an `error` query parameter, or with a `code` and a `state`, is the
+/// provider's callback; any other request, as a link of a `code` of its
+/// own, is redirected to the provider.
 ///
 /// Each login has its own random `state` (against login CSRF, RFC 6749
 /// §10.12) and PKCE code verifier (RFC 7636), kept between the redirect and
@@ -219,6 +220,13 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       throw ArgumentError.value(maxLogins, 'maxLogins', 'must be at least 1');
     }
     // Of the whole seconds of the cookie's Max-Age, of which 0 is dropped.
+    if (tokenTimeout <= Duration.zero) {
+      throw ArgumentError.value(
+        tokenTimeout,
+        'tokenTimeout',
+        'must be positive',
+      );
+    }
     if (loginTimeout < const Duration(seconds: 1)) {
       throw ArgumentError.value(
         loginTimeout,
@@ -290,10 +298,27 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// closes.
   http.Client? _ownClient;
 
-  /// Closes the HTTP client that the strategy created, if it did, as when
-  /// the app shuts down: not [httpClient], which is yours. Logins of the
-  /// strategy fail after it.
-  void close() => _ownClient?.close();
+  /// Whether [close] was called.
+  bool _closed = false;
+
+  /// Closes the strategy, as when the app shuts down, and the HTTP client
+  /// that it created, if it did: not [httpClient], which is yours. A request
+  /// to it after, as one in flight, is a 503, of a strategy that is closed,
+  /// and creates no client.
+  void close() {
+    _closed = true;
+    _ownClient?.close();
+  }
+
+  /// Throws the 503 of a strategy that is closed.
+  void _checkOpen() {
+    if (_closed) {
+      throw AngelHttpException(
+        statusCode: 503,
+        message: 'The OAuth2 strategy is closed.',
+      );
+    }
+  }
 
   /// The grant of a login of [codeVerifier], of the strategy's [_client],
   /// which it does not close.
@@ -454,11 +479,14 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// Whether [parameters] are those of the provider's callback, rather than
   /// of the start of a login.
   ///
-  /// Of a `state` too, which a callback always has: a link to the start of
-  /// a login of a `code` of its own, as of a referral, starts it.
+  /// Of a `code` and a `state`, which a callback of a code always has: a
+  /// link to the start of a login of a `code` of its own, as of a referral,
+  /// starts it. Of an `error`, of a `state` or not: one of none, which no
+  /// login is of, goes to [onError] as `invalid_state`, rather than start
+  /// another login, which a provider that fails alike would loop.
   static bool _isCallback(Map<String, String> parameters) =>
-      parameters.containsKey('state') &&
-      (parameters.containsKey('code') || parameters.containsKey('error'));
+      parameters.containsKey('error') ||
+      (parameters.containsKey('code') && parameters.containsKey('state'));
 
   @override
   FutureOr<User?> authenticate(
@@ -466,6 +494,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     ResponseContext res, [
     AngelAuthOptions<User>? options,
   ]) async {
+    _checkOpen();
     switch (await _outcomeOf(req, res)) {
       case _Verified(:var user):
         return user as User?;
@@ -583,6 +612,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     ResponseContext res, [
     AngelAuthOptions? options,
   ]) async {
+    _checkOpen();
     var (parameters, unreadable) = await _parametersOf(req, callback: true);
     var outcome = unreadable != null
         ? await _unreadable(req, res, unreadable)
