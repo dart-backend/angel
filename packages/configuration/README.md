@@ -9,11 +9,7 @@ Automatic YAML configuration loader for [Angel3 framework](https://pub.dev/packa
 
 ## About
 
-Any web app needs different configuration for development and production. This plugin will search
-for a `config/default.yaml` file. If it is found, configuration from it is loaded into `app.configuration`.
-Then, it will look for a `config/$ANGEL_ENV` file. (i.e. config/development.yaml). If this found, all of its
-configuration be loaded, and will override anything loaded from the `default.yaml` file. This allows for your
-app to work under different conditions without you re-coding anything. :)
+Any web app needs different configuration for development and production. This plugin will search for a `config/default.yaml` file. If it is found, configuration from it is loaded into `app.configuration`. Then, it will look for a `config/$ANGEL_ENV` file. (i.e. config/development.yaml). If this found, all of its configuration be loaded, and will override anything loaded from the `default.yaml` file. This allows for your app to work under different conditions without you re-coding anything. :)
 
 ## Installation
 
@@ -44,8 +40,7 @@ You can also load configuration from the environment:
 system_path: $PATH
 ```
 
-If a `.env` file is present in your configuration directory (i.e. `config/.env`), then it will be loaded before
-applying YAML configuration.
+If a `.env` file is present in your configuration directory (i.e. `config/.env`), then it will be loaded before applying YAML configuration.
 
 You can also include values from one file into another:
 
@@ -57,6 +52,7 @@ _include: "just-one-file.yaml"
 ```
 
 **Server-side**
+
 Call `configuration()` with the `FileSystem` to read the files from. The loaded configuration will be available in your application's `configuration` map.
 
 ```dart
@@ -70,13 +66,9 @@ void main() async {
 }
 ```
 
-`configuration` also accepts a `directoryPath`, `overrideEnvironmentName` or `envPath` parameter.
-The first will allow you to search in a directory other than `./config`, the second lets you
-override `$ANGEL_ENV` by specifying a specific configuration name to look for (i.e. `production`),
-and the last reads the `.env` file from another path.
+`configuration` also accepts a `directoryPath`, `overrideEnvironmentName` or `envPath` parameter. The first will allow you to search in a directory other than `./config`, the second lets you override `$ANGEL_ENV` by specifying a specific configuration name to look for (i.e. `production`), and the last reads the `.env` file from another path.
 
-This package uses [`package:belatuk_merge_map`](https://pub.dev/packages/belatuk_merge_map)
-internally, so existing configurations can be deeply merged.
+This package uses [`package:belatuk_merge_map`](https://pub.dev/packages/belatuk_merge_map) internally, so existing configurations can be deeply merged.
 
 Example:
 

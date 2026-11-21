@@ -99,8 +99,7 @@ A `memberResolver` given to `jael` is asked first, for members of values the ref
 
 ## Performance Optimization
 
-For handling large volume of initial requests, consider using `jaelTemplatePreload` to preload all the JAEL templates
-into an external cache.
+For handling large volume of initial requests, consider using `jaelTemplatePreload` to preload all the JAEL templates into an external cache.
 
 ```dart
 

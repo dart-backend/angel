@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.2
+
+### Fixes in 10.0.2
+
+* **Docs:** The README is rewritten in plain English, with sections on trying several strategies, what a login answers, protecting routes and logging out. Its strategy list sample named a `basic` strategy that was never registered, and its popup sample used an undefined `authOptions`; both now work
+
 ## 10.0.1
 
 ### Breaking changes in 10.0.1

@@ -63,12 +63,9 @@ app.fallback(vDir.pushState('index.html'));
 
 The `VirtualDirectory` API accepts a few named parameters:
 
-- **source**: A `Directory` containing the files to be served. If left null, then Angel3 will serve either from `web` (in development) or
-    `build/web` (in production), depending on your `ANGEL_ENV`.
+- **source**: A `Directory` containing the files to be served. If left null, then Angel3 will serve either from `web` (in development) or `build/web` (in production), depending on your `ANGEL_ENV`.
 - **indexFileNames**: A `List<String>` of filenames that should be served as index pages. Default is `['index.html']`.
-- **publicPath**: To serve index files, you need to specify the virtual path under which
-    angel3_static is serving your files. If you are not serving static files at the site root,
-    please include this.
+- **publicPath**: To serve index files, you need to specify the virtual path under which angel3_static is serving your files. If you are not serving static files at the site root, please include this.
 - **callback**: Runs before sending a file to a client. Use this to set headers, etc. If it returns anything other than `null` or `true`, then the callback's result will be sent to the user, instead of the file contents.
 - **followLinksOutsideSource**: If `true` (default: `false`), a symbolic link in `source` to a file or directory outside of it is followed. Otherwise such a path is not served, as if it did not exist.
 

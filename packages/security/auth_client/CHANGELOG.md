@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Docs:** The README is rewritten in plain English, with a table of contents, one complete GitHub example, and the login flow split into routes and cookies, several instances, errors and the HTTP client. The Null Safety badge link is fixed
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

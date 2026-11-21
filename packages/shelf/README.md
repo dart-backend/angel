@@ -32,8 +32,7 @@ dependencies:
 
 ### embedShelf
 
-This is a compliant `shelf` adapter that acts as an Angel request handler. You can use it as a middleware,
-or attach it to individual routes.
+This is a compliant `shelf` adapter that acts as an Angel request handler. You can use it as a middleware, or attach it to individual routes.
 
 ```dart
 import 'dart:io';
@@ -103,10 +102,7 @@ await angelShelf.startServer();
 await shelf_io.serve(angelShelf.handler, InternetAddress.loopbackIPv4, 8081);
 ```
 
-You can also use the `AngelShelf` driver as a shelf middleware - just use
-`angelShelf.middleware` instead of `angelShelf.handler`. When used as a middleware,
-if the Angel response context is still open after all handlers run (i.e. no routes were
-matched), the next shelf handler will be called.
+You can also use the `AngelShelf` driver as a shelf middleware - just use `angelShelf.middleware` instead of `angelShelf.handler`. When used as a middleware, if the Angel response context is still open after all handlers run (i.e. no routes were matched), the next shelf handler will be called.
 
 ```dart
 var handler = shelf.Pipeline()

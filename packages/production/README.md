@@ -57,8 +57,7 @@ When combined with `systemd`, deploying Angel3 applications on Linux can be very
 
 ### Message Passing
 
-The `Runner` class uses [`belatuk_pub_sub`](<https://pub.dev/packages/belatuk_pub_sub>) to coordinate
-message passing between isolates. When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it. It is injected into your application's `Container` as `pub_sub.Client`, so you can use it as follows:
+The `Runner` class uses [`belatuk_pub_sub`](<https://pub.dev/packages/belatuk_pub_sub>) to coordinate message passing between isolates. When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it. It is injected into your application's `Container` as `pub_sub.Client`, so you can use it as follows:
 
 ```dart
 // Use the injected `pub_sub.Client` to send messages.
