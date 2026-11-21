@@ -16,9 +16,9 @@ packages:
   - packages/cache
   - packages/configuration
   - packages/cors
-  - packages/auth
-  - packages/auth_oauth2
-#  - packages/auth_twitter
+  - packages/security/auth
+  - packages/security/auth_client
+#  - packages/security/auth_twitter
   - packages/file_service
   - packages/html
   - packages/client
@@ -27,8 +27,9 @@ packages:
   - packages/production
   - packages/test
   - packages/sync
-  - packages/oauth2
-  - packages/security
+  - packages/security/auth_server
+  - packages/security/oidc_server
+  - packages/security/security
   - packages/proxy
   - packages/paginate
   - packages/static

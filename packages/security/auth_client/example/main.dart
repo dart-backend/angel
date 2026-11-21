@@ -1,0 +1,171 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_auth_client/angel3_auth_client.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:logging/logging.dart';
+
+var authorizationEndpoint = Uri.parse(
+  'https://github.com/login/oauth/authorize',
+);
+
+var tokenEndpoint = Uri.parse('https://github.com/login/oauth/access_token');
+
+/// The credentials of your own GitHub OAuth app, of the environment.
+///
+/// Register one at https://github.com/settings/developers, with the
+/// callback URL `http://localhost:3000/auth/github/callback`, and run:
+///
+/// ```sh
+/// GITHUB_CLIENT_ID=... GITHUB_CLIENT_SECRET=... dart run example/main.dart
+/// ```
+ExternalAuthOptions githubOptions() => ExternalAuthOptions(
+  clientId: _requiredEnv('GITHUB_CLIENT_ID'),
+  clientSecret: _requiredEnv('GITHUB_CLIENT_SECRET'),
+  redirectUri: Uri.parse('http://localhost:3000/auth/github/callback'),
+);
+
+String _requiredEnv(String name) {
+  var value = Platform.environment[name];
+  if (value == null || value.isEmpty) {
+    stderr.writeln(
+      'Set $name to that of your GitHub OAuth app; see the comment of '
+      '`githubOptions` in example/main.dart.',
+    );
+    exit(64);
+  }
+  return value;
+}
+
+/// Github doesn't properly follow the OAuth2 spec, so here's logic to parse their response.
+///
+/// Of the type of `getParameters`; the values of JSON are kept as they are,
+/// as `expires_in` is a number.
+Map<String, dynamic> parseParamsFromGithub(
+  MediaType? contentType,
+  String body,
+) {
+  if (contentType?.type == 'application') {
+    if (contentType!.subtype == 'x-www-form-urlencoded') {
+      return Uri.splitQueryString(body);
+    } else if (contentType.subtype == 'json') {
+      return (json.decode(body) as Map).cast<String, dynamic>();
+    }
+  }
+
+  throw FormatException(
+    'Invalid content-type $contentType; expected application/x-www-form-urlencoded or application/json.',
+  );
+}
+
+void main() async {
+  var options = githubOptions();
+
+  // Create the server instance.
+  var app = Angel();
+  var http = AngelHttp(app);
+  app.logger = Logger('angel')
+    ..onRecord.listen((rec) {
+      print(rec);
+      if (rec.error != null) print(rec.error);
+      if (rec.stackTrace != null) print(rec.stackTrace);
+    });
+
+  // Create a service that stores user data.
+  var userService = app.use('/users', MapService()).inner;
+  var mappedUserService = userService.map(User.parse, User.serialize);
+
+  // Set up the authenticator plugin.
+  var auth = AngelAuth<User>(
+    serializer: (user) async => user.id ?? '',
+    deserializer: (id) => mappedUserService.read(id),
+    // Of the environment, so that JWTs stay valid across restarts; or, by
+    // default, a random key of each run.
+    jwtKey: Platform.environment['JWT_KEY'],
+    allowCookie: false,
+  );
+  await app.configure(auth.configureServer);
+
+  /// Create an instance of the strategy class.
+  auth.strategies['github'] = OAuth2Strategy(
+    options,
+    authorizationEndpoint,
+    tokenEndpoint,
+
+    // This function is called when the user ACCEPTS the request to sign in with Github.
+    (client, req, res) async {
+      var response = await client.get(Uri.parse('https://api.github.com/user'));
+      // Of no user, as of bad credentials or a rate limit: refused, as one
+      // of no id would be the same user of every such login.
+      if (response.statusCode != 200) return null;
+      var id = (json.decode(response.body) as Map)['id'];
+      if (id is! int) return null;
+
+      var matchingUsers = await mappedUserService.index({
+        'query': {'github_id': id},
+      });
+
+      if (matchingUsers.isNotEmpty) {
+        // Return the corresponding user, if it exists.
+        return matchingUsers.first;
+      } else {
+        // Otherwise,create a user
+        return await mappedUserService.create(User(githubId: id));
+      }
+    },
+
+    // This function is called when an error occurs, or the user REJECTS the request.
+    (e, req, res) async {
+      res.write('Ooops: $e');
+      await res.close();
+    },
+
+    // We have to pass this parser function when working with Github.
+    getParameters: parseParamsFromGithub,
+  );
+
+  // Mount some routes
+  app.get('/auth/github', auth.authenticate('github'));
+  app.get(
+    '/auth/github/callback',
+    auth.authenticate(
+      'github',
+      AngelAuthOptions(
+        callback: (req, res, jwt) async {
+          // In real-life, you might include a pop-up callback script.
+          //
+          // Use `confirmPopupAuthentication`, which is bundled with
+          // `package:angel_auth`.
+          var user = req.container!.make<User>();
+          res.write('Your user info: ${user.toJson()}\n\n');
+          res.write('Your JWT: $jwt');
+          await res.close();
+        },
+      ),
+    ),
+  );
+
+  // Start listening.
+  // Of the host of the redirect URI, so that the browser sends the cookie
+  // of the login, which is of the host it was set of, to the callback.
+  await http.startServer('localhost', 3000);
+  print('Listening on ${http.uri}');
+  print('View user listing: ${http.uri}/users');
+  print('Sign in via Github: ${http.uri}/auth/github');
+}
+
+class User extends Model {
+  int? githubId;
+
+  User({super.id, this.githubId});
+
+  static User parse(Map<String, dynamic> map) =>
+      User(id: map['id'] as String?, githubId: map['github_id'] as int?);
+
+  static Map<String, dynamic> serialize(User user) => user.toJson();
+
+  Map<String, dynamic> toJson() => {'id': id, 'github_id': githubId};
+}

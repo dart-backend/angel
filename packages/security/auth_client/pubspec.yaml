@@ -1,0 +1,25 @@
+name: angel3_auth_client
+version: 10.0.0
+description: Angel3 library for authenticating users with external identity providers via OAuth2.
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dart-backend/angel/
+issue_tracker: https://github.com/dart-backend/angel/issues
+
+resolution: workspace
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+dependencies:
+  angel3_auth: ^10.0.0
+  angel3_framework: ^10.0.0
+  crypto: ^3.0.0
+  http: ^1.0.0
+  http_parser: ^4.0.0
+  jose_plus: ^1.0.1
+  logging: ^1.2.0
+  oauth2: ^2.0.0
+dev_dependencies:
+  angel3_mock_request: ^10.0.0
+  angel3_auth_server: ^10.0.0
+  angel3_oidc_server: ^10.0.0
+  lints: ^6.0.0
+  test: ^1.24.0

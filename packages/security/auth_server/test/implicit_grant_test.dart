@@ -1,0 +1,143 @@
+import 'dart:async';
+
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_test/angel3_test.dart';
+import 'package:angel3_auth_server/angel3_auth_server.dart';
+import 'package:test/test.dart';
+
+import 'common.dart';
+
+void main() {
+  late TestClient client;
+
+  setUp(() async {
+    var app = Angel();
+    var oauth2 = _AuthorizationServer();
+
+    app.group('/oauth2', (router) {
+      router
+        ..get('/authorize', oauth2.authorizationEndpoint)
+        ..post('/token', oauth2.tokenEndpoint);
+    });
+
+    app.errorHandler = (e, req, res) async {
+      res.json(e.toJson());
+    };
+
+    client = await connectTo(app);
+  });
+
+  tearDown(() => client.close());
+
+  test('the redirect has no state, of a request without one', () async {
+    var response = await client.get(
+      Uri.parse(
+        '/oauth2/authorize?response_type=token&client_id=foo&redirect_uri=http://foo.com',
+      ),
+    );
+    expect(
+      response,
+      allOf(
+        hasStatus(302),
+        hasHeader(
+          'location',
+          'http://foo.com#access_token=foo&token_type=bearer',
+        ),
+      ),
+    );
+  });
+
+  test('the fragment is form-encoded, as of an error', () {
+    var uri = _AuthorizationServer().completeImplicitGrant(
+      AuthorizationTokenResponse('a b', scope: ['read', 'write']),
+      Uri.parse('http://foo.com'),
+      state: 'x&y',
+    );
+    expect(
+      uri.fragment,
+      'access_token=a+b&token_type=bearer&state=x%26y&scope=read+write',
+    );
+  });
+
+  test('is refused by default, as unsupported_response_type', () async {
+    var app = Angel();
+    app.get('/authorize', _Default().authorizationEndpoint);
+    app.errorHandler = (e, req, res) async {
+      res.statusCode = e.statusCode;
+      res.json(e.toJson());
+    };
+    var other = await connectTo(app);
+    try {
+      var response = await other.get(
+        Uri.parse(
+          '/authorize?response_type=token&client_id=foo'
+          '&redirect_uri=http://foo.com',
+        ),
+      );
+      expect(response, hasStatus(400));
+      expect(response.body, contains('unsupported_response_type'));
+    } finally {
+      await other.close();
+    }
+  });
+
+  test('authenticate via implicit grant', () async {
+    var response = await client.get(
+      Uri.parse(
+        '/oauth2/authorize?response_type=token&client_id=foo&redirect_uri=http://foo.com&state=bar',
+      ),
+    );
+
+    print('Headers: ${response.headers}');
+    expect(
+      response,
+      allOf(
+        hasStatus(302),
+        hasHeader(
+          'location',
+          'http://foo.com#access_token=foo&token_type=bearer&state=bar',
+        ),
+      ),
+    );
+  });
+}
+
+class _AuthorizationServer
+    extends AuthorizationServer<PseudoApplication, PseudoUser> {
+  @override
+  bool allowsImplicitGrant(PseudoApplication client) => true;
+
+  @override
+  PseudoApplication? findClient(String? clientId) {
+    return clientId == pseudoApplication.id ? pseudoApplication : null;
+  }
+
+  @override
+  Future<bool> verifyClient(
+    PseudoApplication client,
+    String? clientSecret,
+  ) async {
+    return client.secret == clientSecret;
+  }
+
+  @override
+  Future<void> requestAuthorizationCode(
+    PseudoApplication client,
+    String? redirectUri,
+    Iterable<String> scopes,
+    String state,
+    RequestContext req,
+    ResponseContext res,
+    bool implicit,
+  ) async {
+    var tok = AuthorizationTokenResponse('foo');
+    var uri = completeImplicitGrant(tok, Uri.parse(redirectUri!), state: state);
+    return res.redirect(uri);
+  }
+}
+
+/// A server of the defaults, which does not allow the implicit grant.
+class _Default extends _AuthorizationServer {
+  @override
+  bool allowsImplicitGrant(PseudoApplication client) => false;
+}

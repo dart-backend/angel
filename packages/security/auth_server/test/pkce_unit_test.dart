@@ -1,0 +1,68 @@
+import 'dart:convert';
+
+import 'package:angel3_auth_server/angel3_auth_server.dart';
+import 'package:crypto/crypto.dart';
+import 'package:test/test.dart';
+
+void main() {
+  const verifier = 'dBjftJeZ4CVP-mJ92K23Ul_ycL7Eupkym5c2hrtYQdHsS0';
+  var padded = base64Url.encode(sha256.convert(ascii.encode(verifier)).bytes);
+  var unpadded = padded.replaceAll('=', '');
+
+  test('S256 accepts the unpadded challenge of RFC 7636', () {
+    var pkce = Pkce.fromJson({
+      'code_challenge': unpadded,
+      'code_challenge_method': 'S256',
+    });
+    expect(pkce.isS256, isTrue);
+    pkce.validate(verifier);
+  });
+
+  test('a padded challenge and s256 are still accepted', () {
+    Pkce('s256', padded).validate(verifier);
+    Pkce('S256', padded).validate(verifier);
+  });
+
+  test('only the padding at the end of a challenge is dropped', () {
+    Pkce('S256', '$unpadded==').validate(verifier);
+    var inner = '${unpadded.substring(0, 10)}=${unpadded.substring(10)}';
+    expect(
+      () => Pkce('S256', inner).validate(verifier),
+      throwsA(isA<AuthorizationException>()),
+    );
+  });
+
+  test('a wrong verifier is refused', () {
+    expect(
+      () => Pkce('S256', unpadded).validate('${verifier}x'),
+      throwsA(isA<AuthorizationException>()),
+    );
+    expect(
+      () => Pkce('plain', 'foo').validate('fo'),
+      throwsA(isA<AuthorizationException>()),
+    );
+  });
+
+  test('a verifier of non-ASCII characters is refused, not an error', () {
+    expect(
+      () => Pkce('S256', unpadded).validate('caf\u00e9$verifier'),
+      throwsA(
+        isA<AuthorizationException>().having(
+          (e) => e.errorResponse.code,
+          'code',
+          ErrorResponse.invalidGrant,
+        ),
+      ),
+    );
+  });
+
+  test('an unknown method is refused', () {
+    expect(
+      () => Pkce.fromJson({
+        'code_challenge': 'x',
+        'code_challenge_method': 'S512',
+      }),
+      throwsA(isA<AuthorizationException>()),
+    );
+  });
+}
