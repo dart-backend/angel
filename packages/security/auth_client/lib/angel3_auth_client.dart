@@ -219,7 +219,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     if (maxLogins < 1) {
       throw ArgumentError.value(maxLogins, 'maxLogins', 'must be at least 1');
     }
-    // Of the whole seconds of the cookie's Max-Age, of which 0 is dropped.
+    // Of one of no time, of which every token exchange would time out at
+    // once, and the callback be a 502.
     if (tokenTimeout <= Duration.zero) {
       throw ArgumentError.value(
         tokenTimeout,
@@ -227,6 +228,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         'must be positive',
       );
     }
+    // Of the whole seconds of the cookie's Max-Age, of which 0 is dropped.
     if (loginTimeout < const Duration(seconds: 1)) {
       throw ArgumentError.value(
         loginTimeout,
