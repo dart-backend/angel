@@ -239,8 +239,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     if (maxLogins < 1) {
       throw ArgumentError.value(maxLogins, 'maxLogins', 'must be at least 1');
     }
-    // Of one of no time, of which every token exchange would time out at
-    // once, and the callback be a 502.
+    // Of OpenID Connect, of which a request of no `openid` scope gets no
+    // ID token.
     if (openId != null && !options.scopes.contains('openid')) {
       throw ArgumentError.value(
         options.scopes,
@@ -248,6 +248,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         'must have the scope "openid", of OpenID Connect',
       );
     }
+    // Of one of no time, of which every token exchange would time out at
+    // once, and the callback be a 502.
     if (tokenTimeout <= Duration.zero) {
       throw ArgumentError.value(
         tokenTimeout,

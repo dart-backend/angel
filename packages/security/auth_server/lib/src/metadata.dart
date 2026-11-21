@@ -101,6 +101,38 @@ class ServerMetadata {
     }
   }
 
+  /// This metadata, of the values given in place of its own.
+  ServerMetadata copyWith({
+    Uri? issuer,
+    Uri? authorizationEndpoint,
+    Uri? tokenEndpoint,
+    Uri? deviceAuthorizationEndpoint,
+    Uri? revocationEndpoint,
+    Uri? introspectionEndpoint,
+    Uri? registrationEndpoint,
+    Iterable<String>? responseTypes,
+    Iterable<String>? grantTypes,
+    Iterable<String>? clientAuthMethods,
+    Iterable<String>? scopes,
+    Uri? serviceDocumentation,
+    Map<String, dynamic>? extra,
+  }) => ServerMetadata(
+    issuer: issuer ?? this.issuer,
+    authorizationEndpoint: authorizationEndpoint ?? this.authorizationEndpoint,
+    tokenEndpoint: tokenEndpoint ?? this.tokenEndpoint,
+    deviceAuthorizationEndpoint:
+        deviceAuthorizationEndpoint ?? this.deviceAuthorizationEndpoint,
+    revocationEndpoint: revocationEndpoint ?? this.revocationEndpoint,
+    introspectionEndpoint: introspectionEndpoint ?? this.introspectionEndpoint,
+    registrationEndpoint: registrationEndpoint ?? this.registrationEndpoint,
+    responseTypes: responseTypes ?? this.responseTypes,
+    grantTypes: grantTypes ?? this.grantTypes,
+    clientAuthMethods: clientAuthMethods ?? this.clientAuthMethods,
+    scopes: scopes ?? this.scopes,
+    serviceDocumentation: serviceDocumentation ?? this.serviceDocumentation,
+    extra: extra ?? this.extra,
+  );
+
   /// The path at which to route [AuthorizationServer.metadataEndpoint]:
   /// `/.well-known/oauth-authorization-server`, followed by the path of
   /// [issuer], if any (RFC 8414 §3.1).

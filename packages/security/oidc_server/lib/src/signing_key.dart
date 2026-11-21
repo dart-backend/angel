@@ -98,12 +98,24 @@ class OpenIdSigningKey {
         'must be an RSA key of at least 2048 bits',
       );
     }
-    return OpenIdSigningKey._(
+    var key = OpenIdSigningKey._(
       keyId,
       algorithm,
       JsonWebKey.fromJson(json)!,
       rsa,
     );
+    // Of a key that signs, so that one of a `d` of another key fails here,
+    // rather than at each ID token.
+    try {
+      key.sign(const [0]);
+    } on StateError {
+      throw ArgumentError.value(
+        keyId,
+        'jwk',
+        'is not a key that signs: its "d" is not of its "n" and "e"',
+      );
+    }
+    return key;
   }
 
   static void _checkAlgorithm(String algorithm) {

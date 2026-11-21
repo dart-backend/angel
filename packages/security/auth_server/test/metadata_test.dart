@@ -87,6 +87,19 @@ void main() {
     expect(warnings.single, contains('"password"'));
   });
 
+  test('copyWith keeps what it is not given', () {
+    var metadata = ServerMetadata(
+      issuer: _issuer,
+      tokenEndpoint: _url('/oauth2/token'),
+      grantTypes: ['authorization_code', 'refresh_token'],
+    );
+    var copy = metadata.copyWith(scopes: ['openid']);
+    expect(_Server().metadataOf(copy), {
+      ..._Server().metadataOf(metadata),
+      'scopes_supported': ['openid'],
+    });
+  });
+
   test('plain PKCE, if the server allows it', () {
     var json = _Server(allowsPlain: true)
         .metadataOf(ServerMetadata(issuer: _issuer));

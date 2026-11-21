@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Cookie;
 
@@ -294,6 +295,99 @@ void main() {
     expect(status, 502);
   });
 
+  test('a JWKS that is not an object is a 502, not a 500', () async {
+    published = [];
+    var verifier = IdTokenVerifier(
+      OpenIdOptions(issuer: _issuer, jwksUri: _jwksUri),
+      MockClient((request) async => http.Response('[]', 200)),
+      timeout: const Duration(seconds: 5),
+    );
+    await expectLater(
+      verifier.verify(key.signJwt(claimsOf('n')), clientId: 'app', nonce: 'n'),
+      throwsA(isA<http.ClientException>()),
+    );
+  });
+
+  group('the keys', () {
+    /// A verifier of a provider of [key], of [fetches] counted, which fails
+    /// once [down], and answers in [delay].
+    late int fetches;
+    late bool down;
+
+    IdTokenVerifier verifierOf({
+      Duration keysLifetime = const Duration(hours: 1),
+      Duration delay = Duration.zero,
+    }) {
+      fetches = 0;
+      down = false;
+      return IdTokenVerifier(
+        OpenIdOptions(
+          issuer: _issuer,
+          jwksUri: _jwksUri,
+          keysLifetime: keysLifetime,
+        ),
+        MockClient((request) async {
+          fetches++;
+          await Future<void>.delayed(delay);
+          if (down) throw http.ClientException('down', request.url);
+          return http.Response(
+            json.encode({
+              'keys': [key.publicJwk],
+            }),
+            200,
+          );
+        }),
+        timeout: const Duration(seconds: 5),
+      );
+    }
+
+    test('of a refresh that fails, are those fetched before', () async {
+      var verifier = verifierOf(keysLifetime: Duration.zero);
+      await verifier.verify(
+        key.signJwt(claimsOf('n')),
+        clientId: 'app',
+        nonce: 'n',
+      );
+      down = true;
+      var idToken = await verifier.verify(
+        key.signJwt(claimsOf('n')),
+        clientId: 'app',
+        nonce: 'n',
+      );
+      expect(idToken.subject, 'alice');
+      expect(fetches, 2);
+    });
+
+    test('are fetched once, of logins at once', () async {
+      var verifier = verifierOf(delay: const Duration(milliseconds: 20));
+      await Future.wait([
+        for (var i = 0; i < 5; i++)
+          verifier.verify(
+            key.signJwt(claimsOf('n')),
+            clientId: 'app',
+            nonce: 'n',
+          ),
+      ]);
+      expect(fetches, 1);
+    });
+
+    test(
+      'an access token that is not ASCII is refused, of an at_hash',
+      () async {
+        var verifier = verifierOf();
+        await expectLater(
+          verifier.verify(
+            key.signJwt(claimsOf('n')),
+            clientId: 'app',
+            nonce: 'n',
+            accessToken: 'tökén',
+          ),
+          throwsA(isA<IdTokenException>()),
+        );
+      },
+    );
+  });
+
   group('the options refuse', () {
     test('a strategy of no openid scope', () {
       expect(
@@ -325,6 +419,16 @@ void main() {
       OpenIdOptions(
         issuer: Uri.parse('http://localhost:3000'),
         jwksUri: _jwksUri,
+      );
+    });
+
+    test('a JWKS of http, but of localhost', () {
+      expect(
+        () => OpenIdOptions(
+          issuer: _issuer,
+          jwksUri: Uri.parse('http://id.example/jwks'),
+        ),
+        throwsArgumentError,
       );
     });
 
@@ -434,6 +538,34 @@ void main() {
           }),
         ),
         throwsFormatException,
+      );
+    });
+
+    test('refuses a configuration of a JWKS of http', () async {
+      expect(
+        OpenIdOptions.discover(
+          _issuer,
+          httpClient: configured({
+            'issuer': '$_issuer',
+            'authorization_endpoint': 'https://id.example/authorize',
+            'token_endpoint': 'https://id.example/token',
+            'jwks_uri': 'http://id.example/jwks',
+          }),
+        ),
+        throwsFormatException,
+      );
+    });
+
+    test('times out of a provider that does not answer', () async {
+      expect(
+        OpenIdOptions.discover(
+          _issuer,
+          httpClient: MockClient(
+            (request) => Completer<http.Response>().future,
+          ),
+          timeout: const Duration(milliseconds: 50),
+        ),
+        throwsA(isA<TimeoutException>()),
       );
     });
 

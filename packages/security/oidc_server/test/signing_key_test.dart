@@ -44,11 +44,18 @@ void main() {
       expect(header, {'alg': 'RS256', 'kid': 'rsa-1', 'typ': 'JWT'});
     });
 
-    test('a signature that does not verify, of a fault, is withheld', () {
-      // A d that is not of e, as of a fault of the computation.
+    test('a key of a d of another, whose signatures do not verify, is '
+        'refused as it loads', () {
+      // A d that is not of e: each signature fails the check after it,
+      // which loading the key runs.
       var json = rsa.toJson()..['d'] = rsa.toJson()['e'];
-      var faulty = OpenIdSigningKey.fromJwk(json);
-      expect(() => faulty.sign([1, 2, 3]), throwsStateError);
+      expect(() => OpenIdSigningKey.fromJwk(json), throwsArgumentError);
+      // Of its factors alone, of no d of CRT: refused alike.
+      var noFactors = rsa.toJson()
+        ..['d'] = rsa.toJson()['e']
+        ..remove('p')
+        ..remove('q');
+      expect(() => OpenIdSigningKey.fromJwk(noFactors), throwsArgumentError);
     });
   });
 

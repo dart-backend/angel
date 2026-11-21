@@ -75,6 +75,14 @@ void main() {
       );
     });
 
+    test('of max_age=0 are a login, whenever the user authenticated', () {
+      expect(
+        request(maxAge: 0)
+            .interactions(signedIn: true, authTime: now, now: now),
+        {OpenIdInteraction.login},
+      );
+    });
+
     test('are what prompt asks for, and consent the user has not given', () {
       expect(
         request(prompt: {'login', 'select_account', 'consent'})
@@ -212,6 +220,31 @@ void main() {
         expect(stored.defaultMaxAge, 3600);
       });
 
+      test('of the openid scope, of metadata of scopes of none', () async {
+        var app = Angel()
+          ..post(
+            '/register',
+            provider.registrationEndpoint(
+              _metadata.copyWith(scopes: ['profile']),
+            ),
+          );
+        app.errorHandler = (e, req, res) async {
+          res.statusCode = e.statusCode;
+          res.json(e.toJson());
+        };
+        var other = await connectTo(app);
+        var response = await other.post(
+          Uri.parse('/register'),
+          headers: {'content-type': 'application/json'},
+          body: json.encode({
+            'redirect_uris': ['$_redirectUri'],
+            'scope': 'openid profile',
+          }),
+        );
+        await other.close();
+        expect(response.statusCode, 201, reason: response.body);
+      });
+
       test('of an algorithm of a key of the provider', () async {
         var response = await register({
           'id_token_signed_response_alg': 'ES256',
@@ -245,6 +278,30 @@ void main() {
         );
         expect(provider.registered, isEmpty);
       });
+    });
+
+    test('an ID token of a client of no algorithm is of RS256, of an ES256 '
+        'key first', () {
+      var plain = _Plain(keys: [_ec, _rsa]);
+      var token = plain.issueIdToken(user: 'alice', client: 'app');
+      expect(_headerOf(token), containsPair('alg', 'RS256'));
+    });
+
+    test('an ID token of requireAuthTime must be given its authTime', () {
+      expect(
+        () => provider.issueIdToken(
+          user: 'alice',
+          client: 'app',
+          requireAuthTime: true,
+        ),
+        throwsArgumentError,
+      );
+      provider.issueIdToken(
+        user: 'alice',
+        client: 'app',
+        requireAuthTime: true,
+        authTime: DateTime.now(),
+      );
     });
 
     test('an ID token of a client of ES256 is signed with the ES256 key', () {
@@ -349,6 +406,41 @@ void main() {
             expect(response.statusCode, 400, reason: '$params');
             expect(response.headers, isNot(contains('location')));
           }
+          expect(provider.ended, isEmpty);
+        },
+      );
+
+      test(
+        'of a hint of several audiences, of the client_id of one of them',
+        () async {
+          var several = _rsa.signJwt({
+            'iss': '$_issuer',
+            'sub': 'alice',
+            'aud': ['app', 'es-app'],
+          });
+          var response = await logout({
+            'id_token_hint': several,
+            'client_id': 'es-app',
+          });
+          expect(response.statusCode, 200, reason: response.body);
+          expect(provider.ended.single.client, 'es-app');
+          // Of no client_id, of which the client is not known.
+          response = await logout({'id_token_hint': several});
+          expect(response.statusCode, 400);
+        },
+      );
+
+      test(
+        'refuses a hint of no audience, and a body it cannot read',
+        () async {
+          var none = _rsa.signJwt({'iss': '$_issuer', 'sub': 'x', 'aud': []});
+          expect((await logout({'id_token_hint': none})).statusCode, 400);
+          var response = await client.post(
+            Uri.parse('/oauth2/logout'),
+            headers: {'content-type': 'application/x-www-form-urlencoded'},
+            body: 'state=%E0%A4%A',
+          );
+          expect(response.statusCode, 400);
           expect(provider.ended, isEmpty);
         },
       );
@@ -458,7 +550,8 @@ class _Provider extends OpenIdServer<String, String> {
 
 /// A provider of the defaults, of no logout.
 class _Plain extends OpenIdServer<String, String> {
-  _Plain() : super(issuer: _issuer, signingKeys: [_rsa]);
+  _Plain({List<OpenIdSigningKey>? keys})
+    : super(issuer: _issuer, signingKeys: keys ?? [_rsa]);
 
   @override
   String? findClient(String? clientId) => clientId;

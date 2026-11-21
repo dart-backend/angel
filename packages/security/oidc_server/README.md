@@ -86,7 +86,7 @@ await storeSecretSomehow(json.encode(key.toJson()));
 var loaded = OpenIdSigningKey.fromJwk(json.decode(await readSecretSomehow()));
 ```
 
-The first of `signingKeys` signs; the JSON Web Key Set publishes all of them, of their public members alone. To rotate, put a new key first, and remove the old one once the ID tokens it signed have expired. RSA keys must be of at least 2048 bits, and the server must have an `RS256` key.
+The first key of a client's algorithm signs its ID tokens: of `idTokenAlgorithmOf` the client, or of `RS256`, the default of OpenID Connect, for a client of none. The JSON Web Key Set publishes all of them, of their public members alone. To rotate, put a new key first among those of its algorithm, and remove the old one once the ID tokens it signed have expired. A key whose private exponent is not of its modulus, as of a stored key that was damaged, is refused as it loads. RSA keys must be of at least 2048 bits, and the server must have an `RS256` key.
 
 `RS256` signatures are made with RSA blinding, as BoringSSL and OpenSSL make them, so that the time a signature takes tells nothing of the key, and each is checked before it is given out, against a fault of the computation, which could leak a factor of the key. The arithmetic is of pure Dart, and is not constant-time otherwise. `ES256` signatures are of `package:jose_plus`, whose curve arithmetic is not constant-time: prefer `RS256` where timing attacks against the server are a concern.
 
@@ -114,7 +114,7 @@ var idToken = issueIdToken(
 return IdTokenResponse(accessToken, idToken: idToken, expiresIn: 3600);
 ```
 
-It has the `iss`, `sub`, `aud`, `exp` and `iat` of OpenID Connect Core §2, the `nonce` of the request, its `auth_time`, which is required if the request had a `max_age`, and the `at_hash` of the access token. It is valid for `idTokenLifetime` (default 10 minutes). Of a refresh token grant, issue one of no `nonce`, and of the `authTime` of the first.
+It has the `iss`, `sub`, `aud`, `exp` and `iat` of OpenID Connect Core §2, the `nonce` of the request, its `auth_time`, and the `at_hash` of the access token. Give `requireAuthTime: true` of a request of `max_age`, or a client of `require_auth_time`, of which the ID token must have an `auth_time`: it then throws an `ArgumentError` of no `authTime`, rather than issue a token without it. It is valid for `idTokenLifetime` (default 10 minutes). Of a refresh token grant, issue one of no `nonce`, and of the `authTime` of the first.
 
 ## UserInfo
 
@@ -136,7 +136,7 @@ if (needed.contains(OpenIdInteraction.login)) {
 }
 ```
 
-Ask once, before the user is prompted: of `prompt=login`, it is always a login. Give the ID token the `authTime` of the session, which a request of `max_age`, or a client of `require_auth_time`, requires.
+Ask once, before the user is prompted: of `prompt=login`, or `max_age=0`, it is always a login. Give the ID token the `authTime` of the session, which a request of `max_age`, or a client of `require_auth_time`, requires.
 
 ## Logout
 

@@ -62,6 +62,14 @@ class OpenIdOptions {
     this.keysLifetime = const Duration(hours: 1),
   }) {
     _checkIssuer(issuer);
+    // Of TLS, as each ID token is trusted of the keys it gives.
+    if (!_isSecure(jwksUri)) {
+      throw ArgumentError.value(
+        jwksUri,
+        'jwksUri',
+        'must be https, or http of localhost',
+      );
+    }
     if (algorithms.isEmpty || !openIdAlgorithms.containsAll(algorithms)) {
       throw ArgumentError.value(
         algorithms,
@@ -82,8 +90,7 @@ class OpenIdOptions {
         'must have no query nor fragment',
       );
     }
-    if (!issuer.isScheme('https') &&
-        !(issuer.isScheme('http') && _loopbackHosts.contains(issuer.host))) {
+    if (!_isSecure(issuer)) {
       throw ArgumentError.value(
         issuer,
         'issuer',
@@ -92,17 +99,26 @@ class OpenIdOptions {
     }
   }
 
+  /// Whether [uri] is of `https`, or of `http` of loopback, as of a
+  /// provider of the developer's machine.
+  static bool _isSecure(Uri uri) =>
+      (uri.isScheme('https') && uri.host.isNotEmpty) ||
+      (uri.isScheme('http') && _loopbackHosts.contains(uri.host));
+
   /// The configuration of the OpenID Provider of [issuer] (OpenID Connect
   /// Discovery 1.0 §4), of its endpoints and the [OpenIdOptions] of its
   /// keys, of [httpClient] if given.
   ///
   /// Throws a [FormatException] if the configuration is not of [issuer],
-  /// exactly, as Discovery §4.3 requires, or has no endpoints of the code
-  /// flow, or no JSON Web Key Set.
+  /// exactly, as Discovery §4.3 requires, has no endpoints of the code flow,
+  /// or no JSON Web Key Set, or one of its URLs is not `https`; and a
+  /// [TimeoutException] if it is not read in [timeout] (default 30
+  /// seconds), as of a provider that does not answer.
   static Future<OpenIdProvider> discover(
     Uri issuer, {
     http.Client? httpClient,
     Duration clockSkew = const Duration(minutes: 2),
+    Duration timeout = const Duration(seconds: 30),
   }) async {
     _checkIssuer(issuer);
     var path = issuer.path.endsWith('/')
@@ -113,7 +129,7 @@ class OpenIdOptions {
     );
     var client = httpClient ?? http.Client();
     try {
-      var response = await client.get(configuration);
+      var response = await client.get(configuration).timeout(timeout);
       if (response.statusCode != 200) {
         throw FormatException(
           'The configuration of $issuer is a ${response.statusCode}.',
@@ -133,6 +149,11 @@ class OpenIdOptions {
         var uri = value is String ? Uri.tryParse(value) : null;
         if (uri == null || !uri.isAbsolute) {
           throw FormatException('The configuration of $issuer has no "$name".');
+        }
+        if (!_isSecure(uri)) {
+          throw FormatException(
+            'The "$name" of the configuration of $issuer is not https.',
+          );
         }
         return uri;
       }
@@ -244,11 +265,7 @@ class IdToken {
   String get subject => claims['sub'] as String;
 
   /// The `aud` of the token, of the `client_id` of the app.
-  List<String> get audience => switch (claims['aud']) {
-    String aud => [aud],
-    List aud => aud.cast<String>(),
-    _ => const [],
-  };
+  List<String> get audience => _audienceOf(claims['aud']) ?? const [];
 
   /// When the token expires.
   DateTime get expiresAt => _time(claims['exp'])!;
@@ -262,9 +279,7 @@ class IdToken {
   /// The `nonce` of the token, which was that of its login.
   String? get nonce => claims['nonce'] as String?;
 
-  static DateTime? _time(Object? seconds) => seconds is num
-      ? DateTime.fromMillisecondsSinceEpoch((seconds * 1000).round())
-      : null;
+  static DateTime? _time(Object? seconds) => _timeOf(seconds);
 }
 
 /// An ID token that is refused, of [message].
@@ -276,6 +291,29 @@ class IdTokenException implements Exception {
   String toString() => 'IdTokenException: $message';
 }
 
+/// The time of a claim of [seconds] since the epoch, as `exp` is.
+DateTime? _timeOf(Object? seconds) => seconds is num
+    ? DateTime.fromMillisecondsSinceEpoch((seconds * 1000).round())
+    : null;
+
+/// The audiences of an `aud` claim of [aud]: of a string, or of a list of
+/// strings, or `null` of another.
+List<String>? _audienceOf(Object? aud) => switch (aud) {
+  String aud => [aud],
+  List aud when aud.every((v) => v is String) => aud.cast<String>(),
+  _ => null,
+};
+
+/// The keys of a JSON Web Key Set, as fetched: of their store, parsed once,
+/// and of their key ids.
+class _Keys {
+  final JsonWebKeyStore store;
+  final Set<String?> keyIds;
+  final DateTime fetched;
+
+  _Keys(this.store, this.keyIds, this.fetched);
+}
+
 /// Checks the ID tokens of [options] (OpenID Connect Core 1.0 §3.1.3.7), of
 /// the keys of its JSON Web Key Set, fetched by [client].
 class IdTokenVerifier {
@@ -285,8 +323,11 @@ class IdTokenVerifier {
   /// How long a fetch of the keys may take.
   final Duration timeout;
 
-  JsonWebKeySet? _keys;
-  DateTime? _fetched;
+  _Keys? _keys;
+
+  /// The fetch of the keys in progress, which logins that need them at once
+  /// share, rather than fetch them each.
+  Future<_Keys>? _fetching;
 
   /// When the keys were last fetched again of a token of an unknown key,
   /// which is at most once a minute, so that tokens of made-up key ids
@@ -296,16 +337,29 @@ class IdTokenVerifier {
   IdTokenVerifier(this.options, this.client, {required this.timeout});
 
   /// The keys of the JSON Web Key Set, fetched again if they are older than
-  /// [OpenIdOptions.keysLifetime], or if [refresh].
-  Future<JsonWebKeySet> _keySet({bool refresh = false}) async {
-    var now = DateTime.now();
-    var keys = _keys, fetched = _fetched;
+  /// [OpenIdOptions.keysLifetime], or if [refresh]. Of a fetch that fails
+  /// once they are older, but not of [refresh], the keys that were fetched
+  /// before, which a provider's short outage leaves valid.
+  Future<_Keys> _keySet({bool refresh = false}) async {
+    var keys = _keys;
     if (keys != null &&
-        fetched != null &&
         !refresh &&
-        now.difference(fetched) < options.keysLifetime) {
+        DateTime.now().difference(keys.fetched) < options.keysLifetime) {
       return keys;
     }
+    try {
+      return await (_fetching ??= _fetch().whenComplete(
+        () => _fetching = null,
+      ));
+    } catch (_) {
+      if (keys != null && !refresh) return keys;
+      rethrow;
+    }
+  }
+
+  /// The keys of the JSON Web Key Set, of a fetch of them. Throws an
+  /// [http.ClientException] of one that cannot be fetched, or read.
+  Future<_Keys> _fetch() async {
     var response = await client.get(options.jwksUri).timeout(timeout);
     if (response.statusCode != 200) {
       throw http.ClientException(
@@ -313,16 +367,31 @@ class IdTokenVerifier {
         options.jwksUri,
       );
     }
-    var set = JsonWebKeySet.fromJson(
-      json.decode(response.body) as Map<String, dynamic>,
-    );
-    _keys = set;
-    _fetched = now;
-    return set;
+    List<JsonWebKey> keys;
+    try {
+      var decoded = json.decode(response.body);
+      if (decoded is! Map) throw const FormatException('not an object');
+      keys = JsonWebKeySet.fromJson(Map<String, dynamic>.from(decoded)).keys
+          .whereType<JsonWebKey>()
+          .toList();
+    } catch (e) {
+      throw http.ClientException(
+        'The JSON Web Key Set cannot be read: $e',
+        options.jwksUri,
+      );
+    }
+    var store = JsonWebKeyStore();
+    keys.forEach(store.addKey);
+    var fetched = _Keys(store, {
+      for (var key in keys) key.keyId,
+    }, DateTime.now());
+    _keys = fetched;
+    return fetched;
   }
 
-  /// The claims of [token], of its signature, of a key of [_keySet].
-  Future<Map<String, dynamic>> _verifiedClaims(String token) async {
+  /// The claims of [token], of its signature, of a key of [_keySet], and
+  /// the algorithm it is signed with.
+  Future<(Map<String, dynamic>, String)> _verifiedClaims(String token) async {
     JsonWebSignature jws;
     try {
       jws = JsonWebSignature.fromCompactSerialization(token);
@@ -338,11 +407,10 @@ class IdTokenVerifier {
       );
     }
 
-    Future<Map<String, dynamic>?> tryKeys(JsonWebKeySet keys) async {
-      var store = JsonWebKeyStore()..addKeySet(keys);
+    Future<Map<String, dynamic>?> claimsOf(_Keys keys) async {
       try {
         var payload = await jws.getPayload(
-          store,
+          keys.store,
           allowedAlgorithms: options.algorithms.toList(),
         );
         var claims = payload.jsonContent;
@@ -360,20 +428,18 @@ class IdTokenVerifier {
     }
 
     var keys = await _keySet();
-    var claims = await tryKeys(keys);
-    if (claims != null) return claims;
+    var claims = await claimsOf(keys);
+    if (claims != null) return (claims, algorithm);
     // Of a key that is not among them, as of keys the provider rotated: of
-    // them fetched again, at most once a minute.
-    var keyId = header.keyId;
-    var known = keys.keys.any((key) => key.keyId == keyId);
+    // them fetched again, of such tokens at most once a minute.
     var refreshed = _refreshed;
-    if (!known &&
+    if (!keys.keyIds.contains(header.keyId) &&
         (refreshed == null ||
             DateTime.now().difference(refreshed) >
                 const Duration(minutes: 1))) {
       _refreshed = DateTime.now();
-      claims = await tryKeys(await _keySet(refresh: true));
-      if (claims != null) return claims;
+      claims = await claimsOf(await _keySet(refresh: true));
+      if (claims != null) return (claims, algorithm);
     }
     throw IdTokenException(
       'The signature of the ID token is not of a key of the provider.',
@@ -390,7 +456,7 @@ class IdTokenVerifier {
     String? accessToken,
     DateTime? now,
   }) async {
-    var claims = await _verifiedClaims(token);
+    var (claims, algorithm) = await _verifiedClaims(token);
     var time = now ?? DateTime.now();
 
     if (claims['iss'] != options.issuer.toString()) {
@@ -404,12 +470,7 @@ class IdTokenVerifier {
       throw IdTokenException('The ID token has no "sub".');
     }
 
-    var aud = claims['aud'];
-    var audience = aud is String
-        ? [aud]
-        : aud is List && aud.every((v) => v is String)
-        ? aud.cast<String>()
-        : null;
+    var audience = _audienceOf(claims['aud']);
     if (audience == null || !audience.contains(clientId)) {
       throw IdTokenException('The ID token is not of this app as audience.');
     }
@@ -421,14 +482,7 @@ class IdTokenVerifier {
       );
     }
 
-    DateTime? at(String name) {
-      var value = claims[name];
-      return value is num
-          ? DateTime.fromMillisecondsSinceEpoch((value * 1000).round())
-          : null;
-    }
-
-    var exp = at('exp'), iat = at('iat');
+    var exp = _timeOf(claims['exp']), iat = _timeOf(claims['iat']);
     if (exp == null || iat == null) {
       throw IdTokenException('The ID token has no "exp" or "iat".');
     }
@@ -446,9 +500,6 @@ class IdTokenVerifier {
     }
 
     if (claims['at_hash'] case var atHash? when accessToken != null) {
-      var algorithm = JsonWebSignature.fromCompactSerialization(token)
-          .commonProtectedHeader
-          .algorithm!;
       if (atHash != _halfHash(accessToken, algorithm)) {
         throw IdTokenException(
           'The "at_hash" of the ID token is not of its access token.',
@@ -459,14 +510,21 @@ class IdTokenVerifier {
   }
 
   /// The left half of the hash of [value] of the hash of [algorithm], in
-  /// base64url (OpenID Connect Core 1.0 §3.1.3.6).
+  /// base64url (OpenID Connect Core 1.0 §3.1.3.6), of its ASCII, which an
+  /// access token is of (RFC 6749 §A.12).
   static String _halfHash(String value, String algorithm) {
+    List<int> bytes;
+    try {
+      bytes = ascii.encode(value);
+    } on ArgumentError {
+      throw IdTokenException('The access token is not of ASCII.');
+    }
     var hash = switch (algorithm.substring(2)) {
       '384' => sha384,
       '512' => sha512,
       _ => sha256,
     };
-    var digest = hash.convert(ascii.encode(value)).bytes;
+    var digest = hash.convert(bytes).bytes;
     return base64Url
         .encode(digest.sublist(0, digest.length ~/ 2))
         .replaceAll('=', '');

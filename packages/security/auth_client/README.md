@@ -16,6 +16,8 @@ dependencies:
   angel3_auth_client: ^10.0.0
 ```
 
+It depends on [`jose_plus`](https://pub.dev/packages/jose_plus), and on its `pointycastle`, `crypto_keys_plus` and `x509_plus`, of which it checks the signatures of the ID tokens of [OpenID Connect](#openid-connect) providers. They are pure Dart, and an app that signs in of no OpenID provider compiles none of their code, but pub resolves them all the same: a version conflict of `pointycastle` or `asn1lib` with another package of the app is of them.
+
 ## Usage
 
 First, create an options object:
@@ -138,7 +140,7 @@ var strategy = OAuth2Strategy<User>(
 
 Each login then sends a `nonce` of its own, kept in its cookie, and its ID token must be of a key of the provider's JSON Web Key Set, of the `RS256` or `ES256` that `OpenIdOptions.algorithms` accept (never `none`, nor `HS256`, of a secret the app has), of the provider's issuer, of this app's `client_id` as its audience (and as its `azp`, of several audiences), unexpired, not issued ahead of now (of `clockSkew`, default 2 minutes, either way), of the `nonce` of its login, and of the `at_hash` of its access token, if it has one, or the callback goes to `onError` as `invalid_token`. The verifier is given the checked `IdToken` in `req.container`. A provider that gives no ID token is `invalid_token` too; keys that cannot be fetched are a `502`.
 
-The keys are fetched once, and again after `keysLifetime` (default an hour), or at once of a token of a key that is not among them, as when the provider rotates its keys; of such tokens, at most once a minute. The configuration must be of the issuer it was discovered of, exactly, and of a JSON Web Key Set. Give `OpenIdOptions` yourself, of the `issuer` and `jwksUri`, to use none.
+The keys are fetched once, and again after `keysLifetime` (default an hour), or at once of a token of a key that is not among them, as when the provider rotates its keys; of such tokens, at most once a minute. Logins that need the keys at once share one fetch of them, and of a fetch after `keysLifetime` that fails, as of a short outage of the provider, the keys fetched before are kept. The configuration must be of the issuer it was discovered of, exactly, and of a JSON Web Key Set, and its URLs, as the issuer's and the `jwksUri` of `OpenIdOptions`, must be `https`, or `http` of localhost; `discover` gives up after its `timeout` (default 30 seconds). Give `OpenIdOptions` yourself, of the `issuer` and `jwksUri`, to use none.
 
 A login that was started before the strategy was given `openId` has no `nonce`, and is refused as `invalid_token`: its user signs in again.
 

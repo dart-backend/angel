@@ -102,9 +102,12 @@ class OpenIdRequest {
   }) {
     var maxAge = this.maxAge ?? defaultMaxAge;
     var time = now ?? DateTime.now();
+    // Of max_age=0, as of prompt=login (OpenID Connect Core 1.0 §3.1.2.1),
+    // a login whenever the user authenticated.
     var stale =
         maxAge != null &&
-        (authTime == null ||
+        (maxAge == 0 ||
+            authTime == null ||
             time.difference(authTime) > Duration(seconds: maxAge));
     var needed = {
       if (!signedIn || stale || prompt.contains('login'))
@@ -294,14 +297,22 @@ abstract class OpenIdServer<Client, User>
   /// [standardScopeClaims]. Add a scope of claims of your own here.
   Map<String, List<String>> get scopeClaims => standardScopeClaims;
 
-  /// The algorithm of the ID tokens of [client], as it registered it, of
-  /// [OpenIdClientMetadata.idTokenSignedResponseAlg]: by default, `null`,
-  /// of the first of [signingKeys].
+  /// The algorithm of the ID tokens of [client], as it registered it. By
+  /// default, `null`, of `RS256`, the default of OpenID Connect.
+  ///
+  /// The server does not know which registration a `Client` is of: of
+  /// clients that register themselves, give back what they registered, as
+  /// `OpenIdClientMetadata.of(registration.metadata).idTokenSignedResponseAlg`,
+  /// or the algorithm they registered is not used.
   String? idTokenAlgorithmOf(Client client) => null;
 
   /// The `post_logout_redirect_uris` of [client], to which
-  /// [endSessionEndpoint] may redirect, of
-  /// [OpenIdClientMetadata.postLogoutRedirectUris]. By default, none.
+  /// [endSessionEndpoint] may redirect. By default, none.
+  ///
+  /// The server does not know which registration a `Client` is of: of
+  /// clients that register themselves, give back what they registered, as
+  /// `OpenIdClientMetadata.of(registration.metadata).postLogoutRedirectUris`,
+  /// or no redirect after a logout is ever allowed.
   FutureOr<Iterable<Uri>> postLogoutRedirectUrisOf(Client client) => const [];
 
   /// Ends the session of the user of [request], of [endSessionEndpoint]:
@@ -338,7 +349,9 @@ abstract class OpenIdServer<Client, User>
   ///
   /// Of a refresh token grant (§12.2), give no [nonce], and the [authTime]
   /// of the first. Of [algorithm], or of [idTokenAlgorithmOf] of the client,
-  /// it is signed with the first key of it.
+  /// or of `RS256`, it is signed with the first key of it. Give
+  /// [requireAuthTime] of a request of `max_age`, or of a client of
+  /// `require_auth_time`, of which an [authTime] is required.
   String issueIdToken({
     required User user,
     required Client client,
@@ -348,20 +361,29 @@ abstract class OpenIdServer<Client, User>
     Map<String, dynamic> claims = const {},
     DateTime? now,
     String? algorithm,
+    bool requireAuthTime = false,
   }) {
+    if (requireAuthTime && authTime == null) {
+      throw ArgumentError.value(
+        authTime,
+        'authTime',
+        'is required, of a request of max_age, or a client of '
+            'require_auth_time',
+      );
+    }
     var issued = now ?? DateTime.now();
     int seconds(DateTime time) => time.millisecondsSinceEpoch ~/ 1000;
     // Of the algorithm given, or the client's, of the first key of it.
-    var alg = algorithm ?? idTokenAlgorithmOf(client);
-    var key = alg == null
-        ? signingKeys.first
-        : signingKeys.firstWhere(
-            (key) => key.algorithm == alg,
-            orElse: () => throw StateError(
-              'No signing key is of the algorithm $alg, of the ID tokens of '
-              '${clientIdOf(client)}.',
-            ),
-          );
+    // Of RS256, of a client of none of its own, which the default of OpenID
+    // Connect is, and which registration recorded for it.
+    var alg = algorithm ?? idTokenAlgorithmOf(client) ?? 'RS256';
+    var key = signingKeys.firstWhere(
+      (key) => key.algorithm == alg,
+      orElse: () => throw StateError(
+        'No signing key is of the algorithm $alg, of the ID tokens of '
+        '${clientIdOf(client)}.',
+      ),
+    );
     return key.signJwt({
       ...claims,
       'iss': issuer.toString(),
@@ -632,6 +654,23 @@ abstract class OpenIdServer<Client, User>
     };
   }
 
+  /// Of the `openid` scope too, which [openIdConfigurationOf] gives, of a
+  /// [metadata] of scopes, so that a client may register it.
+  @override
+  RequestHandler registrationEndpoint(ServerMetadata metadata) =>
+      super.registrationEndpoint(_withOpenIdScope(metadata));
+
+  /// Of the `openid` scope too, as [registrationEndpoint].
+  @override
+  RequestHandler registrationManagementEndpoint(ServerMetadata metadata) =>
+      super.registrationManagementEndpoint(_withOpenIdScope(metadata));
+
+  static ServerMetadata _withOpenIdScope(ServerMetadata metadata) {
+    var scopes = metadata.scopes;
+    if (scopes == null || scopes.contains('openid')) return metadata;
+    return metadata.copyWith(scopes: ['openid', ...scopes]);
+  }
+
   /// The metadata of what the server does not do, which a client may not
   /// register.
   static const _unsupportedClientMetadata = {
@@ -661,15 +700,20 @@ abstract class OpenIdServer<Client, User>
   /// The claims of [token], if it is an ID token of the provider: of one of
   /// [signingKeys], of [issuer]. It may have expired, as an `id_token_hint`
   /// may (OpenID Connect RP-Initiated Logout 1.0 §2).
+  /// The public keys of [signingKeys], of which [_claimsOfOwnToken] checks.
+  late final JsonWebKeyStore _ownKeys = () {
+    var store = JsonWebKeyStore();
+    for (var key in signingKeys) {
+      store.addKey(JsonWebKey.fromJson(key.publicJwk));
+    }
+    return store;
+  }();
+
   Future<Map<String, dynamic>?> _claimsOfOwnToken(String token) async {
     try {
       var jws = JsonWebSignature.fromCompactSerialization(token);
-      var store = JsonWebKeyStore();
-      for (var key in signingKeys) {
-        store.addKey(JsonWebKey.fromJson(key.publicJwk));
-      }
       var payload = await jws.getPayload(
-        store,
+        _ownKeys,
         allowedAlgorithms: [for (var key in signingKeys) key.algorithm],
       );
       var claims = payload.jsonContent;
@@ -705,7 +749,16 @@ abstract class OpenIdServer<Client, User>
           await req.parseBody();
           params = req.bodyAsMap;
         } catch (_) {
-          params = const {};
+          // Not a logout of no parameters, which could sign a user out of
+          // a request that was not what it seemed.
+          throw AuthorizationException(
+            ErrorResponse(
+              ErrorResponse.invalidRequest,
+              'The body of the request cannot be read.',
+              null,
+            ),
+            statusCode: 400,
+          );
         }
       } else {
         params = req.queryParameters;
@@ -722,7 +775,8 @@ abstract class OpenIdServer<Client, User>
             statusCode: 400,
           );
 
-      String? subject, audience;
+      String? subject;
+      List<String>? audience;
       var hint = param('id_token_hint');
       if (hint != null) {
         var claims = await _claimsOfOwnToken(hint);
@@ -734,17 +788,34 @@ abstract class OpenIdServer<Client, User>
         subject = claims['sub'] as String?;
         var aud = claims['aud'];
         audience = aud is String
-            ? aud
-            : (aud is List ? aud.first as String : null);
+            ? [aud]
+            : aud is List && aud.every((v) => v is String)
+            ? aud.cast<String>()
+            : null;
+        if (audience == null || audience.isEmpty) {
+          throw invalid('The "id_token_hint" has no audience.');
+        }
       }
 
       var clientId = param('client_id');
-      if (clientId != null && audience != null && clientId != audience) {
+      if (clientId != null &&
+          audience != null &&
+          !audience.contains(clientId)) {
         throw invalid(
-          'The "client_id" is not the audience of the "id_token_hint".',
+          'The "client_id" is not of the audience of the "id_token_hint".',
         );
       }
-      clientId ??= audience;
+      // Of a hint of one audience, its client; of several, the client_id
+      // must say which.
+      if (clientId == null && audience != null) {
+        if (audience.length > 1) {
+          throw invalid(
+            'The "id_token_hint" is of several audiences: give the '
+            '"client_id".',
+          );
+        }
+        clientId = audience.single;
+      }
       Client? client;
       if (clientId != null) {
         client = await findClient(clientId);
