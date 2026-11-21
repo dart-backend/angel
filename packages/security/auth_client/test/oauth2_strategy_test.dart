@@ -275,6 +275,24 @@ void main() {
       expect(jar, isNot(contains(name)));
     });
 
+    test(
+      'of another state of the same start are counted on a callback',
+      () async {
+        // Six, as of a start that is not sent them, one over maxLogins.
+        var states = <String>[];
+        for (var i = 0; i < 6; i++) {
+          var got = await get('/auth/start');
+          var cookie = got.cookies.single;
+          jar[cookie.name] = cookie;
+          states.add(Uri.parse(got.location!).queryParameters['state']!);
+          await Future<void>.delayed(const Duration(milliseconds: 2));
+        }
+        var other = '${states.last.substring(0, 12)}${'x' * 20}';
+        await browse('/auth/callback?code=c&state=$other');
+        expect(logins(), hasLength(5));
+      },
+    );
+
     test('expire no cookie of another client, signed alike', () async {
       var state = 'zyxwvutsrqponmlk' * 2;
       var name = 'angel3_oauth2_${state.substring(0, 12)}';
@@ -443,6 +461,39 @@ void main() {
     });
   });
 
+  test(
+    'a refusal of a malformed error_uri goes to onError, not a 502',
+    () async {
+      var (url, cookie) = await start();
+      var state = url.queryParameters['state']!;
+      var got = await get(
+        Uri(
+          path: '/auth/callback',
+          queryParameters: {
+            'state': state,
+            'error': 'access_denied',
+            'error_uri': 'http://[bad',
+          },
+        ).toString(),
+        cookie: cookie,
+      );
+      expect(got.status, 400);
+      expect(errors, ['access_denied']);
+      expect(tokenRequests, isEmpty);
+    },
+  );
+
+  test('the cookie of a login lasts its whole loginTimeout', () async {
+    var app = await mapApp(loginTimeout: const Duration(milliseconds: 1500));
+    var rq = MockHttpRequest('GET', Uri.parse('/start'));
+    await rq.close();
+    await AngelHttp(app).handleRequest(rq);
+    var cookie = rq.response.cookies.singleWhere(
+      (c) => c.name.startsWith('angel3_oauth2_'),
+    );
+    expect(cookie.maxAge, 2);
+  });
+
   test('a callback of no code is invalid_request', () async {
     var (url, cookie) = await start();
     var state = url.queryParameters['state'];
@@ -579,6 +630,7 @@ Future<Angel> mapApp({
   bool basicAuth = true,
   Map<String, String> authorizationParameters = const {},
   String redirectUri = 'https://app.example/cb',
+  Duration loginTimeout = const Duration(minutes: 10),
 }) async {
   var app = Angel();
   var auth = AngelAuth<Map<String, dynamic>>(
@@ -612,6 +664,7 @@ Future<Angel> mapApp({
     cookieSameSite: cookieSameSite,
     basicAuth: basicAuth,
     authorizationParameters: authorizationParameters,
+    loginTimeout: loginTimeout,
   );
   await app.configure(auth.configureServer);
   app

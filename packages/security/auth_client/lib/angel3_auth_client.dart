@@ -299,21 +299,32 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
           authorizationEndpoint.queryParameters['response_mode']) ==
       'form_post';
 
+  /// The failure of [req] of the OAuth2 [error], of [description], and of
+  /// [uri], as [onError] answers it.
+  Future<_Outcome> _fail(
+    String error,
+    String? description,
+    RequestContext req,
+    ResponseContext res, {
+    Uri? uri,
+  }) async => _Failed(
+    await onError(
+      oauth2.AuthorizationException(error, description, uri),
+      req,
+      res,
+    ),
+  );
+
   /// The failure of a request whose body cannot be read, for [unreadable].
   Future<_Outcome> _unreadable(
     RequestContext req,
     ResponseContext res,
     String unreadable,
-  ) async => _Failed(
-    await onError(
-      oauth2.AuthorizationException(
-        'invalid_request',
-        'The body of the request cannot be read: $unreadable',
-        null,
-      ),
-      req,
-      res,
-    ),
+  ) => _fail(
+    'invalid_request',
+    'The body of the request cannot be read: $unreadable',
+    req,
+    res,
   );
 
   /// The outcome of [req], of [authenticate]: of its callback, or `null` of
@@ -393,7 +404,9 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
           'c': options.clientId,
         }),
         path,
-      )..maxAge = loginTimeout.inSeconds,
+        // Of whole seconds, rounded up, so that the browser keeps it as long
+        // as the server takes the login.
+      )..maxAge = (loginTimeout.inMilliseconds / 1000).ceil(),
     );
     return url;
   }
@@ -485,36 +498,42 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       req,
       res,
       keep: login != null ? maxLogins - 1 : maxLogins,
-      except: name,
+      // Of the cookie of this login alone, which was expired: one of another
+      // state, of the same start, is counted.
+      except: stored != null ? name : null,
     );
 
     if (login == null) {
-      return _Failed(
-        await onError(
-          oauth2.AuthorizationException(
-            'invalid_state',
-            'The login expired, or was not started here.',
-            null,
-          ),
-          req,
-          res,
-        ),
+      return _fail(
+        'invalid_state',
+        'The login expired, or was not started here.',
+        req,
+        res,
       );
     }
 
+    // An error of the provider, as when the user refuses, which is
+    // answered here, so that no part of the callback is read by the grant,
+    // of which a FormatException is then of the token response alone.
+    if (query['error'] case var error?) {
+      var uri = query['error_uri'];
+      return _fail(
+        error,
+        query['error_description'],
+        req,
+        res,
+        // Of none, if it is not a URI, which the error is of all the same.
+        uri: uri == null ? null : Uri.tryParse(uri),
+      );
+    }
     // Of a provider that gave no error, a code is required: else, the
     // callback is malformed, which is the client's.
-    if (!query.containsKey('error') && (query['code'] ?? '').isEmpty) {
-      return _Failed(
-        await onError(
-          oauth2.AuthorizationException(
-            'invalid_request',
-            'The callback has no "code" parameter.',
-            null,
-          ),
-          req,
-          res,
-        ),
+    if ((query['code'] ?? '').isEmpty) {
+      return _fail(
+        'invalid_request',
+        'The callback has no "code" parameter.',
+        req,
+        res,
       );
     }
 
@@ -533,9 +552,10 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       _closeGrant(grant);
       switch (e) {
         case oauth2.AuthorizationException():
+          // Of an error of the token endpoint, as `invalid_grant`.
           return _Failed(await onError(e, req, res));
         case FormatException():
-          // Of the provider's token response, as the callback was checked:
+          // Of the provider's token response, as the callback was read here:
           // an error page of its own, as of an outage, is the provider's.
           throw AngelHttpException(
             statusCode: 502,
@@ -607,7 +627,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   String _signatureOf(String data) => _unpadded(
     base64Url.encode(
-      Hmac(sha256, _cookieKey).convert(ascii.encode(data)).bytes,
+      // UTF-8, of the same bytes as ASCII, of a value that is not of it.
+      Hmac(sha256, _cookieKey).convert(utf8.encode(data)).bytes,
     ),
   );
 
