@@ -13,6 +13,10 @@ import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 
+import 'src/openid.dart';
+
+export 'src/openid.dart';
+
 final _log = Logger('OAuth2Strategy');
 
 /// What the default key of the cookies of logins is derived from, before
@@ -132,6 +136,21 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// reached. Default: 30 seconds.
   final Duration tokenTimeout;
 
+  /// Of an OpenID Provider, how its ID tokens are checked (OpenID Connect
+  /// Core 1.0 §3.1.3.7), of [OpenIdOptions.discover] or of your own: each
+  /// login then sends a `nonce`, and its ID token must be of the provider's
+  /// key, issuer, of this app as audience, of that `nonce`, and unexpired,
+  /// or the callback goes to [onError] as `invalid_token`. The verifier is
+  /// then given the [IdToken], in `req.container`. The scopes of [options]
+  /// must have `openid`.
+  final OpenIdOptions? openId;
+
+  /// The checks of the ID tokens of [openId], of the strategy's client.
+  late final IdTokenVerifier? _idTokens = switch (openId) {
+    var openId? => IdTokenVerifier(openId, _client, timeout: tokenTimeout),
+    null => null,
+  };
+
   /// The path of the cookies of logins, which must be that of the redirect
   /// URI or above it, so that the callback is sent them; by default, the
   /// path that the route that starts a login shares with the redirect URI,
@@ -170,6 +189,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     this.loginTimeout = const Duration(minutes: 10),
     this.maxLogins = 5,
     this.tokenTimeout = const Duration(seconds: 30),
+    this.openId,
     this.cookiePath,
     List<int>? cookieKey,
   }) : _cookieKey = cookieKey ?? _defaultCookieKey(options.clientSecret) {
@@ -221,6 +241,13 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     }
     // Of one of no time, of which every token exchange would time out at
     // once, and the callback be a 502.
+    if (openId != null && !options.scopes.contains('openid')) {
+      throw ArgumentError.value(
+        options.scopes,
+        'options',
+        'must have the scope "openid", of OpenID Connect',
+      );
+    }
     if (tokenTimeout <= Duration.zero) {
       throw ArgumentError.value(
         tokenTimeout,
@@ -255,7 +282,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     }
     var dropped = [
       for (var key in authorizationParameters.keys)
-        if (_ownParameters.contains(key)) key,
+        if (_isOwnParameter(key)) key,
     ];
     if (dropped.isNotEmpty) {
       _log.warning(
@@ -347,7 +374,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
           queryParameters: {
             ...authorizationEndpoint.queryParameters,
             for (var MapEntry(:key, :value) in authorizationParameters.entries)
-              if (!_ownParameters.contains(key)) key: value,
+              if (!_isOwnParameter(key)) key: value,
           },
         );
 
@@ -357,10 +384,15 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     for (var MapEntry(:key, :value)
         in authorizationEndpoint.queryParametersAll.entries)
       if (value.length > 1 &&
-          !_ownParameters.contains(key) &&
+          !_isOwnParameter(key) &&
           !authorizationParameters.containsKey(key))
         key: value,
   };
+
+  /// Whether the strategy gives the parameter [key] of the authorization URL
+  /// itself: of [_ownParameters], and the `nonce`, of [openId].
+  bool _isOwnParameter(String key) =>
+      _ownParameters.contains(key) || (openId != null && key == 'nonce');
 
   /// The parameters of the authorization URL that the strategy gives, which
   /// [authorizationParameters] do not replace: `scope` too, which it leaves
@@ -532,12 +564,15 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       state: state,
     );
     // Of all values of a parameter that the endpoint repeats, of which
-    // `package:oauth2` keeps only the last.
-    if (_repeatedParameters.isNotEmpty) {
+    // `package:oauth2` keeps only the last; and the `nonce` of the login, of
+    // OpenID Connect, which its ID token must give back, against replay.
+    var nonce = openId == null ? null : _randomString(32);
+    if (_repeatedParameters.isNotEmpty || nonce != null) {
       url = url.replace(
         queryParameters: <String, Object>{
           ...url.queryParametersAll,
           ..._repeatedParameters,
+          'nonce': ?nonce,
         },
       );
     }
@@ -558,6 +593,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
           't': DateTime.now().millisecondsSinceEpoch,
           'p': path,
           'c': options.clientId,
+          'n': ?nonce,
         }),
         path,
         // Of whole seconds, rounded up, so that the browser keeps it as long
@@ -726,6 +762,48 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       rethrow;
     }
 
+    if (_idTokens case var idTokens?) {
+      // Of a login started before the strategy was of OpenID Connect, which
+      // sent no `nonce`: refused, as its ID token cannot be checked.
+      var nonce = login.nonce;
+      var token = client.credentials.idToken;
+      if (nonce == null || token == null) {
+        return _fail(
+          'invalid_token',
+          nonce == null
+              ? 'The login was started of no "nonce": start it again.'
+              : 'The provider gave no ID token.',
+          req,
+          res,
+        );
+      }
+      IdToken idToken;
+      try {
+        idToken = await idTokens.verify(
+          token,
+          clientId: options.clientId,
+          nonce: nonce,
+          accessToken: client.credentials.accessToken,
+        );
+      } on IdTokenException catch (e) {
+        return _fail('invalid_token', e.message, req, res);
+      } catch (e) {
+        if (e is http.ClientException ||
+            e is IOException ||
+            e is TimeoutException ||
+            e is FormatException) {
+          // Of the keys of the provider, which could not be fetched.
+          throw AngelHttpException(
+            statusCode: 502,
+            message: "The OAuth2 provider's keys could not be fetched.",
+            error: e,
+          );
+        }
+        rethrow;
+      }
+      req.container!.registerSingleton<IdToken>(idToken);
+    }
+
     return _Verified(await verifier(client, req, res));
   }
 
@@ -751,9 +829,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// `state`, code verifier, when it was started, in milliseconds, and the
   /// path of its cookie, which one of before 10.0.0's release had not, of
   /// the redirect URI.
-  ({String state, String verifier, int started, String path})? _decodeLogin(
-    String value,
-  ) {
+  ({String state, String verifier, int started, String path, String? nonce})?
+  _decodeLogin(String value) {
     var dot = value.lastIndexOf('.');
     if (dot < 0) return null;
     var data = value.substring(0, dot), signature = value.substring(dot + 1);
@@ -769,12 +846,13 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       // of none, of a cookie of 10.0.0, which had not it.
       var client = claims['c'];
       if (client != null && client != options.clientId) return null;
-      var path = claims['p'];
+      var path = claims['p'], nonce = claims['n'];
       return (
         state: state,
         verifier: verifier,
         started: time,
         path: path is String ? path : _redirectPath,
+        nonce: nonce is String ? nonce : null,
       );
     } on FormatException {
       return null;

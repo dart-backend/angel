@@ -34,6 +34,7 @@ workspace:
   - packages/test
   - packages/sync
   - packages/security/auth_server
+  - packages/security/oidc_server
   - packages/security/security
   - packages/proxy
   - packages/paginate

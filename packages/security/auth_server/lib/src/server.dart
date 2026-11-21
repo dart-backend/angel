@@ -1247,6 +1247,20 @@ abstract class AuthorizationServer<Client, User> {
     RequestContext req,
   ) => false;
 
+  /// The metadata of a registration, or of an update of one, of [metadata]
+  /// as the client gave it, before the server checks it, once the request
+  /// is authenticated: throw an [AuthorizationException] of
+  /// `invalid_client_metadata` or `invalid_redirect_uri`, of a status of
+  /// 400, to refuse it, or give it back with defaults added, as of OpenID
+  /// Connect, whose metadata the server does not know. Its metadata of the
+  /// server's own is checked after, as of a registration.
+  ///
+  /// By default, [metadata] as it is.
+  FutureOr<Map<String, dynamic>> checkClientMetadata(
+    Map<String, dynamic> metadata,
+    RequestContext req,
+  ) => metadata;
+
   /// Stores the client of [registration], of its id, its secret, hashed,
   /// and its [ClientRegistration.metadata], so that [findClient] finds it,
   /// and [verifyClient] verifies its secret, and
@@ -1334,7 +1348,7 @@ abstract class AuthorizationServer<Client, User> {
           );
         }
 
-        var body = await _jsonObjectOf(req);
+        var body = await checkClientMetadata(await _jsonObjectOf(req), req);
         var registration = _registrationOf(body, server, metadata);
         if (manages) {
           registration = _withRegistrationAccess(
@@ -1522,7 +1536,7 @@ abstract class AuthorizationServer<Client, User> {
             // Of its token, which the response must give (RFC 7592 §3).
             return current.copyWith(registrationAccessToken: token).toJson();
           case 'PUT':
-            var body = await _jsonObjectOf(req);
+            var body = await checkClientMetadata(await _jsonObjectOf(req), req);
             if (body['client_id'] != clientId) {
               throw _invalidMetadata(
                 'The "client_id" must be that of the registration.',

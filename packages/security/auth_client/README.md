@@ -111,6 +111,50 @@ configureServer(Angel app) async {
 }
 ```
 
+## OpenID Connect
+
+Of an OpenID Provider, such as Google, Microsoft or an `angel3_oidc_server` of your own, the strategy checks the ID token of each login, which tells who signed in. Discover the provider, of its issuer, and give the strategy its `openId`, of the `openid` scope:
+
+```dart
+var provider = await OpenIdOptions.discover(Uri.parse('https://accounts.google.com'));
+var strategy = OAuth2Strategy<User>(
+  ExternalAuthOptions(
+    clientId: '<client-id>',
+    clientSecret: '<client-secret>',
+    redirectUri: Uri.parse('https://app.example/auth/google/callback'),
+    scopes: ['openid', 'email'],
+  ),
+  provider.authorizationEndpoint,
+  provider.tokenEndpoint,
+  (client, req, res) async {
+    var idToken = req.container!.make<IdToken>();
+    // Know the user by their issuer and subject, which never change.
+    return findOrCreateUserSomehow(idToken.issuer, idToken.subject);
+  },
+  yourErrorHandler,
+  openId: provider.openId,
+);
+```
+
+Each login then sends a `nonce` of its own, kept in its cookie, and its ID token must be of a key of the provider's JSON Web Key Set, of the `RS256` or `ES256` that `OpenIdOptions.algorithms` accept (never `none`, nor `HS256`, of a secret the app has), of the provider's issuer, of this app's `client_id` as its audience (and as its `azp`, of several audiences), unexpired, not issued ahead of now (of `clockSkew`, default 2 minutes, either way), of the `nonce` of its login, and of the `at_hash` of its access token, if it has one, or the callback goes to `onError` as `invalid_token`. The verifier is given the checked `IdToken` in `req.container`. A provider that gives no ID token is `invalid_token` too; keys that cannot be fetched are a `502`.
+
+The keys are fetched once, and again after `keysLifetime` (default an hour), or at once of a token of a key that is not among them, as when the provider rotates its keys; of such tokens, at most once a minute. The configuration must be of the issuer it was discovered of, exactly, and of a JSON Web Key Set. Give `OpenIdOptions` yourself, of the `issuer` and `jwksUri`, to use none.
+
+A login that was started before the strategy was given `openId` has no `nonce`, and is refused as `invalid_token`: its user signs in again.
+
+To sign a user out of the provider too, once the app has signed them out of itself, keep the `IdToken.token` of their login, and redirect them to the provider's `endSessionUrl` (OpenID Connect RP-Initiated Logout 1.0), of a `postLogoutRedirectUri` that the app registered with the provider, to which it redirects them after, with the `state`:
+
+```dart
+var url = provider.endSessionUrl(
+  idTokenHint: session.idToken,
+  postLogoutRedirectUri: Uri.parse('https://app.example/signed-out'),
+  state: 'bye',
+);
+await res.redirect(url);
+```
+
+It throws a `StateError` of a provider of no `end_session_endpoint`.
+
 ## Custom Scope Delimiter
 
 This package should work out-of-the-box for most OAuth2 providers, such as Github or Dropbox. However, if your OAuth2 scopes are separated by a delimiter other than the default (`' '`), you can add it in the `OAuth2Strategy` constructor:
@@ -239,6 +283,7 @@ This package is `angel3_auth_oauth2`, renamed. Its 10.0.0 also has these changes
 * **New options**: `authorizationParameters`, more query parameters of the authorization URL, and `basicAuth: false`, to send the client secret in the form.
 * **Errors of `onError`**: a callback without a `code` is `invalid_request`, as is a posted callback whose body cannot be read, of `response_mode=form_post`; a `state` that the strategy did not give, as of a crafted link, is `invalid_state`. A token response that cannot be read, as an error page of the provider, is a 502, as is a provider that cannot be reached, where it was `invalid_request`.
 * **The verifier** may return `null` to refuse a user.
+* **OpenID Connect**: `openId`, of `OpenIdOptions.discover`, checks the ID token of each login, of a `nonce` of its own, and gives the verifier the `IdToken`.
 * **A client without a secret** sends its `client_id` alone to the token endpoint, rather than an empty secret.
 
 The [CHANGELOG](CHANGELOG.md) lists them all.

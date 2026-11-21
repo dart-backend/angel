@@ -14,10 +14,12 @@ dependencies:
   crypto: ^3.0.0
   http: ^1.0.0
   http_parser: ^4.0.0
+  jose_plus: ^1.0.1
   logging: ^1.2.0
   oauth2: ^2.0.0
 dev_dependencies:
   angel3_mock_request: ^10.0.0
   angel3_auth_server: ^10.0.0
+  angel3_oidc_server: ^10.0.0
   lints: ^6.0.0
   test: ^1.24.0

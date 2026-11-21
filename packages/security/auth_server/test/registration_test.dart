@@ -137,6 +137,16 @@ void main() {
     },
   );
 
+  test('checkClientMetadata may refuse metadata, or add to it', () async {
+    expectRefused(
+      await register({...web, 'x_refuse': true}),
+      'invalid_client_metadata',
+    );
+    expect(server.clients, isEmpty);
+    var json = await registered(web);
+    expect(json, containsPair('x_default', 'added'));
+  });
+
   test('registerClient may change the metadata, or refuse it', () async {
     expect(
       await registered({...web, 'client_name': 'rename me'}),
@@ -353,6 +363,24 @@ class _DefaultServer
 
 class _Server extends _DefaultServer {
   final clients = <String, ClientRegistration>{};
+
+  @override
+  Map<String, dynamic> checkClientMetadata(
+    Map<String, dynamic> metadata,
+    RequestContext req,
+  ) {
+    if (metadata['x_refuse'] == true) {
+      throw AuthorizationException(
+        ErrorResponse(
+          ErrorResponse.invalidClientMetadata,
+          'Refused of checkClientMetadata.',
+          null,
+        ),
+        statusCode: 400,
+      );
+    }
+    return {'x_default': 'added', ...metadata};
+  }
 
   @override
   PseudoApplication? findClient(String? clientId) {
