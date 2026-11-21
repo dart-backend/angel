@@ -53,8 +53,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// As always, return `null` if authentication fails, as of a user that
   /// the app refuses: [AngelAuth.authenticate] then tries its next strategy,
   /// or answers a 401, or redirects to its `failureRedirect`. The client is
-  /// closed once it returns, unless [httpClient] was given: keep the
-  /// credentials, not the client.
+  /// of the strategy's HTTP client, which every login shares: do not close
+  /// it.
   final FutureOr<User?> Function(oauth2.Client, RequestContext, ResponseContext)
   verifier;
 
@@ -102,7 +102,9 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   final Map<String, String> authorizationParameters;
 
   /// The HTTP client to exchange codes for tokens with, and of the clients
-  /// given to [verifier]; by default, one of each login, closed after it.
+  /// given to [verifier]; by default, one of the strategy, which every login
+  /// shares, so that its connections to the provider are kept, and which is
+  /// never closed.
   final http.Client? httpClient;
 
   /// The name of the cookies that keep the `state` and code verifier of
@@ -164,6 +166,21 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     this.cookiePath,
     List<int>? cookieKey,
   }) : _cookieKey = cookieKey ?? _defaultCookieKey(options.clientSecret) {
+    // Of a key that anyone could guess, of which login cookies are forged,
+    // as of one of an unset variable of the environment.
+    if (cookieKey != null && cookieKey.length < 16) {
+      throw ArgumentError.value(
+        '${cookieKey.length} bytes',
+        'cookieKey',
+        'must be of at least 16 bytes',
+      );
+    }
+    try {
+      // Of the characters a cookie's name may have, as dart:io checks.
+      Cookie(_cookieNameOf('a' * 12), '');
+    } on FormatException catch (e) {
+      throw ArgumentError.value(cookieName, 'cookieName', e.message);
+    }
     if (cookiePath case var path?) {
       if (!path.startsWith('/')) {
         throw ArgumentError.value(path, 'cookiePath', 'must start with "/"');
@@ -230,8 +247,9 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     }
     _log.warning(
       'The OAuth2 client has no secret, so the cookies of logins are signed '
-      'with a random key, which other instances of the app do not share: '
-      'pass a cookieKey to run more than one.',
+      'with a random key of this strategy, which no other shares, as of '
+      'another instance of the app, or another isolate of it: pass a '
+      'cookieKey to run more than one.',
     );
     var random = Random.secure();
     return [for (var i = 0; i < 32; i++) random.nextInt(256)];
@@ -241,28 +259,27 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   String _cookieNameOf(String state) =>
       '${cookieName}_${state.substring(0, 12)}';
 
-  /// An HTTP client that is never used, of the grants that only build an
-  /// authorization URL, so that none is created, and closed, for each.
-  static final http.Client _idleClient = http.Client();
+  /// The HTTP client of every grant: [httpClient], or one of the strategy,
+  /// created once it is needed, which a verifier that closes its client
+  /// does not close.
+  late final http.Client _client = httpClient ?? _Unclosable(http.Client());
 
-  /// The grant of a login of [codeVerifier], of [client] if given, as of
-  /// one that makes no request, else of [httpClient], or one of its own.
-  oauth2.AuthorizationCodeGrant _createGrant(
-    String codeVerifier, {
-    http.Client? client,
-  }) => oauth2.AuthorizationCodeGrant(
-    options.clientId,
-    _authorizationUrl,
-    tokenEndpoint,
-    // None for a client without one, as of PKCE alone, which sends
-    // only its id, rather than an empty secret.
-    secret: options.clientSecret.isEmpty ? null : options.clientSecret,
-    basicAuth: basicAuth,
-    delimiter: delimiter,
-    getParameters: getParameters,
-    httpClient: client ?? httpClient,
-    codeVerifier: codeVerifier,
-  );
+  /// The grant of a login of [codeVerifier], of the strategy's [_client],
+  /// which it does not close.
+  oauth2.AuthorizationCodeGrant _createGrant(String codeVerifier) =>
+      oauth2.AuthorizationCodeGrant(
+        options.clientId,
+        _authorizationUrl,
+        tokenEndpoint,
+        // None for a client without one, as of PKCE alone, which sends
+        // only its id, rather than an empty secret.
+        secret: options.clientSecret.isEmpty ? null : options.clientSecret,
+        basicAuth: basicAuth,
+        delimiter: delimiter,
+        getParameters: getParameters,
+        httpClient: _client,
+        codeVerifier: codeVerifier,
+      );
 
   /// [authorizationEndpoint], with [authorizationParameters] but those of
   /// the strategy, which the grant adds.
@@ -401,7 +418,15 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         return user as User?;
       case _Failed(:var response):
         // The response of [onError], if it gave one, but never a user.
-        if (response != null && res.isOpen) await res.serialize(response);
+        if (response != null && res.isOpen) {
+          await res.serialize(response);
+        } else if (res.isOpen &&
+            ((res.buffer?.isNotEmpty ?? false) || res.headersSent)) {
+          // Of a body that [onError] wrote, to the buffer or as a stream,
+          // but did not close: answered, so that [AngelAuth] does not answer
+          // it again, nor try another.
+          await res.close();
+        }
         return null;
       case null:
         await res.redirect(_startLogin(req, res));
@@ -417,7 +442,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     var state = _randomString(32);
     var verifier = _randomString(64);
     // Of no request, so of a client that is never used.
-    var url = _createGrant(verifier, client: _idleClient).getAuthorizationUrl(
+    var url = _createGrant(verifier).getAuthorizationUrl(
       options.redirectUri,
       scopes: options.scopes,
       state: state,
@@ -595,8 +620,6 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     try {
       client = await grant.handleAuthorizationResponse(query);
     } catch (e) {
-      // Of any failure, its HTTP client is ours, unless it was given.
-      _closeGrant(grant);
       switch (e) {
         case oauth2.AuthorizationException():
           // Of an error of the token endpoint, as `invalid_grant`.
@@ -620,12 +643,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       rethrow;
     }
 
-    try {
-      return _Verified(await verifier(client, req, res));
-    } finally {
-      // The grant's client, which is the client's.
-      _closeGrant(grant);
-    }
+    return _Verified(await verifier(client, req, res));
   }
 
   /// Whether a login that was [started], in milliseconds since the epoch,
@@ -701,12 +719,6 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     ..maxAge = 0
     ..expires = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
-  /// Closes the HTTP client of [grant], of a token exchange that failed,
-  /// unless it was given.
-  void _closeGrant(oauth2.AuthorizationCodeGrant grant) {
-    if (httpClient == null) grant.close();
-  }
-
   /// A `state` of this strategy, of [_randomString].
   static final _rgxState = RegExp(r'^[A-Za-z0-9\-._~]{32}$');
 
@@ -741,4 +753,19 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     }
     return diff == 0;
   }
+}
+
+/// An HTTP client that is not closed by [close], of the strategy's own,
+/// which every login shares, as a verifier may close the client it is given.
+class _Unclosable extends http.BaseClient {
+  final http.Client _inner;
+
+  _Unclosable(this._inner);
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      _inner.send(request);
+
+  @override
+  void close() {}
 }

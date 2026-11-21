@@ -36,6 +36,15 @@ void main() {
     }
   });
 
+  test('logins share the strategy\'s client, which a verifier does not '
+      'close', () async {
+    sites = await _Sites.start();
+    for (var i = 0; i < 3; i++) {
+      var got = await sites.login();
+      expect(got.status, 200, reason: got.body);
+    }
+  });
+
   test('a public client signs in, of PKCE alone', () async {
     sites = await _Sites.start(public: true);
     var got = await sites.login();
@@ -200,6 +209,8 @@ class _Sites {
       // Of the provider's API, of the token: RFC 6750 too.
       (client, req, res) async {
         var me = await client.get(providerBase.resolve('/api/me'));
+        // As an app may, which must not close the strategy's own client.
+        client.close();
         return (jsonDecode(me.body) as Map)['user'] as String;
       },
       (e, req, res) => {'error': e.error, 'description': e.description},

@@ -802,6 +802,80 @@ void moreTests() {
     );
   });
 
+  group('the constructor refuses', () {
+    OAuth2Strategy<String> strategy({
+      List<int>? cookieKey,
+      String cookieName = 'angel3_oauth2',
+    }) => OAuth2Strategy<String>(
+      ExternalAuthOptions(
+        clientId: 'id',
+        clientSecret: 'secret',
+        redirectUri: 'https://app.example/cb',
+      ),
+      authorizationEndpoint,
+      tokenEndpoint,
+      (client, req, res) => 'alice',
+      (e, req, res) => null,
+      cookieKey: cookieKey,
+      cookieName: cookieName,
+    );
+
+    test('a cookieKey of under 16 bytes', () {
+      expect(() => strategy(cookieKey: []), throwsArgumentError);
+      expect(
+        () => strategy(cookieKey: List.filled(15, 1)),
+        throwsArgumentError,
+      );
+      strategy(cookieKey: List.filled(16, 1));
+    });
+
+    test('a cookieName a cookie may not have', () {
+      expect(() => strategy(cookieName: 'oauth login'), throwsArgumentError);
+      expect(() => strategy(cookieName: 'a=b'), throwsArgumentError);
+    });
+  });
+
+  test(
+    'a body that onError writes, but does not close, is the answer',
+    () async {
+      var app = Angel();
+      var auth = AngelAuth<String>(
+        jwtKey: 'key',
+        serializer: (user) => user,
+        deserializer: (id) => id,
+        enforceIp: false,
+      );
+      auth.strategies['p'] = OAuth2Strategy<String>(
+        ExternalAuthOptions(
+          clientId: 'id',
+          clientSecret: 'secret',
+          redirectUri: 'https://app.example/cb',
+        ),
+        authorizationEndpoint,
+        tokenEndpoint,
+        (client, req, res) => 'alice',
+        (e, req, res) {
+          res.write('Login failed');
+        },
+        httpClient: MockClient((request) async => http.Response('', 500)),
+      );
+      await app.configure(auth.configureServer);
+      app
+        ..get('/start', auth.authenticate('p'))
+        ..get(
+          '/cb',
+          auth.authenticate('p', AngelAuthOptions(failureRedirect: '/failed')),
+        );
+      var got = await logIn(
+        app,
+        (state) => {'error': 'access_denied', 'state': state},
+      );
+      // Not the redirect of AngelAuth's failureRedirect.
+      expect(got.status, 200);
+      expect(got.body, 'Login failed');
+    },
+  );
+
   group('warns of settings', () {
     late List<String> warnings;
 
