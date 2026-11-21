@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Docs:** The README is rewritten in plain English, with a table of contents, a section on choosing an executor, and the transaction rules split into subsections
+
 ## 10.0.0
 
 ### New in 10.0.0

@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Docs:** The README is rewritten in plain English, with a Client Authentication section, subsections for the implicit grant, extension grants and registration metadata checks, and lists and tables in place of long paragraphs. Its installation snippet asks for `angel3_framework` 10.1.0, which the package requires
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

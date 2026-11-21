@@ -1,5 +1,5 @@
 name: angel3_oidc_server
-version: 10.0.0
+version: 10.0.1
 description: OpenID Connect for an Angel3 OAuth 2.0 server of angel3_auth_server, of ID tokens, JWKS, discovery and UserInfo.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
