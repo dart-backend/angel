@@ -126,6 +126,11 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// cookies of the oldest. Default: 5.
   final int maxLogins;
 
+  /// How long the token endpoint may take to answer the exchange of a code,
+  /// after which the callback is a 502, as of a provider that cannot be
+  /// reached. Default: 30 seconds.
+  final Duration tokenTimeout;
+
   /// The path of the cookies of logins, which must be that of the redirect
   /// URI or above it, so that the callback is sent them; by default, the
   /// path that the route that starts a login shares with the redirect URI,
@@ -163,6 +168,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     this.cookieSameSite = SameSite.lax,
     this.loginTimeout = const Duration(minutes: 10),
     this.maxLogins = 5,
+    this.tokenTimeout = const Duration(seconds: 30),
     this.cookiePath,
     List<int>? cookieKey,
   }) : _cookieKey = cookieKey ?? _defaultCookieKey(options.clientSecret) {
@@ -173,6 +179,15 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         '${cookieKey.length} bytes',
         'cookieKey',
         'must be of at least 16 bytes',
+      );
+    }
+    // Of bytes, as of `utf8.encode`: of a value above 255, as of the code
+    // units of a String, the HMAC drops the high bits.
+    if (cookieKey != null && cookieKey.any((b) => b < 0 || b > 255)) {
+      throw ArgumentError.value(
+        'a value that is not a byte',
+        'cookieKey',
+        'must be of bytes, as of utf8.encode',
       );
     }
     try {
@@ -192,10 +207,11 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         throw ArgumentError.value(path, 'cookiePath', e.message);
       }
       if (!_pathMatches(_redirectPath, path)) {
-        _log.warning(
-          'The cookiePath $path is not the redirect URI\'s path, or above it: '
-          'the callback is not sent the cookies of logins, and every login '
-          'fails.',
+        throw ArgumentError.value(
+          path,
+          'cookiePath',
+          'must be the redirect URI\'s path, or above it, of which the '
+              'callback is sent the cookies of logins',
         );
       }
     }
@@ -212,11 +228,12 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     }
     // Of settings with which every login fails, or which are dropped.
     if (_postsCallbacks && cookieSameSite != SameSite.none) {
-      _log.warning(
-        'With response_mode=form_post, the provider posts its callback '
-        'across sites, which a cookie of SameSite.$cookieSameSite is not '
-        'sent with: every login fails. Pass cookieSameSite: SameSite.none, '
-        'over HTTPS.',
+      throw ArgumentError.value(
+        cookieSameSite,
+        'cookieSameSite',
+        'must be SameSite.none, over HTTPS, of response_mode=form_post, as '
+            'the provider posts its callback across sites, which a cookie '
+            'of SameSite.$cookieSameSite is not sent with',
       );
     }
     if (cookieSameSite == SameSite.none &&
@@ -262,7 +279,21 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// The HTTP client of every grant: [httpClient], or one of the strategy,
   /// created once it is needed, which a verifier that closes its client
   /// does not close.
-  late final http.Client _client = httpClient ?? _Unclosable(http.Client());
+  ///
+  /// [httpClient] too is not closed by a verifier, of which it would be
+  /// closed for every login: close it yourself.
+  late final http.Client _client = _Unclosable(
+    httpClient ?? (_ownClient = http.Client()),
+  );
+
+  /// The strategy's own HTTP client, if it created one, which [close]
+  /// closes.
+  http.Client? _ownClient;
+
+  /// Closes the HTTP client that the strategy created, if it did, as when
+  /// the app shuts down: not [httpClient], which is yours. Logins of the
+  /// strategy fail after it.
+  void close() => _ownClient?.close();
 
   /// The grant of a login of [codeVerifier], of the strategy's [_client],
   /// which it does not close.
@@ -377,6 +408,24 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     ),
   );
 
+  /// The failure of the error of the provider of a callback's [query], of
+  /// its `error`, `error_description` and `error_uri`.
+  Future<_Outcome> _providerError(
+    Map<String, String> query,
+    RequestContext req,
+    ResponseContext res,
+  ) {
+    var uri = query['error_uri'];
+    return _fail(
+      query['error']!,
+      query['error_description'],
+      req,
+      res,
+      // Of none, if it is not a URI, which the error is of all the same.
+      uri: uri == null ? null : Uri.tryParse(uri),
+    );
+  }
+
   /// The failure of a request whose body cannot be read, for [unreadable].
   Future<_Outcome> _unreadable(
     RequestContext req,
@@ -404,8 +453,12 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   /// Whether [parameters] are those of the provider's callback, rather than
   /// of the start of a login.
+  ///
+  /// Of a `state` too, which a callback always has: a link to the start of
+  /// a login of a `code` of its own, as of a referral, starts it.
   static bool _isCallback(Map<String, String> parameters) =>
-      parameters.containsKey('code') || parameters.containsKey('error');
+      parameters.containsKey('state') &&
+      (parameters.containsKey('code') || parameters.containsKey('error'));
 
   @override
   FutureOr<User?> authenticate(
@@ -575,6 +628,12 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       except: stored != null ? name : null,
     );
 
+    // An error of the provider, as when the user refuses, of a login of
+    // this browser, which its signed cookie of this state shows, timed out
+    // or not: that error, which an expired login would else hide.
+    if (stored != null && query['error'] != null) {
+      return _providerError(query, req, res);
+    }
     if (login == null) {
       return _fail(
         'invalid_state',
@@ -587,17 +646,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     // An error of the provider, as when the user refuses, which is
     // answered here, so that no part of the callback is read by the grant,
     // of which a FormatException is then of the token response alone.
-    if (query['error'] case var error?) {
-      var uri = query['error_uri'];
-      return _fail(
-        error,
-        query['error_description'],
-        req,
-        res,
-        // Of none, if it is not a URI, which the error is of all the same.
-        uri: uri == null ? null : Uri.tryParse(uri),
-      );
-    }
+    if (query['error'] != null) return _providerError(query, req, res);
     // Of a provider that gave no error, a code is required: else, the
     // callback is malformed, which is the client's.
     if ((query['code'] ?? '').isEmpty) {
@@ -618,7 +667,9 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
     oauth2.Client client;
     try {
-      client = await grant.handleAuthorizationResponse(query);
+      client = await grant
+          .handleAuthorizationResponse(query)
+          .timeout(tokenTimeout);
     } catch (e) {
       switch (e) {
         case oauth2.AuthorizationException():

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show ContentType, Cookie, HandshakeException, SameSite;
 
@@ -249,15 +250,13 @@ void main() {
         await browse('/auth/start');
         await Future<void>.delayed(const Duration(milliseconds: 2));
       }
-      for (var query in [
-        {'code': 'c'},
-        {'code': 'c', 'state': 'x' * 32},
-      ]) {
-        var got = await browse(
-          Uri(path: '/auth/callback', queryParameters: query).toString(),
-        );
-        expect(got.status, 400);
-      }
+      var got = await browse(
+        Uri(
+          path: '/auth/callback',
+          queryParameters: {'code': 'c', 'state': 'x' * 32},
+        ).toString(),
+      );
+      expect(got.status, 400);
       expect(logins(), hasLength(5));
       expect(expiredNames, isEmpty);
     });
@@ -580,22 +579,132 @@ void main() {
       expect(() => strategyOf('/app;x'), throwsArgumentError);
     });
 
-    test('is warned of, if not above the redirect URI', () {
-      var warnings = <String>[];
-      var sub = Logger.root.onRecord
-          .where((r) => r.level == Level.WARNING)
-          .listen((r) => warnings.add(r.message));
-      addTearDown(sub.cancel);
-      strategyOf('/elsewhere');
+    test('must be the redirect URI\'s path, or above it', () {
       strategyOf('/app');
       strategyOf('/app/auth/callback');
+      expect(() => strategyOf('/elsewhere'), throwsArgumentError);
       // Of a trailing slash, of which the callback is not sent it.
-      strategyOf('/app/auth/callback/');
-      expect(warnings, [
-        contains('/elsewhere'),
-        contains('/app/auth/callback/'),
-      ]);
+      expect(() => strategyOf('/app/auth/callback/'), throwsArgumentError);
     });
+  });
+
+  test(
+    'a link to the start of a login, of a code of its own, starts it',
+    () async {
+      var got = await get('/auth/start?code=PROMO2026');
+      expect(got.status, 302);
+      expect(got.location, startsWith('$authorizationEndpoint'));
+      expect(errors, isEmpty);
+    },
+  );
+
+  test(
+    'a refusal of a login that timed out is the provider\'s error',
+    () async {
+      var state = 'mnopqrstuvwxyzab' * 2;
+      var cookie = Cookie(
+        'angel3_oauth2_${state.substring(0, 12)}',
+        signed({
+          's': state,
+          'v': 'v' * 64,
+          't': DateTime.now()
+              .subtract(const Duration(hours: 1))
+              .millisecondsSinceEpoch,
+          'p': '/auth',
+          'c': 'id',
+        }),
+      );
+      var got = await get(
+        '/auth/callback?error=access_denied&state=$state',
+        cookie: cookie,
+      );
+      expect(got.status, 400);
+      expect(errors, ['access_denied']);
+    },
+  );
+
+  test('a token endpoint that does not answer in time is a 502', () async {
+    var app = Angel();
+    var auth = AngelAuth<String>(
+      jwtKey: 'key',
+      serializer: (user) => user,
+      deserializer: (id) => id,
+      enforceIp: false,
+    );
+    auth.strategies['p'] = OAuth2Strategy<String>(
+      ExternalAuthOptions(
+        clientId: 'id',
+        clientSecret: 'secret',
+        redirectUri: 'https://app.example/cb',
+      ),
+      authorizationEndpoint,
+      tokenEndpoint,
+      (client, req, res) => 'alice',
+      (e, req, res) => null,
+      httpClient: MockClient((request) => Completer<http.Response>().future),
+      tokenTimeout: const Duration(milliseconds: 50),
+    );
+    await app.configure(auth.configureServer);
+    app
+      ..get('/start', auth.authenticate('p'))
+      ..get('/cb', auth.authenticate('p'));
+    var got = await logIn(app, (state) => {'code': 'c0de', 'state': state});
+    expect(got.status, 502);
+  });
+
+  test(
+    'a verifier that closes a given httpClient closes it for no login',
+    () async {
+      var closed = false;
+      var given = _Closeable(provider, () => closed = true);
+      var app = Angel();
+      var auth = AngelAuth<String>(
+        jwtKey: 'key',
+        serializer: (user) => user,
+        deserializer: (id) => id,
+        enforceIp: false,
+      );
+      auth.strategies['p'] = OAuth2Strategy<String>(
+        ExternalAuthOptions(
+          clientId: 'id',
+          clientSecret: 'secret',
+          redirectUri: 'https://app.example/cb',
+        ),
+        authorizationEndpoint,
+        tokenEndpoint,
+        (client, req, res) {
+          client.close();
+          return 'alice';
+        },
+        (e, req, res) => null,
+        httpClient: given,
+      );
+      await app.configure(auth.configureServer);
+      app
+        ..get('/start', auth.authenticate('p'))
+        ..get('/cb', auth.authenticate('p'));
+      var got = await logIn(app, (state) => {'code': 'c0de', 'state': state});
+      expect(got.status, 200);
+      expect(closed, isFalse);
+    },
+  );
+
+  test('a cookieKey must be of bytes', () {
+    expect(
+      () => OAuth2Strategy<String>(
+        ExternalAuthOptions(
+          clientId: 'id',
+          clientSecret: 'secret',
+          redirectUri: 'https://app.example/cb',
+        ),
+        authorizationEndpoint,
+        tokenEndpoint,
+        (client, req, res) => 'alice',
+        (e, req, res) => null,
+        cookieKey: 'κλειδί μυστικό abc'.codeUnits,
+      ),
+      throwsArgumentError,
+    );
   });
 
   test('a callback of no code is invalid_request', () async {
@@ -887,9 +996,11 @@ void moreTests() {
       addTearDown(sub.cancel);
     });
 
-    test('of form_post, of a cookie of SameSite.lax', () async {
-      await mapApp(authorizationParameters: {'response_mode': 'form_post'});
-      expect(warnings, contains(contains('form_post')));
+    test('refuses form_post, of a cookie of SameSite.lax', () async {
+      expect(
+        () => mapApp(authorizationParameters: {'response_mode': 'form_post'}),
+        throwsArgumentError,
+      );
     });
 
     test('of SameSite.none, of an http redirect URI', () async {
@@ -905,19 +1016,23 @@ void moreTests() {
       expect(warnings, contains(contains('authorizationParameters scope')));
     });
 
-    test('of form_post of the endpoint, of a cookie of SameSite.lax', () {
-      OAuth2Strategy<String>(
-        ExternalAuthOptions(
-          clientId: 'id',
-          clientSecret: 'secret',
-          redirectUri: 'https://app.example/cb',
+    test('refuses form_post of the endpoint, of a cookie of SameSite.lax', () {
+      expect(
+        () => OAuth2Strategy<String>(
+          ExternalAuthOptions(
+            clientId: 'id',
+            clientSecret: 'secret',
+            redirectUri: 'https://app.example/cb',
+          ),
+          Uri.parse(
+            'https://appleid.example/authorize?response_mode=form_post',
+          ),
+          tokenEndpoint,
+          (client, req, res) => 'alice',
+          (e, req, res) => null,
         ),
-        Uri.parse('https://appleid.example/authorize?response_mode=form_post'),
-        tokenEndpoint,
-        (client, req, res) => 'alice',
-        (e, req, res) => null,
+        throwsArgumentError,
       );
-      expect(warnings, contains(contains('form_post')));
     });
 
     test('of none, by default', () async {
@@ -1057,6 +1172,7 @@ void moreTests() {
   test('the authorization URL has the parameters asked for, but not in '
       'place of its own', () async {
     var app = await mapApp(
+      cookieSameSite: SameSite.none,
       authorizationParameters: {
         'response_mode': 'form_post',
         'prompt': 'consent',
@@ -1195,4 +1311,19 @@ String signed(Map<String, Object> claims) {
       .encode(Hmac(sha256, key).convert(ascii.encode(data)).bytes)
       .replaceAll('=', '');
   return '$data.$signature';
+}
+
+/// A client of [_inner] that records that it was closed.
+class _Closeable extends http.BaseClient {
+  final http.Client _inner;
+  final void Function() _onClose;
+
+  _Closeable(this._inner, this._onClose);
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      _inner.send(request);
+
+  @override
+  void close() => _onClose();
 }
