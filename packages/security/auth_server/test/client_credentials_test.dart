@@ -60,6 +60,33 @@ void main() {
         */
   });
 
+  test('a parameter given more than once in the form is refused', () async {
+    Future<Map> token(String body) async => json.decode(
+      (await client.post(
+        Uri.parse('/oauth2/token'),
+        headers: {
+          'Authorization': 'Basic ${base64.encode('foo:bar'.codeUnits)}',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
+        body: body,
+      )).body,
+    ) as Map;
+    for (var body in [
+      'grant_type=client_credentials&scope=read&scope=write',
+      'grant_type=client_credentials&grant_type=client_credentials',
+    ]) {
+      expect(
+        await token(body),
+        containsPair('error', 'invalid_request'),
+        reason: body,
+      );
+    }
+    expect(
+      await token('grant_type=client_credentials&scope=read'),
+      contains('access_token'),
+    );
+  });
+
   test('the grant is given the scopes of the request', () async {
     var response = await client.post(
       Uri.parse('/oauth2/token'),

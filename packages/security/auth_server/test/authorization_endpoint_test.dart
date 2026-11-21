@@ -72,6 +72,62 @@ void main() {
       );
     });
 
+    test(
+      'a parameter given more than once is refused, not redirected',
+      () async {
+        var base = {
+          ..._pkce,
+          'response_type': 'code',
+          'client_id': 'foo',
+          'state': 's',
+        };
+        for (var name in ['redirect_uri', 'state', 'client_id', 'scope']) {
+          var query = Uri(queryParameters: {...base}..remove(name)).query;
+          var response = await client.get(
+            Uri.parse('/oauth2/authorize?$query&$name=x&$name=y'),
+          );
+          expect(response, hasStatus(400), reason: name);
+          expect(response.headers, isNot(contains('location')), reason: name);
+          expect(
+            json.decode(response.body),
+            containsPair('error', 'invalid_request'),
+            reason: name,
+          );
+        }
+        // Once each, as before.
+        expect(
+          await client.get(
+            Uri.parse('/oauth2/authorize?${Uri(queryParameters: base).query}'),
+          ),
+          hasStatus(200),
+        );
+      },
+    );
+
+    test('a parameter given more than once in a POST form is refused, not '
+        'redirected', () async {
+      var form = Uri(
+        queryParameters: {
+          ..._pkce,
+          'response_type': 'code',
+          'client_id': 'foo',
+        },
+      ).query;
+      Future<http.Response> post(String body) => client.post(
+        Uri.parse('/oauth2/authorize'),
+        headers: {'content-type': 'application/x-www-form-urlencoded'},
+        body: body,
+      );
+      var response = await post('$form&state=a&state=b');
+      expect(response, hasStatus(400));
+      expect(response.headers, isNot(contains('location')));
+      expect(
+        json.decode(response.body),
+        containsPair('error', 'invalid_request'),
+      );
+      expect(await post('$form&state=a'), hasStatus(200));
+    });
+
     test('an error is redirected, in the query, with the state', () async {
       var response = await authorize({
         'response_type': 'code',

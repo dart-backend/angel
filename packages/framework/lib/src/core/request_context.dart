@@ -52,6 +52,7 @@ abstract class RequestContext<RawRequest> {
   /// Whether the body getters can be read.
   bool get _bodyReadable => _hasParsedBody || _bodyParseFailed;
   Map<String, dynamic> _bodyFields = {};
+  Map<String, List<String>> _bodyFieldsAll = const {};
   List _bodyList = [];
   List<UploadedFile> _uploadedFiles = <UploadedFile>[];
   MediaType _contentType = MediaType('text', 'plain');
@@ -152,6 +153,23 @@ abstract class RequestContext<RawRequest> {
     //}
 
     return _bodyFields;
+  }
+
+  /// Every value of each field of a form body, `x-www-form-urlencoded` or
+  /// the text parts of `multipart/form-data`, in the order given, as
+  /// [Uri.queryParametersAll] is of the query: where [bodyAsMap] keeps only
+  /// the last value of a field given more than once, this keeps them all,
+  /// so that such a field can be read, or refused. Unmodifiable.
+  ///
+  /// Empty for any other body, such as JSON, whose repeated keys are not
+  /// kept by its parser, or one set with [bodyAsObject].
+  ///
+  /// Note that [parseBody] must be called first.
+  Map<String, List<String>> get bodyFieldsAll {
+    if (!_bodyReadable) {
+      throw StateError('The request body has not been parsed yet.');
+    }
+    return _bodyFieldsAll;
   }
 
   /// This setter allows you to explicitly set the request body **exactly once**.
@@ -330,6 +348,7 @@ abstract class RequestContext<RawRequest> {
         _bodyParseFailed = true;
         _bodyObject = null;
         _bodyFields = {};
+        _bodyFieldsAll = const {};
         _bodyList = [];
         _uploadedFiles = [];
         Error.throwWithStackTrace(e, st);
@@ -368,7 +387,7 @@ abstract class RequestContext<RawRequest> {
       _uploadedFiles = [];
       var parsed = await encoding.decoder.bind(contentBody).join().then((s) {
         try {
-          return Uri.splitQueryString(s, encoding: encoding);
+          return _splitQueryStringAll(s, encoding);
         } on ArgumentError catch (e) {
           // e.g. invalid percent-encoding
           throw AngelHttpException.badRequest(
@@ -376,7 +395,11 @@ abstract class RequestContext<RawRequest> {
           );
         }
       });
-      _bodyFields = Map<String, dynamic>.from(parsed);
+      _bodyFieldsAll = _unmodifiableAll(parsed);
+      // Of the last value of each, as Uri.splitQueryString gives.
+      _bodyFields = {
+        for (var MapEntry(:key, :value) in parsed.entries) key: value.last,
+      };
     } else if (contentType.type == 'multipart' &&
         contentType.subtype == 'form-data' &&
         contentType.parameters.containsKey('boundary')) {
@@ -435,14 +458,47 @@ abstract class RequestContext<RawRequest> {
           message: 'Invalid multipart body: ${e.message}',
         );
       }
+      var all = <String, List<String>>{};
       for (var (key, value) in values) {
-        _bodyFields[key] = await value;
+        var text = await value;
+        _bodyFields[key] = text;
+        (all[key] ??= []).add(text);
       }
+      _bodyFieldsAll = _unmodifiableAll(all);
     } else {
       _bodyFields = {};
       _uploadedFiles = [];
     }
   }
+
+  /// The fields of the form [query], of every value of each, as
+  /// [Uri.splitQueryString] parses them: of an element of no `=`, a value
+  /// of `''`, and none of an empty key.
+  static Map<String, List<String>> _splitQueryStringAll(
+    String query,
+    Encoding encoding,
+  ) {
+    String decode(String s) => Uri.decodeQueryComponent(s, encoding: encoding);
+    var all = <String, List<String>>{};
+    for (var element in query.split('&')) {
+      var index = element.indexOf('=');
+      if (index == -1) {
+        if (element.isNotEmpty) (all[decode(element)] ??= []).add('');
+      } else if (index != 0) {
+        (all[decode(element.substring(0, index))] ??= []).add(
+          decode(element.substring(index + 1)),
+        );
+      }
+    }
+    return all;
+  }
+
+  static Map<String, List<String>> _unmodifiableAll(
+    Map<String, List<String>> all,
+  ) => Map.unmodifiable({
+    for (var MapEntry(:key, :value) in all.entries)
+      key: List<String>.unmodifiable(value),
+  });
 
   static bool _isFilePart(MimeMultipart part) {
     var disposition = part.headers['content-disposition'];

@@ -24,11 +24,21 @@ typedef ExtensionGrant = FutureOr<AuthorizationTokenResponse> Function(
 /// A body that cannot be read, as of malformed JSON or a truncated form, is
 /// `invalid_request` (RFC 6749 §5.2), not a 500, nor an error of the
 /// framework's own form.
+///
+/// A query or form that gives a parameter more than once is
+/// `invalid_request` too (RFC 6749 §3.1, §4.1.2.1), not of its last value,
+/// so that no proxy or filter in front of the server, reading the first,
+/// sees another request; unless not [refuseRepeated], as of a form of the
+/// app's own, which [AuthorizationServer.requireToken] reads.
 Future<Map<String, dynamic>> _paramsOf(
   RequestContext req, {
   bool body = false,
+  bool refuseRepeated = true,
 }) async {
-  if (!body) return req.queryParameters;
+  if (!body) {
+    _refuseRepeated(req.uri?.queryParametersAll ?? const {});
+    return req.queryParameters;
+  }
   try {
     await req.parseBody();
   } on FormatException catch (e) {
@@ -40,7 +50,24 @@ Future<Map<String, dynamic>> _paramsOf(
     if (e.statusCode != 400) rethrow;
     throw _malformedBody(e.message);
   }
+  if (refuseRepeated) _refuseRepeated(req.bodyFieldsAll);
   return req.bodyAsMap;
+}
+
+/// Throws `invalid_request` of a parameter of [all] given more than once.
+void _refuseRepeated(Map<String, List<String>> all) {
+  for (var MapEntry(:key, :value) in all.entries) {
+    if (value.length > 1) {
+      throw AuthorizationException(
+        ErrorResponse(
+          ErrorResponse.invalidRequest,
+          'The parameter "$key" is given more than once.',
+          '',
+        ),
+        statusCode: 400,
+      );
+    }
+  }
 }
 
 AuthorizationException _malformedBody(String reason) => AuthorizationException(
@@ -349,9 +376,14 @@ abstract class AuthorizationServer<Client, User> {
       if (allowFormParameter && req.method.toUpperCase() != 'GET') {
         var contentType = req.headers!.contentType?.mimeType;
         if (contentType == 'application/x-www-form-urlencoded') {
-          var body = await _paramsOf(req, body: true);
-          var token = _formValue(body, 'access_token');
-          if (token != null) tokens.add(token);
+          // Of a form of the app's own, whose other fields may be given
+          // more than once; but of each access_token, so that several are
+          // refused, as of the header and the form both.
+          await _paramsOf(req, body: true, refuseRepeated: false);
+          tokens.addAll([
+            for (var token in req.bodyFieldsAll['access_token'] ?? const [])
+              if (token.isNotEmpty) token,
+          ]);
         }
       }
       if (req.uri?.queryParameters.containsKey('access_token') == true) {

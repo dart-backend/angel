@@ -46,6 +46,7 @@
 
 ### Fixes in 10.0.0
 
+* **Repeated parameters:** a request whose query or form gives a parameter more than once is `invalid_request`, instead of using the last value (RFC 6749 §3.1), at the authorization endpoint, where it is never redirected, and at the token, device authorization, revocation and introspection endpoints. `requireToken` with `allowFormParameter` refuses only a repeated `access_token`, as the rest of the form is the app's own. Forms are checked through `RequestContext.bodyFieldsAll`, so `angel3_framework` 10.1.0 is required
 * **Implicit grant:** `completeImplicitGrant` gives no `state` of a request without one, where it gave an empty `state=` (RFC 6749 §4.2.2), and form-encodes its fragment, as its error redirects are, a space as `+` (RFC 6749 Appendix B)
 * **PKCE verifier:** `getPkceCodeVerifier` throws `invalid_request` of an empty `code_verifier=`, as of a missing one, where it gave `''`
 * **Client credentials:** A refresh token is left out of the JSON of the response, where the response was rebuilt without it, and lost what a subclass of `AuthorizationTokenResponse` adds

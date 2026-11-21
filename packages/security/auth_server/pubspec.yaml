@@ -9,7 +9,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies: 
-  angel3_framework: ^10.0.0
+  angel3_framework: ^10.1.0
   angel3_http_exception: ^10.0.0
   crypto: ^3.0.1
   logging: ^1.2.0

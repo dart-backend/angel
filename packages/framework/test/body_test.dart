@@ -147,6 +147,63 @@ void main() {
     expect(() => req.bodyAsObject, throwsStateError);
     expect(() => req.bodyAsMap, throwsStateError);
     expect(() => req.bodyAsList, throwsStateError);
+    expect(() => req.bodyFieldsAll, throwsStateError);
+  });
+
+  group('bodyFieldsAll', () {
+    test('keeps every value of a urlencoded field, in order', () async {
+      var req = await rawRequest(
+        'application/x-www-form-urlencoded',
+        'a=1&b=x+y&a=2&flag&=skipped&&a=%33',
+      );
+      await req.parseBody();
+      expect(req.bodyFieldsAll, {
+        'a': ['1', '2', '3'],
+        'b': ['x y'],
+        'flag': [''],
+      });
+      // bodyAsMap is as before: the last value of each.
+      expect(req.bodyAsMap, {'a': '3', 'b': 'x y', 'flag': ''});
+      expect(
+        req.bodyAsMap,
+        Uri.splitQueryString('a=1&b=x+y&a=2&flag&=skipped&&a=%33'),
+      );
+      expect(() => req.bodyFieldsAll['a']!.add('4'), throwsUnsupportedError);
+      expect(() => req.bodyFieldsAll['c'] = [], throwsUnsupportedError);
+    });
+
+    test('keeps every value of a multipart text field, not files', () async {
+      var req = await rawRequest(
+        'multipart/form-data; boundary=XYZ',
+        '--XYZ\r\n'
+            'Content-Disposition: form-data; name="tag"\r\n\r\n'
+            'one\r\n'
+            '--XYZ\r\n'
+            'Content-Disposition: form-data; name="file"; filename="f.txt"\r\n'
+            'Content-Type: text/plain\r\n\r\n'
+            'data\r\n'
+            '--XYZ\r\n'
+            'Content-Disposition: form-data; name="tag"\r\n\r\n'
+            'two\r\n'
+            '--XYZ--\r\n',
+      );
+      await req.parseBody();
+      expect(req.bodyFieldsAll, {
+        'tag': ['one', 'two'],
+      });
+      expect(req.bodyAsMap, {'tag': 'two'});
+    });
+
+    test('is empty of a JSON body, or of a failed parse', () async {
+      var req = await request(bodyFields: {'a': 1});
+      expect(req.bodyFieldsAll, isEmpty);
+      var bad = await rawRequest(
+        'application/x-www-form-urlencoded',
+        'a=1&a=%zz',
+      );
+      await expectLater(bad.parseBody(), throwsA(isA<AngelHttpException>()));
+      expect(bad.bodyFieldsAll, isEmpty);
+    });
   });
 
   test('can set body object exactly once', () async {

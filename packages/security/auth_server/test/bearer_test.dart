@@ -214,6 +214,22 @@ void main() {
           400,
           'invalid_request',
         );
+        Future<http.Response> form(String body) => formClient.post(
+          Uri.parse('/form'),
+          headers: {'content-type': 'application/x-www-form-urlencoded'},
+          body: body,
+        );
+        // The app's own fields may be given more than once.
+        expect(
+          await form('access_token=read-token&tag=a&tag=b'),
+          hasStatus(200),
+        );
+        // Not the access token.
+        expectRefused(
+          await form('access_token=read-token&access_token=read-token'),
+          400,
+          'invalid_request',
+        );
       } finally {
         await formClient.close();
       }

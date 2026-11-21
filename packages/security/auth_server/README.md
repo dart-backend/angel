@@ -174,6 +174,8 @@ Uri? registeredRedirectUri(PseudoApplication client, String? redirectUri) {
 }
 ```
 
+A request that gives a parameter more than once, such as two `redirect_uri`s, in its query or in its form, is `invalid_request` (RFC 6749 §3.1). An authorization request refused this way is never redirected. Otherwise the server would use the last value, while a proxy or filter in front of it might read the first. Forms are checked with `RequestContext.bodyFieldsAll` of `angel3_framework` 10.1.0. `requireToken` refuses only a repeated `access_token`, since the rest of a protected endpoint's form is the app's own. A JSON body can't be checked, because its parser keeps only the last of a repeated key.
+
 ## Other Grants
 
 By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `unsupported_grant_type` OAuth2 error at the token endpoint, or `unsupported_response_type` for an authorization request. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
