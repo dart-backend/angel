@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.1.0
+
+### New in 10.1.0
+
+* **Mutual TLS:** `--client-ca-file` asks each client for a certificate, which a handler reads as `req.clientCertificate`, and trusts the CAs of the file to sign it, for `--ssl` and `--http2`. `--require-client-certificate` refuses a client that presents none. `RunnerOptions` takes them as `clientCaFile` and `requireClientCertificate`. Requires `angel3_framework` 10.2.0
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

@@ -1,4 +1,5 @@
 export 'src/access_token.dart';
+export 'src/client_certificate.dart';
 export 'src/exception.dart';
 export 'src/metadata.dart';
 export 'src/pkce.dart' hide unpaddedChallenge;

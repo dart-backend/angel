@@ -44,6 +44,15 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       ..app = app
       .._socket = socket
       .._stream = stream;
+    if (socket is SecureSocket) {
+      try {
+        req._clientCertificate = socket.peerCertificate;
+      } catch (_) {
+        // The connection closed already, so the request has no one to answer:
+        // dart:io throws a StateError once the socket is destroyed, and a
+        // TypeError once it is only closed.
+      }
+    }
 
     var headers = req._headers = MockHttpHeaders();
     // String scheme = 'https', host = socket.address.address, path = '';
@@ -286,6 +295,12 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
 
   @override
   InternetAddress get remoteAddress => _socket.remoteAddress;
+
+  X509Certificate? _clientCertificate;
+
+  // Read once, in [from]: dart:io throws for a connection that is closed.
+  @override
+  X509Certificate? get clientCertificate => _clientCertificate;
 
   @override
   String get path {

@@ -31,6 +31,11 @@ It covers the authorization code grant with PKCE, refresh tokens, the password a
   - [Client Registration](#client-registration)
     - [Metadata checks](#metadata-checks)
     - [Managing Registrations](#managing-registrations)
+  - [Mutual TLS](#mutual-tls)
+    - [Authenticating clients by certificate](#authenticating-clients-by-certificate)
+    - [Certificate-bound access tokens](#certificate-bound-access-tokens)
+    - [Behind a reverse proxy](#behind-a-reverse-proxy)
+    - [Metadata and registration](#metadata-and-registration)
   - [Extending](#extending)
 
 ## Installation
@@ -39,8 +44,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^10.1.0
-  angel3_auth_server: ^10.0.0
+  angel3_framework: ^10.2.0
+  angel3_auth_server: ^10.1.0
 ```
 
 ## Usage
@@ -192,6 +197,8 @@ The rules:
 - A client that fails authentication gets `invalid_client`, with status 401.
 - If the request has the header and also a `client_id` or `client_secret` in the form, those must match the header.
 - A client without a secret may use the authorization code, password and refresh token grants. It may not use the client credentials grant, which is only for confidential clients. It gets `unauthorized_client` instead.
+
+A client may also authenticate by a TLS client certificate instead of a secret (see [Mutual TLS](#mutual-tls)).
 
 The device authorization, revocation and introspection endpoints authenticate clients the same way.
 
@@ -585,6 +592,7 @@ The metadata is checked before `registerClient` is called. A refusal is a 400 wi
   - a native app's private-use scheme, which is a reverse domain name such as `com.example.app:/cb` (RFC 8252 §7.1).
 
   Any other scheme, such as `myapp:` or `javascript:`, is refused.
+- **Mutual TLS.** See [Metadata and registration](#metadata-and-registration).
 - **Other metadata.** Other RFC 7591 metadata must have the right types. Unknown metadata is kept. Values the server issues itself, such as a `client_id`, are dropped, and so is a `software_statement`, which the server does not verify.
 
 The server checks the metadata only at registration. It doesn't know which registration a `Client` came from, so the token and authorization endpoints don't enforce it. In your grant methods, such as `clientCredentialsGrant` and `requestAuthorizationCode`, check the client's stored `grantTypes`, `responseTypes` and `tokenEndpointAuthMethod`. Throw `unauthorized_client` (`ErrorResponse.unauthorizedClient`) for anything it didn't register.
@@ -626,6 +634,189 @@ The three methods:
 - **DELETE.** It passes the registration to `deleteClient`, which deletes the client and revokes its tokens. The response is a 204.
 
 By default, `updateClient` and `deleteClient` refuse with `access_denied`, a 403, so a server can offer reads only.
+
+## Mutual TLS
+
+With mutual TLS (RFC 8705), a client authenticates with a TLS client certificate instead of a secret, and its access tokens can be bound to that certificate, so a stolen token is useless without the certificate's private key.
+
+First, have the server ask clients for a certificate, with `requestClientCertificate: true` from `angel3_framework` 10.2.0, and trust the CAs that may sign one:
+
+```dart
+var context = SecurityContext()
+  ..useCertificateChain('server.pem')
+  ..usePrivateKey('server.key')
+  ..setClientAuthorities('client_ca.pem')
+  ..setTrustedCertificates('client_ca.pem');
+var http = AngelHttp.fromSecurityContext(
+  app,
+  context,
+  requestClientCertificate: true,
+);
+```
+
+A certificate that doesn't verify against the trusted CAs fails the TLS handshake, so a self-signed one (`self_signed_tls_client_auth`) only reaches the server through a [reverse proxy](#behind-a-reverse-proxy) that accepts it.
+
+### Authenticating clients by certificate
+
+A client of mutual TLS sends its `client_id` and no secret, over a connection with its certificate. Implement `verifyClientCertificate` to check that the certificate is the client's:
+
+```dart
+@override
+FutureOr<bool> verifyClientCertificate(
+    PseudoApplication client, ClientCertificate certificate, RequestContext req) {
+  // `tls_client_auth`: the subject the client registered, of a certificate
+  // of a trusted CA. `self_signed_tls_client_auth`: a key of its JWKS. Or,
+  // as here, the thumbprint of a certificate registered out of band.
+  return client.certificateThumbprint == certificate.thumbprint;
+}
+```
+
+How it fits with the other methods:
+
+- **When it is called.** For a request that has a `client_id`, no secret, and a client certificate. It applies to every endpoint that authenticates clients: token, device authorization, revocation and introspection.
+- **What `true` means.** The client is authenticated, and is confidential, as a client with a secret is. So it may use the client credentials grant and introspect tokens.
+- **What `false` means.** `verifyClient` is then given a `null` secret, as for a public client. Return `false` from `verifyClient` for a client of mutual TLS, or it could be authenticated by its `client_id` alone.
+- **A request with a secret** is authenticated by the secret, and its certificate isn't checked.
+- **What a certificate gives.** `ClientCertificate` has the certificate's `der`, its `subject` (`/CN=client/O=Example`) when it comes from the TLS connection, and its `thumbprint`. `dart:io` can't read a certificate's subject alternative names, so matching `tls_client_auth_san_*` metadata needs a certificate parser of your own.
+
+### Certificate-bound access tokens
+
+To bind an access token, store the thumbprint of the request's certificate with it when you issue it:
+
+```dart
+@override
+Future<AuthorizationTokenResponse> clientCredentialsGrant(
+    PseudoApplication? client,
+    Iterable<String> scopes,
+    RequestContext req,
+    ResponseContext res) async {
+  var certificate = await clientCertificateOf(req);
+  var token = await issueTokenSomehow(
+    client,
+    scopes,
+    certificateThumbprint: certificate?.thumbprint,
+  );
+  return AuthorizationTokenResponse(token);
+}
+```
+
+Then return it from `findAccessToken` as the `certificateThumbprint` of the `AccessToken`:
+
+- **`requireToken`** refuses a bound token with `invalid_token`, a 401, when the request doesn't present the same certificate.
+- **Introspection** gives it as `"cnf": {"x5t#S256": ...}`, so a resource server can check it itself.
+- **A JWT access token** should carry the same `cnf` claim.
+
+Bind the tokens of the clients that registered `tls_client_certificate_bound_access_tokens`, or all of them if your server requires it. Also bind the refresh tokens of public clients (RFC 8705 §4), and check them in `refreshAuthorizationToken`.
+
+### Behind a reverse proxy
+
+When a proxy terminates TLS, the server's connection is to the proxy, so `RequestContext.clientCertificate` is `null`. Configure the proxy to verify the client's certificate and forward it in a header, and override `clientCertificateOf` to read it:
+
+```dart
+@override
+FutureOr<ClientCertificate?> clientCertificateOf(RequestContext req) {
+  // As of nginx's `proxy_set_header X-Client-Cert $ssl_client_escaped_cert;`.
+  var pem = req.headers?.value('x-client-cert');
+  return pem == null
+      ? null
+      : ClientCertificate.fromPem(Uri.decodeComponent(pem));
+}
+```
+
+Only the proxy may set that header. Make the proxy replace it on every request, and don't let clients reach the server except through the proxy, or any client can claim any certificate. A certificate of `ClientCertificate.fromPem` has no `subject`.
+
+The configurations below terminate TLS, verify client certificates against `client_ca.pem` (the CAs of `tls_client_auth` clients), and forward the certificate to the Angel3 server on `127.0.0.1:3000` in `X-Client-Cert`. A client without a certificate can still connect, for the endpoints that don't need one, and then no `X-Client-Cert` reaches the server, even if the client sent one.
+
+#### nginx
+
+nginx 1.13.5 or later, for `$ssl_client_escaped_cert` (the PEM, URL-encoded):
+
+```nginx
+server {
+    listen 443 ssl;
+    server_name auth.example.com;
+
+    ssl_certificate     /etc/nginx/tls/server.pem;
+    ssl_certificate_key /etc/nginx/tls/server.key;
+
+    ssl_client_certificate /etc/nginx/tls/client_ca.pem;
+    ssl_verify_client      optional;
+    ssl_verify_depth       2;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Replaces the client's own X-Client-Cert. Without a client
+        # certificate the value is empty, and nginx sends no header.
+        proxy_set_header X-Client-Cert     $ssl_client_escaped_cert;
+    }
+}
+```
+
+A certificate that doesn't verify gets a `400 The SSL certificate error` from nginx, and never reaches the server.
+
+#### Apache httpd
+
+Apache 2.4.10 or later, with `mod_ssl`, `mod_proxy`, `mod_proxy_http` and `mod_headers`. `SSL_CLIENT_CERT` is the PEM itself, which `ClientCertificate.fromPem` reads as it is after the `Uri.decodeComponent` above:
+
+```apache
+<VirtualHost *:443>
+    ServerName auth.example.com
+
+    SSLEngine on
+    SSLCertificateFile    /etc/apache2/tls/server.pem
+    SSLCertificateKeyFile /etc/apache2/tls/server.key
+
+    SSLCACertificateFile /etc/apache2/tls/client_ca.pem
+    SSLVerifyClient      optional
+    SSLVerifyDepth       2
+
+    ProxyPreserveHost On
+    ProxyPass        / http://127.0.0.1:3000/
+    ProxyPassReverse / http://127.0.0.1:3000/
+    RequestHeader set X-Forwarded-Proto "https"
+
+    # Drop the client's own X-Client-Cert, then set it only when the
+    # client presented a certificate.
+    RequestHeader unset X-Client-Cert
+    RequestHeader set X-Client-Cert "%{SSL_CLIENT_CERT}s" "expr=%{SSL_CLIENT_VERIFY} != 'NONE'"
+</VirtualHost>
+```
+
+A certificate that doesn't verify fails the TLS handshake.
+
+#### Accepting self-signed certificates
+
+For `self_signed_tls_client_auth`, the proxy must forward certificates that it can't verify. Use `optional_no_ca` in place of `optional`, and forward the proxy's verdict as well:
+
+- **nginx:** `ssl_verify_client optional_no_ca;` and `proxy_set_header X-Client-Verify $ssl_client_verify;`
+- **Apache:** `SSLVerifyClient optional_no_ca` and `RequestHeader set X-Client-Verify "%{SSL_CLIENT_VERIFY}s"`
+
+`X-Client-Verify` is then `SUCCESS` for a certificate of `client_ca.pem`, `FAILED:` and a reason (such as `FAILED:self-signed certificate`) for any other, and `NONE` without one. As every certificate now reaches the server, a `tls_client_auth` client must also have `SUCCESS`, or anyone could present a self-made certificate of its subject:
+
+```dart
+@override
+FutureOr<bool> verifyClientCertificate(
+    PseudoApplication client, ClientCertificate certificate, RequestContext req) {
+  if (client.tokenEndpointAuthMethod == 'tls_client_auth' &&
+      req.headers?.value('x-client-verify') != 'SUCCESS') {
+    return false;
+  }
+  return client.certificateThumbprint == certificate.thumbprint;
+}
+```
+
+Read `X-Client-Verify` only when the proxy sets it: with `optional`, nothing replaces it, so a client could send its own.
+
+### Metadata and registration
+
+- **Server metadata.** Add `tls_client_auth` and/or `self_signed_tls_client_auth` to `clientAuthMethods`. Set `tlsClientCertificateBoundAccessTokens: true` if the server binds tokens. If mutual TLS is served on other URLs, such as another host, give them in `mtlsEndpointAliases`, as `{'token_endpoint': Uri.parse('https://mtls.example.com/oauth2/token')}`.
+- **`tls_client_auth`.** The client must register exactly one of `tls_client_auth_subject_dn`, `tls_client_auth_san_dns`, `tls_client_auth_san_uri`, `tls_client_auth_san_ip` and `tls_client_auth_san_email`, each a string.
+- **`self_signed_tls_client_auth`.** The client must register its `jwks` (a JSON object) or `jwks_uri`.
+- **No secret.** A client of either method is issued no `client_secret`. An update that switches a client to one of them gives `updateClient` a `null` secret, so delete the stored one; an update that switches it away from them issues a new secret.
+- **`tls_client_certificate_bound_access_tokens`.** It must be a boolean, and may be `true` only if the server sets `tlsClientCertificateBoundAccessTokens`.
 
 ## Extending
 

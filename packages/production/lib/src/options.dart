@@ -63,6 +63,15 @@ class RunnerOptions {
       'key-password',
       help:
           'The PEM key file password; prefer $keyPasswordVariable, as arguments are seen by other users.',
+    )
+    ..addOption(
+      'client-ca-file',
+      help: 'The PEM file of the CAs that may sign client certificates: asks each client for one (mutual TLS).',
+    )
+    ..addFlag(
+      'require-client-certificate',
+      negatable: false,
+      help: 'Refuse a client that presents no certificate; needs --client-ca-file.',
     );
 
   /// The environment variable of the certificate's password, used if
@@ -89,6 +98,16 @@ class RunnerOptions {
 
   final String hostname;
   final String? certificateFile, keyFile, certificatePassword, keyPassword;
+
+  /// The PEM file of the CAs that may sign client certificates, of
+  /// `--client-ca-file`: if given, the server asks each client for a
+  /// certificate (mutual TLS), which `RequestContext.clientCertificate`
+  /// gives, and trusts these CAs to sign it.
+  final String? clientCaFile;
+
+  /// Whether a client that presents no certificate fails the TLS
+  /// handshake, of `--require-client-certificate`. Needs [clientCaFile].
+  final bool requireClientCertificate;
   final int concurrency, port;
   final bool useZone, respawn, quiet, ssl, http2;
   final Map<String, Object?> removeResponseHeaders = {};
@@ -107,6 +126,8 @@ class RunnerOptions {
     this.http2 = false,
     this.certificatePassword,
     this.keyPassword,
+    this.clientCaFile,
+    this.requireClientCertificate = false,
   });
 
   factory RunnerOptions.fromArgResults(ArgResults argResults) {
@@ -127,6 +148,9 @@ class RunnerOptions {
       keyPassword:
           argResults['key-password'] as String? ??
           Platform.environment[keyPasswordVariable],
+      clientCaFile: argResults['client-ca-file'] as String?,
+      requireClientCertificate:
+          argResults['require-client-certificate'] as bool? ?? false,
     );
   }
 }

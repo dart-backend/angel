@@ -65,6 +65,12 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
         InternetAddress("127.0.0.1");
   }
 
+  X509Certificate? _clientCertificate;
+
+  // Read once, in [from]: dart:io throws for a connection that is closed.
+  @override
+  X509Certificate? get clientCertificate => _clientCertificate;
+
   @override
   HttpSession? get session {
     return rawRequest?.session;
@@ -108,6 +114,13 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
     ctx._override = override;
     ctx._path = path;
     ctx._io = request;
+    try {
+      ctx._clientCertificate = request.certificate;
+    } catch (_) {
+      // The connection closed already, so the request has no one to answer:
+      // dart:io throws a StateError once the socket is destroyed, and a
+      // TypeError once it is only closed.
+    }
 
     return Future.value(ctx);
   }

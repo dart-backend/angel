@@ -22,6 +22,7 @@ To build an OAuth2 authorization server instead, see [`angel3_auth_server`](http
   - [Keeping the tokens](#keeping-the-tokens)
   - [More parameters of the authorization URL](#more-parameters-of-the-authorization-url)
   - [Client authentication at the token endpoint](#client-authentication-at-the-token-endpoint)
+    - [Mutual TLS](#mutual-tls)
   - [Custom scope delimiter](#custom-scope-delimiter)
   - [Handling non-JSON responses](#handling-non-json-responses)
   - [Migrating from 9.x to 10.0.0](#migrating-from-9x-to-1000)
@@ -289,6 +290,31 @@ var strategy = OAuth2Strategy(
 ## Client authentication at the token endpoint
 
 The client ID and secret are sent to the token endpoint with HTTP Basic authentication (`client_secret_basic`). For a provider that wants them in the form of the request (`client_secret_post`), pass `basicAuth: false`. A client without a secret sends its `client_id` alone.
+
+### Mutual TLS
+
+For a provider that authenticates clients by a TLS client certificate (RFC 8705), give the strategy an `httpClient` whose `SecurityContext` has the client's certificate and key, and an empty `clientSecret`. The token requests then go over a connection with the certificate, and send the `client_id` alone:
+
+```dart
+var context = SecurityContext()
+  ..useCertificateChain('client.pem')
+  ..usePrivateKey('client.key');
+var strategy = OAuth2Strategy(
+  ExternalAuthOptions(
+    clientId: '<client-id>',
+    clientSecret: '',
+    redirectUri: Uri.parse('https://app.example/auth/example/callback'),
+  ),
+  Uri.parse('https://id.example.com/oauth2/authorize'),
+  // The `mtls_endpoint_aliases` of the provider's metadata, if it has them.
+  Uri.parse('https://mtls.example.com/oauth2/token'),
+  verifier,
+  onError,
+  httpClient: IOClient(HttpClient(context: context)),
+);
+```
+
+If the provider binds access tokens to the certificate, the verifier's `oauth2.Client` also calls the provider's API with it, so the API accepts them.
 
 ## Custom scope delimiter
 

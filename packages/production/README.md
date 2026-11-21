@@ -17,7 +17,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_production: ^10.0.0
+  angel3_production: ^10.1.0
 ```
 
 ## Usage
@@ -130,30 +130,40 @@ A batteries-included, full-featured, full-stack framework in Dart.
 https://angel3-framework.web.app
 
 Options:
--h, --help                    Print this help information.
-    --[no-]respawn            Automatically respawn crashed application instances.
-                              (defaults to on)
-
-    --use-zone                Create a new Zone for each request.
-    --quiet                   Completely mute logging.
-    --ssl                     Listen for HTTPS instead of HTTP.
-    --http2                   Listen for HTTP/2 instead of HTTP/1.1.
--a, --address                 The address to listen on.
-                              (defaults to "127.0.0.1")
-
--j, --concurrency             The number of isolates to spawn.
-                              (defaults to "4")
-
--p, --port                    The port to listen on.
-                              (defaults to "3000")
-
-    --certificate-file        The PEM certificate file to read.
-    --certificate-password    The PEM certificate file password.
-    --key-file                The PEM key file to read.
-    --key-password            The PEM key file password.
+-h, --help                          Print this help information.
+    --[no-]respawn                  Automatically respawn crashed application instances.
+                                    (defaults to on)
+    --use-zone                      Create a new Zone for each request.
+    --quiet                         Completely mute logging.
+    --ssl                           Listen for HTTPS instead of HTTP.
+    --http2                         Listen for HTTP/2 instead of HTTP/1.1.
+-a, --address                       The address to listen on.
+                                    (defaults to "127.0.0.1")
+-j, --concurrency                   The number of isolates to spawn.
+                                    (defaults to "4")
+-p, --port                          The port to listen on.
+                                    (defaults to "3000")
+    --certificate-file              The PEM certificate file to read.
+    --certificate-password          The PEM certificate file password; prefer ANGEL_CERTIFICATE_PASSWORD, as arguments are seen by other users.
+    --key-file                      The PEM key file to read.
+    --key-password                  The PEM key file password; prefer ANGEL_KEY_PASSWORD, as arguments are seen by other users.
+    --client-ca-file                The PEM file of the CAs that may sign client certificates: asks each client for one (mutual TLS).
+    --require-client-certificate    Refuse a client that presents no certificate; needs --client-ca-file.
 ```
 
 Command-line arguments are visible to other users of the machine (`ps`), and end up in shell history, so give the passwords in the `ANGEL_CERTIFICATE_PASSWORD` and `ANGEL_KEY_PASSWORD` environment variables instead; an option given on the command line takes precedence.
+
+### Mutual TLS
+
+With `--client-ca-file`, the server asks each client for a certificate (mutual TLS), for `--ssl` and `--http2` alike, and accepts those that the CAs of the file sign; a handler reads it as `req.clientCertificate`. A client may still connect without one, unless `--require-client-certificate` is given too:
+
+```bash
+dart example/main.dart --ssl \
+  --certificate-file server.pem --key-file server.key \
+  --client-ca-file client_ca.pem --require-client-certificate
+```
+
+A certificate that the CAs did not sign fails the TLS handshake. Leave out `--require-client-certificate` for a server that clients without a certificate use too, such as an OAuth 2.0 server that browsers reach.
 
 ## Migrating from 9.x to 10.0.0
 

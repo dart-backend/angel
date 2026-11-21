@@ -16,12 +16,24 @@ import 'http2_response_context.dart';
 import 'package:uuid/uuid.dart';
 
 /// Boots a shared server instance. Use this if launching multiple isolates.
+///
+/// [requestClientCertificate] and [requireClientCertificate] are as of
+/// [AngelHttp2.new].
 Future<SecureServerSocket> startSharedHttp2(
   Object? address,
   int port,
-  SecurityContext ctx,
-) {
-  return SecureServerSocket.bind(address, port, ctx, shared: true);
+  SecurityContext ctx, {
+  bool requestClientCertificate = false,
+  bool requireClientCertificate = false,
+}) {
+  return SecureServerSocket.bind(
+    address,
+    port,
+    ctx,
+    shared: true,
+    requestClientCertificate: requestClientCertificate,
+    requireClientCertificate: requireClientCertificate,
+  );
 }
 
 /// Adapts `package:http2`'s [ServerTransportConnection] to serve Angel.
@@ -77,6 +89,18 @@ class AngelHttp2
     }
   }
 
+  /// An HTTP/2 server of [securityContext].
+  ///
+  /// If [requestClientCertificate], the server asks each client for a
+  /// certificate (mutual TLS), which [RequestContext.clientCertificate]
+  /// gives, for HTTP/2 requests and the HTTP/1 ones of [allowHttp1] alike.
+  /// A client may still connect without one. Trust the certificates that
+  /// may sign one with [SecurityContext.setClientAuthorities] and
+  /// [SecurityContext.setTrustedCertificates]: a client whose certificate
+  /// does not verify fails the handshake.
+  ///
+  /// If [requireClientCertificate], the server asks for one too, and a
+  /// client that presents none fails the handshake.
   factory AngelHttp2(
     Angel app,
     SecurityContext securityContext, {
@@ -84,11 +108,19 @@ class AngelHttp2
     bool allowHttp1 = false,
     ServerSettings? settings,
     Duration sessionTimeout = const Duration(minutes: 20),
+    bool requestClientCertificate = false,
+    bool requireClientCertificate = false,
   }) {
     return AngelHttp2.custom(
       app,
       securityContext,
-      SecureServerSocket.bind,
+      (address, port, ctx) => SecureServerSocket.bind(
+        address,
+        port,
+        ctx,
+        requestClientCertificate: requestClientCertificate,
+        requireClientCertificate: requireClientCertificate,
+      ),
       useZone: useZone,
       allowHttp1: allowHttp1,
       settings: settings,

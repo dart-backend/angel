@@ -79,7 +79,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^10.0.0
+  angel3_framework: ^10.2.0
 ```
 
 ## Usage
@@ -155,6 +155,50 @@ app.post('/upload', uploadHandler, middleware: [
 ```
 
 Set `app.maxBodySize = null` to remove the limit. In production, resolved routes are cached per request path; the cache holds at most `app.maxHandlerCacheSize` entries (1024 by default, `0` disables it).
+
+## Mutual TLS
+
+With mutual TLS (mTLS), a client also presents a certificate in the TLS handshake, which identifies it to the server, as OAuth 2.0 clients may do (RFC 8705). To ask clients for one, start the server with `requestClientCertificate: true`, and trust the certificate authorities that may sign theirs:
+
+```dart
+import 'dart:io';
+
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+
+Future<void> main() async {
+  var app = Angel();
+  app.get('/whoami', (req, res) {
+    var certificate = req.clientCertificate;
+    if (certificate == null) throw AngelHttpException.notAuthenticated();
+    return certificate.subject;
+  });
+
+  var context = SecurityContext()
+    ..useCertificateChain('server.pem')
+    ..usePrivateKey('server.key')
+    // The CAs whose client certificates are accepted.
+    ..setClientAuthorities('client_ca.pem')
+    ..setTrustedCertificates('client_ca.pem');
+
+  var http = AngelHttp.fromSecurityContext(
+    app,
+    context,
+    requestClientCertificate: true,
+  );
+  await http.startServer('0.0.0.0', 8443);
+}
+```
+
+How it behaves:
+
+* **`RequestContext.clientCertificate`** is the certificate of the request's connection, or `null` if the client presented none. A handler decides whether a certificate is required.
+* **Requiring a certificate.** With `requireClientCertificate: true` in place of `requestClientCertificate`, a client that presents no certificate fails the handshake, so every request that reaches the app has one. Use it for a server that only mTLS clients use: an OAuth 2.0 server must not, as browsers and public clients connect to it without one.
+* **Check who signed it.** A `SecurityContext` that trusts more than your clients' CAs, such as `SecurityContext(withTrustedRoots: true)`, accepts any certificate that they sign, so check its `issuer` or `subject` too.
+* **Verification happens in the handshake.** A certificate that doesn't verify against the trusted certificates of the `SecurityContext`, such as a self-signed one, fails the handshake, so the request never reaches the app.
+* **HTTP/2.** `AngelHttp2` takes `requestClientCertificate` and `requireClientCertificate` too, for its HTTP/2 requests and the HTTP/1 requests of `allowHttp1`. So do `startSharedSecure` and `startSharedHttp2`, for servers shared by several isolates, and `AngelHttp.secure`, whose `clientAuthoritiesPath` is the .pem of the trusted CAs.
+* **Behind a reverse proxy** that terminates TLS, `clientCertificate` is `null`, as the server's TLS connection is to the proxy. A proxy may forward the client's certificate in a header, which the app must read itself, and only from the proxy.
+* **What a certificate gives.** `X509Certificate` of `dart:io` has its `subject`, `issuer`, validity dates, `der`, `pem` and `sha1`. The SHA-256 of its `der` is the thumbprint that RFC 8705 binds tokens to.
 
 ## Full-stack with Kelicap
 

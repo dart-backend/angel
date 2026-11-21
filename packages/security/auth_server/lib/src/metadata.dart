@@ -90,6 +90,18 @@ class ServerMetadata {
   /// A page of the documentation of the server, for developers.
   final Uri? serviceDocumentation;
 
+  /// Whether the server issues access tokens bound to the client
+  /// certificate of their request (RFC 8705 §3.3), as
+  /// `AccessToken.certificateThumbprint`; a client may then register
+  /// `tls_client_certificate_bound_access_tokens`.
+  final bool tlsClientCertificateBoundAccessTokens;
+
+  /// The URLs of the endpoints at which the server asks for client
+  /// certificates, by the names of their metadata, such as
+  /// `token_endpoint`, if they are not those above, as of another host
+  /// (RFC 8705 §5).
+  final Map<String, Uri>? mtlsEndpointAliases;
+
   /// Other metadata, which is added last, and so may replace any.
   final Map<String, dynamic> extra;
 
@@ -110,6 +122,8 @@ class ServerMetadata {
     ],
     this.scopes,
     this.serviceDocumentation,
+    this.tlsClientCertificateBoundAccessTokens = false,
+    this.mtlsEndpointAliases,
     this.extra = const {},
   }) {
     var local = loopbackHosts.contains(issuer.host);
@@ -146,6 +160,8 @@ class ServerMetadata {
     Iterable<String>? clientAuthMethods,
     Iterable<String>? scopes,
     Uri? serviceDocumentation,
+    bool? tlsClientCertificateBoundAccessTokens,
+    Map<String, Uri>? mtlsEndpointAliases,
     Map<String, dynamic>? extra,
   }) => ServerMetadata(
     issuer: issuer ?? this.issuer,
@@ -161,6 +177,10 @@ class ServerMetadata {
     clientAuthMethods: clientAuthMethods ?? this.clientAuthMethods,
     scopes: scopes ?? this.scopes,
     serviceDocumentation: serviceDocumentation ?? this.serviceDocumentation,
+    tlsClientCertificateBoundAccessTokens:
+        tlsClientCertificateBoundAccessTokens ??
+        this.tlsClientCertificateBoundAccessTokens,
+    mtlsEndpointAliases: mtlsEndpointAliases ?? this.mtlsEndpointAliases,
     extra: extra ?? this.extra,
   );
 
