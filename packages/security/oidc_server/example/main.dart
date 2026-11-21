@@ -176,7 +176,11 @@ class _Provider extends OpenIdServer<_Client, String> {
       scopes: stored.scopes,
       expiresAt: DateTime.now().add(const Duration(hours: 1)),
     );
-    if (!stored.openId.isOpenId) return AuthorizationTokenResponse(accessToken);
+    // Of the scopes granted, as the app may grant openid to a request of
+    // no scope, which is not isOpenId.
+    if (!stored.scopes.contains('openid')) {
+      return AuthorizationTokenResponse(accessToken);
+    }
     return IdTokenResponse(
       accessToken,
       expiresIn: 3600,

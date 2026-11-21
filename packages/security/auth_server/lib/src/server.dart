@@ -1269,11 +1269,16 @@ abstract class AuthorizationServer<Client, User> {
   /// Connect, whose metadata the server does not know. Its metadata of the
   /// server's own is checked after, as of a registration.
   ///
+  /// Of an update, of the [registrationManagementEndpoint], [current] is
+  /// the registration as it is, so that a change of it may be refused;
+  /// of a registration, `null`.
+  ///
   /// By default, [metadata] as it is.
   FutureOr<Map<String, dynamic>> checkClientMetadata(
     Map<String, dynamic> metadata,
-    RequestContext req,
-  ) => metadata;
+    RequestContext req, {
+    ClientRegistration? current,
+  }) => metadata;
 
   /// Stores the client of [registration], of its id, its secret, hashed,
   /// and its [ClientRegistration.metadata], so that [findClient] finds it,
@@ -1550,7 +1555,11 @@ abstract class AuthorizationServer<Client, User> {
             // Of its token, which the response must give (RFC 7592 §3).
             return current.copyWith(registrationAccessToken: token).toJson();
           case 'PUT':
-            var body = await checkClientMetadata(await _jsonObjectOf(req), req);
+            var body = await checkClientMetadata(
+              await _jsonObjectOf(req),
+              req,
+              current: current,
+            );
             if (body['client_id'] != clientId) {
               throw _invalidMetadata(
                 'The "client_id" must be that of the registration.',

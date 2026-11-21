@@ -20,6 +20,7 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
   - [Server Metadata](#server-metadata)
   - [Client Registration](#client-registration)
     - [Managing Registrations](#managing-registrations)
+  - [Extending](#extending)
 
 ## Installation
 
@@ -462,3 +463,36 @@ Store the `registrationAccessToken` of each registration hashed, as its secret, 
 - A DELETE gives the registration to `deleteClient`, which deletes the client and revokes its tokens, and answers a 204.
 
 By default, `updateClient` and `deleteClient` refuse, `access_denied`, a 403, so that a server may give only reads.
+
+## Extending
+
+A protocol built on OAuth 2.0, such as OpenID Connect (`angel3_oidc_server`), can check parameters and metadata that the server does not know through these hooks. Call `super` when you override one, so that other extensions still run.
+
+`checkAuthorizationRequest` is given the parameters of each authorization request, from the query or from the form of a POST, after the server has checked the client, the response type and PKCE, and before `requestAuthorizationCode`. Throw an `AuthorizationException`, such as `invalid_request`, to refuse the request. When the client has a registered redirect URI, from `registeredRedirectUri`, the error is redirected to it like the endpoint's other errors. Otherwise it is thrown.
+
+```dart
+@override
+FutureOr<void> checkAuthorizationRequest(PseudoApplication client,
+    Map<String, dynamic> params, String state, RequestContext req) {
+  if (params['x_mode'] case var mode? when mode != 'fast') {
+    throw AuthorizationException(ErrorResponse(
+        ErrorResponse.invalidRequest, '"x_mode" must be "fast".', state));
+  }
+  return super.checkAuthorizationRequest(client, params, state, req);
+}
+```
+
+`checkClientMetadata` is given the metadata of a registration, or of a PUT that updates one, once the request is authenticated and before the server checks its own metadata. Return the metadata, with any defaults added, or throw an `AuthorizationException` of `invalid_client_metadata` or `invalid_redirect_uri` with a status of 400. On an update, `current` is the registration as it is now, so a change can be refused; on a new registration it is `null`.
+
+```dart
+@override
+FutureOr<Map<String, dynamic>> checkClientMetadata(
+    Map<String, dynamic> metadata, RequestContext req,
+    {ClientRegistration? current}) async {
+  var checked =
+      await super.checkClientMetadata(metadata, req, current: current);
+  return {'x_tier': 'free', ...checked};
+}
+```
+
+`redirectUriProblem` gives the reason a URI cannot be a redirect URI under the registration rules above, or `null` if it can, so that other redirect URIs, such as `post_logout_redirect_uris`, follow the same rules. `loopbackHosts` lists the hosts for which `http` is allowed. `ServerMetadata.copyWith` changes some of the metadata, such as adding a scope. A `null` argument keeps the current value, so to remove one, build a new `ServerMetadata`.

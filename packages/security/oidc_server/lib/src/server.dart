@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:angel3_auth_server/angel3_auth_server.dart';
 import 'package:angel3_framework/angel3_framework.dart';
@@ -44,14 +45,20 @@ const standardScopeClaims = <String, List<String>>{
 ///
 /// ```dart
 /// var openId = req.container!.make<OpenIdRequest>();
-/// if (openId.isOpenId) storeWithTheCode(nonce: openId.nonce);
+/// storeWithTheCode(scopes: granted, openId: openId);
+/// // At the token endpoint: of the scopes granted, not of isOpenId, as an
+/// // app that grants `openid` to a request of no scope issues an ID token
+/// // of a request that is not isOpenId.
+/// if (stored.scopes.contains('openid')) issueIdToken(request: stored.openId);
 /// ```
 ///
 /// Making it throws `invalid_request` of a malformed `max_age` or `prompt`,
 /// which the endpoint redirects, as its other errors.
 class OpenIdRequest {
-  /// Whether the request asks for the `openid` scope, of which an ID token
-  /// is issued.
+  /// Whether the request asks for the `openid` scope. Decide whether to
+  /// issue an ID token of the scopes granted, rather than of this: a
+  /// request of no scope ([hasScope]) is not [isOpenId], though the app may
+  /// grant it `openid`.
   final bool isOpenId;
 
   /// The `nonce` of the request, which the ID token of its code must give
@@ -71,11 +78,10 @@ class OpenIdRequest {
   /// The `state` of the request, of which its errors are redirected.
   final String state;
 
-  /// A key of the request, of its parameters, which is that of the request
-  /// sent again of the same parameters, as once the user signed in: keep
-  /// what was done of it in the session of the user, by this key, and give
-  /// it to [interactions] as `completed`.
-  final String key;
+  /// Whether the request gave a `scope`, which a blank one did not. Of
+  /// none, the app may grant `openid` by default, and so issue an ID token
+  /// of a request that is not [isOpenId].
+  final bool hasScope;
 
   OpenIdRequest({
     required this.isOpenId,
@@ -83,21 +89,12 @@ class OpenIdRequest {
     this.prompt = const {},
     this.maxAge,
     this.state = '',
-    this.key = '',
+    this.hasScope = true,
   });
 
-  /// The [key] of a request of [params]: of all of them, sorted, so that a
-  /// request of another `acr_values`, `login_hint` or the like, which asks
-  /// for another login, is of another key.
-  static String _keyOf(Map<String, dynamic> params) {
-    var names = params.keys.toList()..sort();
-    var canonical = json.encode([
-      for (var name in names) [name, params[name]?.toString()],
-    ]);
-    return base64Url
-        .encode(sha256.convert(utf8.encode(canonical)).bytes)
-        .replaceAll('=', '');
-  }
+  /// The most seconds of a `max_age`, some 68 years: of more, which is as
+  /// of none in effect, so that no app overflows a [Duration] of it.
+  static const maxMaxAge = 0x7fffffff;
 
   /// What the provider must do with the user before it issues a code of
   /// this request (OpenID Connect Core 1.0 §3.1.2.3), of whether they are
@@ -110,44 +107,33 @@ class OpenIdRequest {
   /// `account_selection_required` or `consent_required`, which the
   /// authorization endpoint redirects.
   ///
-  /// Of `prompt=login`, `select_account` or `consent`, or of `max_age=0`,
-  /// the user must be asked, whatever was done before: once they have
-  /// been, the app sends them back to the authorization endpoint, of a
-  /// request of the same parameters, which would ask them again, and again.
-  /// Give [completed], what the app did of the request of this [key], which
-  /// it keeps in the user's session, on the server: never of the request,
-  /// as of a parameter of the URL it returns to, which the user could set,
-  /// and so skip a login the client asked for. A login of it satisfies
-  /// `prompt=login` and `max_age` alike.
+  /// Ask it once, of the request as it first came: of `prompt=login`,
+  /// `select_account` or `consent`, or of `max_age=0`, the user is asked,
+  /// whatever was done before. Once they have been, issue the code of the
+  /// request yourself, with `completeAuthorizationCode`, rather than send
+  /// them back to the authorization endpoint, of which this would ask them
+  /// again: keep what the code needs, as the client, redirect URI, scopes,
+  /// `state`, this request and the `Pkce`, in their session on the server,
+  /// by an id of its own, random and used once (see the README).
   Set<OpenIdInteraction> interactions({
     required bool signedIn,
     DateTime? authTime,
     bool consented = true,
     int? defaultMaxAge,
-    Set<OpenIdInteraction> completed = const {},
     DateTime? now,
   }) {
     var maxAge = this.maxAge ?? defaultMaxAge;
     var time = now ?? DateTime.now();
-    var loggedIn = signedIn && completed.contains(OpenIdInteraction.login);
     // Of max_age=0, as of prompt=login (OpenID Connect Core 1.0 §3.1.2.1),
-    // a login whenever the user authenticated, but one of this request. Of
-    // seconds, so that no max_age, however large, overflows a Duration.
+    // a login whenever the user authenticated.
     var stale =
         maxAge != null &&
-        (maxAge == 0
-            ? !loggedIn
-            : authTime == null || _olderThan(time, authTime, maxAge));
+        (maxAge == 0 || authTime == null || _olderThan(time, authTime, maxAge));
     var needed = {
-      if (!signedIn || stale || (prompt.contains('login') && !loggedIn))
+      if (!signedIn || stale || prompt.contains('login'))
         OpenIdInteraction.login,
-      if (prompt.contains('select_account') &&
-          !completed.contains(OpenIdInteraction.selectAccount))
-        OpenIdInteraction.selectAccount,
-      if (!consented ||
-          (prompt.contains('consent') &&
-              !completed.contains(OpenIdInteraction.consent)))
-        OpenIdInteraction.consent,
+      if (prompt.contains('select_account')) OpenIdInteraction.selectAccount,
+      if (!consented || prompt.contains('consent')) OpenIdInteraction.consent,
     };
     if (prompt.contains('none') && needed.isNotEmpty) {
       var (error, description) = switch (needed.first) {
@@ -199,12 +185,11 @@ class OpenIdRequest {
     var scope = params['scope']?.toString();
     if (scope != null && scope.trim().isEmpty) scope = null;
     var isOpenId = (scope ?? '').split(_whitespace).contains('openid');
-    var key = _keyOf(params);
     // Of an OAuth2 request alone, of scopes of no `openid`: what it gives of
     // them is not of OpenID Connect, so not checked. Of no scope, of which
     // the app may grant `openid` by default, they are.
     if (!isOpenId && scope != null) {
-      return OpenIdRequest(isOpenId: false, state: state, key: key);
+      return OpenIdRequest(isOpenId: false, state: state);
     }
     var nonce = params['nonce']?.toString();
 
@@ -225,9 +210,9 @@ class OpenIdRequest {
     if (params['max_age'] case var value?) {
       // Of digits alone, not of hex nor a sign, as `int.tryParse` takes.
       var text = value.toString();
-      // Of digits too many for an int, a max_age of no end.
+      // Of more than [maxMaxAge], as of digits too many for an int, that.
       maxAge = _digits.hasMatch(text)
-          ? int.tryParse(text) ?? _maxDurationSeconds + 1
+          ? min(int.tryParse(text) ?? maxMaxAge, maxMaxAge)
           : null;
       if (maxAge == null) {
         throw invalid('The "max_age" parameter must be a number of seconds.');
@@ -239,7 +224,7 @@ class OpenIdRequest {
       prompt: prompt,
       maxAge: maxAge,
       state: state,
-      key: key,
+      hasScope: scope != null,
     );
   }
 }
@@ -276,7 +261,10 @@ class IdTokenResponse extends AuthorizationTokenResponse {
 /// var idToken = issueIdToken(
 ///   user: stored.user,
 ///   client: client,
-///   nonce: stored.nonce,
+///   // Of its nonce and max_age, and of what the client registered, if it
+///   // did: its algorithm, and whether auth_time is required.
+///   request: stored.openId,
+///   clientMetadata: stored.clientMetadata,
 ///   authTime: stored.authTime,
 ///   accessToken: accessToken,
 /// );
@@ -401,7 +389,7 @@ abstract class OpenIdServer<Client, User>
   );
 
   /// The signed ID token (OpenID Connect Core 1.0 §2) of [user], for
-  /// [client], of the key that is first of [signingKeys].
+  /// [client], of the first key of [signingKeys] of its algorithm.
   ///
   /// Give it the [nonce] of the authorization request of the code, if it
   /// had one; [authTime], when the user authenticated, which is required if
@@ -435,7 +423,7 @@ abstract class OpenIdServer<Client, User>
     OpenIdRequest? request,
     OpenIdClientMetadata? clientMetadata,
   }) {
-    if (request != null && !request.isOpenId) {
+    if (request != null && !request.isOpenId && request.hasScope) {
       throw ArgumentError.value(
         request,
         'request',
@@ -706,18 +694,11 @@ abstract class OpenIdServer<Client, User>
   @override
   FutureOr<Map<String, dynamic>> checkClientMetadata(
     Map<String, dynamic> metadata,
-    RequestContext req,
-  ) {
-    // Of a Future of any type argument, as an override's may be.
-    var checked = super.checkClientMetadata(metadata, req) as Object;
-    if (checked is Future) {
-      return checked.then(
-        (value) =>
-            _checkOpenIdMetadata(Map<String, dynamic>.from(value as Map)),
-      );
-    }
-    return _checkOpenIdMetadata(checked as Map<String, dynamic>);
-  }
+    RequestContext req, {
+    ClientRegistration? current,
+  }) async => _checkOpenIdMetadata(
+    await super.checkClientMetadata(metadata, req, current: current),
+  );
 
   /// The OpenID Connect metadata of [metadata], of [checkClientMetadata].
   Map<String, dynamic> _checkOpenIdMetadata(Map<String, dynamic> metadata) {
@@ -790,6 +771,10 @@ abstract class OpenIdServer<Client, User>
       'subject_type': subjectType,
       'require_auth_time': requireAuthTime,
       'application_type': applicationType,
+      // Capped, as a request's max_age, so that no app overflows a
+      // Duration of it.
+      if (defaultMaxAge != null)
+        'default_max_age': min(defaultMaxAge as int, OpenIdRequest.maxMaxAge),
     };
   }
 

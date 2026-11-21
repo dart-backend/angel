@@ -367,8 +367,9 @@ class _Server extends _DefaultServer {
   @override
   Map<String, dynamic> checkClientMetadata(
     Map<String, dynamic> metadata,
-    RequestContext req,
-  ) {
+    RequestContext req, {
+    ClientRegistration? current,
+  }) {
     if (metadata['x_refuse'] == true) {
       throw AuthorizationException(
         ErrorResponse(

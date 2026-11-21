@@ -130,7 +130,9 @@ class ServerMetadata {
     }
   }
 
-  /// This metadata, of the values given in place of its own.
+  /// This metadata, of the values given in place of its own. A `null` keeps
+  /// the value of this metadata: to remove one, as its [scopes], build a
+  /// [ServerMetadata] instead.
   ServerMetadata copyWith({
     Uri? issuer,
     Uri? authorizationEndpoint,

@@ -400,7 +400,7 @@ class _Provider extends OpenIdServer<_App, _User> {
       user: stored.user,
       scopes: stored.scopes,
     );
-    if (!stored.openId.isOpenId) {
+    if (!stored.scopes.contains('openid')) {
       return AuthorizationTokenResponse(accessToken, scope: stored.scopes);
     }
     return IdTokenResponse(

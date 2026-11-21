@@ -75,37 +75,45 @@ void main() {
       );
     });
 
-    test('of what was completed of the request are not asked again', () {
+    test('of prompt are always asked, of the request as it first came', () {
       var old = now.subtract(const Duration(days: 1));
-      for (var (r, done) in [
-        (request(prompt: {'login'}), OpenIdInteraction.login),
-        (request(maxAge: 0), OpenIdInteraction.login),
-        (request(prompt: {'consent'}), OpenIdInteraction.consent),
-        (request(prompt: {'select_account'}), OpenIdInteraction.selectAccount),
+      for (var (r, asked) in [
+        (request(prompt: {'login'}), {OpenIdInteraction.login}),
+        (request(maxAge: 0), {OpenIdInteraction.login}),
+        (request(prompt: {'consent'}), {OpenIdInteraction.consent}),
+        (
+          request(prompt: {'select_account'}),
+          {OpenIdInteraction.selectAccount},
+        ),
+        (
+          request(prompt: {'login', 'consent'}),
+          {OpenIdInteraction.login, OpenIdInteraction.consent},
+        ),
       ]) {
-        expect(r.interactions(signedIn: true, authTime: old, now: now), {
-          done,
-        }, reason: '${r.prompt} ${r.maxAge}');
+        // Exactly what was asked, nothing more.
         expect(
-          r.interactions(
-            signedIn: true,
-            authTime: old,
-            completed: {done},
-            now: now,
-          ),
-          isEmpty,
+          r.interactions(signedIn: true, authTime: now, now: now),
+          asked,
           reason: '${r.prompt} ${r.maxAge}',
         );
       }
-      // Of a max_age of more than 0, of the time the user signed in, which a
-      // completed login does not stand in for.
+      // Of a user not signed in, a login, whatever the prompt.
       expect(
-        request(maxAge: 60).interactions(
+        request(prompt: {'consent'}).interactions(signedIn: false, now: now),
+        {OpenIdInteraction.login, OpenIdInteraction.consent},
+      );
+      expect(
+        request().interactions(
           signedIn: true,
-          authTime: old,
-          completed: {OpenIdInteraction.login},
+          authTime: now,
+          consented: false,
           now: now,
         ),
+        {OpenIdInteraction.consent},
+      );
+      expect(
+        request(maxAge: 60)
+            .interactions(signedIn: true, authTime: old, now: now),
         {OpenIdInteraction.login},
       );
       // Of the exact time, not of whole seconds.
@@ -117,31 +125,18 @@ void main() {
         ),
         {OpenIdInteraction.login},
       );
-      // Of no user signed in, a login, whatever was completed.
-      expect(
-        request().interactions(
-          signedIn: false,
-          completed: {OpenIdInteraction.login},
-        ),
-        {OpenIdInteraction.login},
-      );
     });
 
-    test('of a key of the request, the same of it sent again', () {
-      Map<String, String> params({String state = 'st'}) => {
-        'response_type': 'code',
-        'client_id': 'app',
-        'scope': 'openid',
-        'state': state,
-        'prompt': 'login',
-      };
-      var a = OpenIdRequest.of(params(), 'st');
-      expect(a.key, OpenIdRequest.of(params(), 'st').key);
-      expect(a.key, isNot(OpenIdRequest.of(params(state: 'x'), 'x').key));
-      // Of a step up, of other acr_values: another login, another key.
+    test('of a default_max_age of no Duration, overflow not', () {
+      // 2^62 seconds overflow a Duration's microseconds.
       expect(
-        a.key,
-        isNot(OpenIdRequest.of({...params(), 'acr_values': 'mfa'}, 'st').key),
+        request().interactions(
+          signedIn: true,
+          authTime: recently,
+          defaultMaxAge: 1 << 62,
+          now: now,
+        ),
+        isEmpty,
       );
     });
 
@@ -223,11 +218,20 @@ void main() {
       }
     });
 
-    test('of a max_age of more digits than an int, of no end', () {
+    test('of a max_age above maxMaxAge, capped at it', () {
       var r = OpenIdRequest.of({
         'scope': 'openid',
         'max_age': '99999999999999999999',
       }, 's');
+      // Capped, so that an app's Duration of it does not overflow.
+      expect(r.maxAge, OpenIdRequest.maxMaxAge);
+      expect(
+        OpenIdRequest.of({
+          'scope': 'openid',
+          'max_age': '9999999999999',
+        }, 's').maxAge,
+        OpenIdRequest.maxMaxAge,
+      );
       expect(
         r.interactions(
           signedIn: true,
@@ -392,6 +396,14 @@ void main() {
         );
         expect(stored.postLogoutRedirectUris, [_postLogout]);
         expect(stored.defaultMaxAge, 3600);
+        // Capped at maxMaxAge, as a request's max_age.
+        var big = await register({'default_max_age': 1 << 40});
+        expect(big.statusCode, 201, reason: big.body);
+        expect(
+          OpenIdClientMetadata.of(provider.registered.last.metadata)
+              .defaultMaxAge,
+          OpenIdRequest.maxMaxAge,
+        );
       });
 
       test('of the openid scope, of metadata of scopes of none', () async {
@@ -526,7 +538,8 @@ void main() {
       },
     );
 
-    test('an ID token of a request of no openid scope is an ArgumentError', () {
+    test('an ID token of a request of no openid scope is an ArgumentError, '
+        'but of one of no scope, which may be granted it', () {
       expect(
         () => provider.issueIdToken(
           user: 'alice',
@@ -535,6 +548,17 @@ void main() {
         ),
         throwsArgumentError,
       );
+      var scopeless = OpenIdRequest.of({'nonce': 'n'}, 's');
+      expect(scopeless.hasScope, isFalse);
+      var token = provider.issueIdToken(
+        user: 'alice',
+        client: 'app',
+        request: scopeless,
+      );
+      var claims = json.decode(
+        utf8.decode(base64Url.decode(base64Url.normalize(token.split('.')[1]))),
+      ) as Map;
+      expect(claims['nonce'], 'n');
     });
 
     test('an access token that is not ASCII is an ArgumentError', () {

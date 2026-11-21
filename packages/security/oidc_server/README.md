@@ -99,6 +99,8 @@ var openId = req.container!.make<OpenIdRequest>();
 // openId.isOpenId, openId.nonce, openId.prompt, openId.maxAge
 ```
 
+Decide whether to issue an ID token of the scopes granted, stored with the code, not of `isOpenId`: a request of no scope is not `isOpenId`, though the app may grant it `openid` by default, and then issue one.
+
 Of `prompt=none`, the user must not be prompted, and of `max_age`, they must have authenticated within it, or authenticate again: see [Signing in](#signing-in-of-prompt-and-max_age).
 
 Issue the ID token with the access token in `exchangeAuthorizationCodeForToken`, as an `IdTokenResponse`:
@@ -124,7 +126,9 @@ It has the `iss`, `sub`, `aud`, `exp` and `iat` of OpenID Connect Core §2, whic
 
 ## Signing in, of prompt and max_age
 
-`OpenIdRequest.interactions` tells `requestAuthorizationCode` what to do with the user before it issues a code: sign them in again, as they are not, or not since its `max_age` (or the client's `default_max_age`), or of `prompt=login`; let them select an account, of `prompt=select_account`; ask for their consent, as they have not given it, or of `prompt=consent`; or none of these, to issue the code at once. Of `prompt=none`, of which the user may not be prompted, it throws `login_required`, `account_selection_required` or `consent_required` instead, which the authorization endpoint redirects to the client:
+`OpenIdRequest.interactions` tells `requestAuthorizationCode` what to do with the user before it issues a code: sign them in again, as they are not, or not since its `max_age` (or the client's `default_max_age`), or of `prompt=login`; let them select an account, of `prompt=select_account`; ask for their consent, as they have not given it, or of `prompt=consent`; or none of these, to issue the code at once. Of `prompt=none`, of which the user may not be prompted, it throws `login_required`, `account_selection_required` or `consent_required` instead, which the authorization endpoint redirects to the client.
+
+Ask it once, when the request first comes. If the user must be asked something, keep what the code needs in their session on the server, under an id that is random and used once, and send them to your login page with it:
 
 ```dart
 var openId = req.container!.make<OpenIdRequest>();
@@ -133,12 +137,44 @@ var needed = openId.interactions(
   authTime: session.authTime,
   consented: await hasConsentedSomehow(session.user, client),
 );
-if (needed.contains(OpenIdInteraction.login)) {
-  return res.redirect('/login?return_to=${Uri.encodeComponent(req.uri.toString())}');
+if (needed.isNotEmpty) {
+  var id = randomIdSomehow();
+  session.pending[id] = (
+    client: client,
+    // Never null here: the endpoint gives the registered one, of a request
+    // that left it out.
+    redirectUri: redirectUri!,
+    scopes: scopes.toList(),
+    state: state,
+    implicit: implicit,
+    openId: openId,
+    pkce: req.container!.make<Pkce>(),
+    needed: needed,
+  );
+  return res.redirect('/login?pending=$id');
 }
 ```
 
-Of `prompt=login`, `select_account` or `consent`, or of `max_age=0`, the user must be asked, whatever was done before; once they have been, the app sends them back to the authorization endpoint, of the same request, which would ask them again. Keep what was done of each request in the user's session, on the server, by the `key` of its `OpenIdRequest`, and give it to `interactions` as `completed`: a login of it satisfies `prompt=login` and `max_age=0`, while a larger `max_age` still needs a sign-in within it. Never take it of the request, as of the URL the app returns to, which the user could set, and so skip a login the client asked for. `max_age` is of digits alone. The OpenID Connect parameters of a request whose scopes have no `openid` are not checked, as they are not of OpenID Connect; those of a request of no scope, or a blank one, are, as the app may grant `openid` by default.
+Once the user has done what was asked, your own handler takes the pending request out of the session, so that it is used once, and issues its code without sending them back to the authorization endpoint. Its `authTime` is that of a login the user just made, or, of consent or an account selection alone, that of the session, which they did not sign in again of:
+
+```dart
+var pending = session.pending.remove(req.queryParameters['pending']);
+if (pending == null) throw AngelHttpException.badRequest();
+var signedInNow = pending.needed.contains(OpenIdInteraction.login);
+var code = await storeCodeSomehow(
+  pending,
+  authTime: signedInNow ? DateTime.now() : session.authTime!,
+);
+await res.redirect(server.completeAuthorizationCode(
+  code,
+  Uri.parse(pending.redirectUri),
+  state: pending.state,
+));
+```
+
+Of an implicit request, which `allowsImplicitGrant` must allow, give its token with `completeImplicitGrant` instead.
+
+Sending the user back to the authorization endpoint instead would ask them again, as of `prompt=login`, `select_account` or `consent`, or of `max_age=0`, which ask whatever was done before; and anything the app put in that URL to say they had been asked, the user could set, and so skip a login the client asked for. A `max_age` above 0 needs a sign-in within it. `max_age` is of digits alone, and is capped at `OpenIdRequest.maxMaxAge`, some 68 years. The OpenID Connect parameters of a request whose scopes have no `openid` are not checked, as they are not of OpenID Connect; those of a request of no scope, or a blank one, are, as the app may grant `openid` by default, and may then be issued an ID token.
 
 ## Logout
 
@@ -160,7 +196,7 @@ Its `id_token_hint` must be an ID token of the provider, of its keys and issuer,
 
 ## Client registration
 
-Of the `registrationEndpoint` of `angel3_auth_server`, `checkClientMetadata` checks the metadata of OpenID Connect Dynamic Client Registration 1.0 too, and gives its defaults: `post_logout_redirect_uris`, of the form of `redirect_uris`; `id_token_signed_response_alg`, of the algorithms of `signingKeys` (`RS256`); `subject_type`, `public` alone; `default_max_age` and `require_auth_time` (`false`); `application_type`, `web` or `native` (`web`); and `initiate_login_uri`, of `https`. Metadata of what the server does not do, such as signed or encrypted UserInfo responses, encrypted ID tokens, request objects and pairwise subjects, is `invalid_client_metadata`. Read it back of the registration with `OpenIdClientMetadata.of(registration.metadata)`, and give the client's algorithm to `idTokenAlgorithmOf`, of which `issueIdToken` signs its ID tokens with the first key of it.
+Of the `registrationEndpoint` of `angel3_auth_server`, `checkClientMetadata` checks the metadata of OpenID Connect Dynamic Client Registration 1.0 too, and gives its defaults: `post_logout_redirect_uris`, of the form of `redirect_uris`; `id_token_signed_response_alg`, of the algorithms of `signingKeys` (`RS256`); `subject_type`, `public` alone; `default_max_age`, capped at `OpenIdRequest.maxMaxAge`, as a request's `max_age`, and `require_auth_time` (`false`); `application_type`, `web` or `native` (`web`); and `initiate_login_uri`, of `https`. Metadata of what the server does not do, such as signed or encrypted UserInfo responses, encrypted ID tokens, request objects and pairwise subjects, is `invalid_client_metadata`. Read it back of the registration with `OpenIdClientMetadata.of(registration.metadata)`, and give the client's algorithm to `idTokenAlgorithmOf`, of which `issueIdToken` signs its ID tokens with the first key of it.
 
 ## Configuration
 

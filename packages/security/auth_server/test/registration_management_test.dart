@@ -175,6 +175,27 @@ void main() {
       expect(server.secrets[id], json['client_secret']);
     });
 
+    test(
+      'is checked of checkClientMetadata, given the current registration',
+      () async {
+        var json = await register({..._web, 'client_name': 'Locked'});
+        expect(server.currents, [null]);
+        var id = json['client_id'] as String;
+        var token = json['registration_access_token'] as String;
+        var body = {..._web, 'client_id': id, 'client_name': 'Locked'};
+        var response = await update(id, token, body);
+        expect(response, hasStatus(200), reason: response.body);
+        expect(jsonDecode(response.body), containsPair('x_default', 'added'));
+        expect(server.currents.last?.clientId, id);
+        expect(server.currents.last?.metadata['client_name'], 'Locked');
+        expectRefused(
+          await update(id, token, {...body, 'client_name': 'Renamed'}),
+          'invalid_client_metadata',
+        );
+        expect(server.registrations[id]?.metadata['client_name'], 'Locked');
+      },
+    );
+
     test('must give the client_id of the registration', () async {
       var json = await register(_web);
       var id = json['client_id'] as String;
@@ -472,6 +493,31 @@ class _Server extends _ReadOnlyServer {
   final bool rotates;
 
   _Server({this.rotates = false});
+
+  /// The `current` of each call of [checkClientMetadata], of the PUTs.
+  final currents = <ClientRegistration?>[];
+
+  @override
+  Map<String, dynamic> checkClientMetadata(
+    Map<String, dynamic> metadata,
+    RequestContext req, {
+    ClientRegistration? current,
+  }) {
+    currents.add(current);
+    // Of a client_name "Locked", which may not change, once registered.
+    if (current?.metadata['client_name'] == 'Locked' &&
+        metadata['client_name'] != 'Locked') {
+      throw AuthorizationException(
+        ErrorResponse(
+          ErrorResponse.invalidClientMetadata,
+          'The "client_name" may not change.',
+          null,
+        ),
+        statusCode: 400,
+      );
+    }
+    return {'x_default': 'added', ...metadata};
+  }
 
   @override
   bool get rotatesRegistrationAccessToken => rotates;
