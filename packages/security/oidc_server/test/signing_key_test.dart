@@ -59,6 +59,12 @@ void main() {
     });
   });
 
+  test('ES256: a key of a d of another is refused as it loads', () {
+    var another = OpenIdSigningKey.generate(keyId: 'x', algorithm: 'ES256');
+    var json = ec.toJson()..['d'] = another.toJson()['d'];
+    expect(() => OpenIdSigningKey.fromJwk(json), throwsArgumentError);
+  });
+
   test('ES256: a JWT of it verifies of its public JWK', () async {
     var jwt = ec.signJwt({'sub': 'alice'});
     expect(await verifies(jwt, ec.publicJwk), isTrue);

@@ -104,17 +104,30 @@ class OpenIdSigningKey {
       JsonWebKey.fromJson(json)!,
       rsa,
     );
-    // Of a key that signs, so that one of a `d` of another key fails here,
-    // rather than at each ID token.
+    // Of a key whose private part is of its public one, so that a `d` of
+    // another key, as of a damaged or mis-pasted secret, fails here, rather
+    // than at each ID token: of a test signature, verified of the public
+    // key alone, as clients verify, of RS256 and ES256 alike.
+    var refused = ArgumentError.value(
+      keyId,
+      'jwk',
+      'is not a key that signs: its "d" is not of its public key',
+    );
+    const probe = [0x6f, 0x69, 0x64, 0x63];
+    List<int> signature;
     try {
-      key.sign(const [0]);
+      signature = key.sign(probe);
     } on StateError {
-      throw ArgumentError.value(
-        keyId,
-        'jwk',
-        'is not a key that signs: its "d" is not of its "n" and "e"',
-      );
+      throw refused;
     }
+    var public = JsonWebKey.fromJson(key.publicJwk)!;
+    bool verified;
+    try {
+      verified = public.verify(probe, signature, algorithm: algorithm);
+    } catch (_) {
+      verified = false;
+    }
+    if (!verified) throw refused;
     return key;
   }
 

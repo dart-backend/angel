@@ -87,6 +87,29 @@ void main() {
     expect(warnings.single, contains('"password"'));
   });
 
+  test('redirectUriProblem allows https, http of loopback, and the scheme '
+      'of a native app, alone', () {
+    for (var ok in [
+      'https://app.example/cb',
+      'http://localhost:8080/cb',
+      'http://127.0.0.1/cb',
+      'http://[::1]/cb',
+      'com.example.app:/cb',
+    ]) {
+      expect(redirectUriProblem(ok), isNull, reason: ok);
+    }
+    for (var bad in [
+      'http://app.example/cb',
+      'https://app.example/cb#x',
+      '/relative',
+      'https:///cb',
+      'javascript:alert(1)',
+      'myapp:/cb',
+    ]) {
+      expect(redirectUriProblem(bad), isNotNull, reason: bad);
+    }
+  });
+
   test('copyWith keeps what it is not given', () {
     var metadata = ServerMetadata(
       issuer: _issuer,

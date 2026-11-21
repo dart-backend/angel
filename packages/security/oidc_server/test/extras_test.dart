@@ -162,6 +162,35 @@ void main() {
 
     tearDown(() => client.close());
 
+    test('a malformed prompt is refused, of an app that never reads the '
+        'OpenIdRequest', () async {
+      var plain = _Plain();
+      var app = Angel()..get('/authorize', plain.authorizationEndpoint);
+      app.errorHandler = (e, req, res) async {
+        res.statusCode = e.statusCode;
+        res.json(e.toJson());
+      };
+      var other = await connectTo(app);
+      var response = await other.get(
+        Uri(
+          path: '/authorize',
+          queryParameters: {
+            'response_type': 'code',
+            'client_id': 'app',
+            'redirect_uri': '$_redirectUri',
+            'scope': 'openid',
+            'prompt': 'bogus',
+            'code_challenge': _challenge,
+            'code_challenge_method': 'S256',
+          },
+        ),
+      );
+      await other.close();
+      expect(response.statusCode, 400);
+      expect(response.body, contains('invalid_request'));
+      expect(response.body, contains('prompt'));
+    });
+
     test('prompt=none of a user who is not signed in redirects '
         'login_required', () async {
       var response = await client.get(
@@ -267,6 +296,7 @@ void main() {
             'request_uris': ['https://app.example/r'],
           },
           {'initiate_login_uri': 'http://app.example/login'},
+          {'initiate_login_uri': 'https:/no-host'},
         ]) {
           expectRefused(await register(body), 'invalid_client_metadata');
         }
@@ -285,6 +315,26 @@ void main() {
       var plain = _Plain(keys: [_ec, _rsa]);
       var token = plain.issueIdToken(user: 'alice', client: 'app');
       expect(_headerOf(token), containsPair('alg', 'RS256'));
+    });
+
+    test('the claims given to an ID token never set its own', () {
+      var token = provider.issueIdToken(
+        user: 'alice',
+        client: 'app',
+        claims: {
+          'nonce': 'stale',
+          'auth_time': 'x',
+          'sub': 'mallory',
+          'acr': '1',
+        },
+      );
+      var claims = json.decode(
+        utf8.decode(base64Url.decode(base64Url.normalize(token.split('.')[1]))),
+      ) as Map;
+      expect(claims, isNot(contains('nonce')));
+      expect(claims, isNot(contains('auth_time')));
+      expect(claims['sub'], 'alice');
+      expect(claims['acr'], '1');
     });
 
     test('an ID token of requireAuthTime must be given its authTime', () {
@@ -384,6 +434,26 @@ void main() {
               'id_token_hint': foreign.signJwt({'iss': '$_issuer', 'sub': 'x'}),
             },
             {'id_token_hint': 'not.a.token'},
+            // Of the provider's keys, but not ID tokens: of another type, of a
+            // logout token's `events`, or of a `sub` that is not a string.
+            {'id_token_hint': _typed('at+jwt')},
+            {
+              'id_token_hint': _rsa.signJwt({
+                'iss': '$_issuer',
+                'sub': 'alice',
+                'aud': 'app',
+                'events': {
+                  'http://schemas.openid.net/event/backchannel-logout': {},
+                },
+              }),
+            },
+            {
+              'id_token_hint': _rsa.signJwt({
+                'iss': '$_issuer',
+                'sub': 123,
+                'aud': 'app',
+              }),
+            },
             // Of the provider's key, of another issuer, as of one key of two.
             {
               'id_token_hint': _rsa.signJwt({
@@ -564,4 +634,18 @@ class _Plain extends OpenIdServer<String, String> {
 
   @override
   String subjectOf(String user) => user;
+}
+
+/// A JWT of the provider's RS256 key, of the header type [type], of the
+/// claims of an ID token.
+String _typed(String type) {
+  String b64(List<int> bytes) => base64Url.encode(bytes).replaceAll('=', '');
+  var header = b64(
+    utf8.encode(json.encode({'alg': 'RS256', 'kid': 'rsa', 'typ': type})),
+  );
+  var payload = b64(
+    utf8.encode(json.encode({'iss': '$_issuer', 'sub': 'alice', 'aud': 'app'})),
+  );
+  var input = '$header.$payload';
+  return '$input.${b64(_rsa.sign(ascii.encode(input)))}';
 }

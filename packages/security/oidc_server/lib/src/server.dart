@@ -10,9 +10,6 @@ import 'client.dart';
 
 import 'signing_key.dart';
 
-/// The hosts of an `http` issuer, of a provider of the developer's machine.
-const _loopbackHosts = {'localhost', '127.0.0.1', '::1'};
-
 /// The path of the OpenID Provider configuration (OpenID Connect Discovery
 /// 1.0 §4), of the issuer's path.
 const openIdConfigurationPath = '/.well-known/openid-configuration';
@@ -264,7 +261,7 @@ abstract class OpenIdServer<Client, User>
       );
     }
     if (!issuer.isScheme('https') &&
-        !(issuer.isScheme('http') && _loopbackHosts.contains(issuer.host))) {
+        !(issuer.isScheme('http') && loopbackHosts.contains(issuer.host))) {
       throw ArgumentError.value(
         issuer,
         'issuer',
@@ -385,7 +382,10 @@ abstract class OpenIdServer<Client, User>
       ),
     );
     return key.signJwt({
-      ...claims,
+      // Of none of the token's own, as of a stale `nonce`, or an
+      // `auth_time` of [requireAuthTime], of what [claims] give.
+      for (var MapEntry(:key, :value) in claims.entries)
+        if (!_idTokenClaims.contains(key)) key: value,
       'iss': issuer.toString(),
       'sub': subjectOf(user),
       'aud': clientIdOf(client),
@@ -397,6 +397,19 @@ abstract class OpenIdServer<Client, User>
     });
   }
 
+  /// The claims of an ID token that [issueIdToken] gives itself, which its
+  /// `claims` may not.
+  static const _idTokenClaims = {
+    'iss',
+    'sub',
+    'aud',
+    'exp',
+    'iat',
+    'auth_time',
+    'nonce',
+    'at_hash',
+  };
+
   /// The left half of the SHA-256 of [value], in base64url, as `at_hash`
   /// is, of an RS256 or ES256 token (OpenID Connect Core 1.0 §3.1.3.6).
   static String _halfHash(String value) {
@@ -404,30 +417,28 @@ abstract class OpenIdServer<Client, User>
     return base64Url.encode(digest.sublist(0, 16)).replaceAll('=', '');
   }
 
-  /// Gives `requestAuthorizationCode` the [OpenIdRequest] of the request,
-  /// in `req.container`, as it does the `Pkce`.
+  /// Checks the OpenID Connect parameters of each authorization request,
+  /// of [OpenIdRequest.of], of which a malformed `prompt` or `max_age` is
+  /// `invalid_request`, redirected, and gives `requestAuthorizationCode`
+  /// the [OpenIdRequest] in `req.container`, as it does the `Pkce`.
+  ///
+  /// Of `prompt=none`, which only the app can answer, as only it knows
+  /// whether the user is signed in, `requestAuthorizationCode` must call
+  /// [OpenIdRequest.interactions]: else the user is prompted after all.
+  /// Call `super` of an override of your own.
   @override
-  Future<void> authorizationEndpoint(
+  FutureOr<void> checkAuthorizationRequest(
+    Client client,
+    Map<String, dynamic> params,
+    String state,
     RequestContext req,
-    ResponseContext res,
-  ) async {
-    Map<String, dynamic> params;
-    if (req.method.toUpperCase() == 'POST') {
-      try {
-        await req.parseBody();
-        params = req.bodyAsMap;
-      } catch (_) {
-        // Of the error of the endpoint, which reads the body too.
-        params = const {};
-      }
-    } else {
-      params = req.queryParameters;
+  ) {
+    var container = req.container!;
+    if (!container.has<OpenIdRequest>()) {
+      container.registerSingleton<OpenIdRequest>(
+        OpenIdRequest.of(params, state),
+      );
     }
-    var state = params['state']?.toString() ?? '';
-    req.container!.registerLazySingleton<OpenIdRequest>(
-      (_) => OpenIdRequest.of(params, state),
-    );
-    return super.authorizationEndpoint(req, res);
   }
 
   /// The JSON Web Key Set of the provider (RFC 7517 §5): the public keys of
@@ -604,12 +615,11 @@ abstract class OpenIdServer<Client, User>
       if (postLogout is! List || postLogout.any((v) => v is! String)) {
         throw invalid('"post_logout_redirect_uris" must be of strings.');
       }
+      // Of the rules of `redirect_uris`, of angel3_auth_server.
       for (var value in postLogout.cast<String>()) {
-        if (!_isRedirectUri(value)) {
+        if (redirectUriProblem(value) case var problem?) {
           throw invalid(
-            'The post logout redirect URI "$value" must be absolute, of no '
-            'fragment, https, http of localhost, or of a reverse domain name '
-            'scheme.',
+            'The post logout redirect URI "$value" $problem.',
             error: ErrorResponse.invalidRedirectUri,
           );
         }
@@ -640,9 +650,13 @@ abstract class OpenIdServer<Client, User>
       throw invalid('"application_type" must be "web" or "native".');
     }
     var initiateLogin = metadata['initiate_login_uri'];
+    var initiateUri = initiateLogin is String
+        ? Uri.tryParse(initiateLogin)
+        : null;
     if (initiateLogin != null &&
-        (initiateLogin is! String ||
-            !(Uri.tryParse(initiateLogin)?.isScheme('https') ?? false))) {
+        (initiateUri == null ||
+            !initiateUri.isScheme('https') ||
+            initiateUri.host.isEmpty)) {
       throw invalid('"initiate_login_uri" must be an https URL.');
     }
     return {
@@ -686,20 +700,6 @@ abstract class OpenIdServer<Client, User>
     'request_uris',
   };
 
-  /// Whether [value] is of the form of a redirect URI: absolute, of no
-  /// fragment, `https`, `http` of loopback, or of the private-use scheme of
-  /// a native app, a reverse domain name (RFC 8252 §7.1).
-  static bool _isRedirectUri(String value) {
-    var uri = Uri.tryParse(value);
-    if (uri == null || !uri.isAbsolute || uri.hasFragment) return false;
-    if (uri.isScheme('https')) return uri.host.isNotEmpty;
-    if (uri.isScheme('http')) return _loopbackHosts.contains(uri.host);
-    return uri.scheme.contains('.');
-  }
-
-  /// The claims of [token], if it is an ID token of the provider: of one of
-  /// [signingKeys], of [issuer]. It may have expired, as an `id_token_hint`
-  /// may (OpenID Connect RP-Initiated Logout 1.0 §2).
   /// The public keys of [signingKeys], of which [_claimsOfOwnToken] checks.
   late final JsonWebKeyStore _ownKeys = () {
     var store = JsonWebKeyStore();
@@ -709,9 +709,16 @@ abstract class OpenIdServer<Client, User>
     return store;
   }();
 
+  /// The claims of [token], if it is an ID token of the provider: of one of
+  /// [signingKeys], of [issuer], of the type `JWT` or none, of a `sub` and
+  /// an `aud`, and not a logout token, of `events`, so that no other JWT of
+  /// the provider's keys passes for one. It may have expired, as an
+  /// `id_token_hint` may (OpenID Connect RP-Initiated Logout 1.0 §2).
   Future<Map<String, dynamic>?> _claimsOfOwnToken(String token) async {
     try {
       var jws = JsonWebSignature.fromCompactSerialization(token);
+      var type = jws.commonProtectedHeader['typ'];
+      if (type != null && type != 'JWT') return null;
       var payload = await jws.getPayload(
         _ownKeys,
         allowedAlgorithms: [for (var key in signingKeys) key.algorithm],
@@ -719,11 +726,25 @@ abstract class OpenIdServer<Client, User>
       var claims = payload.jsonContent;
       if (claims is! Map<String, dynamic>) return null;
       if (claims['iss'] != issuer.toString()) return null;
+      var sub = claims['sub'];
+      if (sub is! String || sub.isEmpty) return null;
+      if (claims['aud'] == null || claims.containsKey('events')) return null;
       return claims;
     } catch (_) {
       return null;
     }
   }
+
+  /// Not a logout of no parameters, of a body that cannot be read, which
+  /// could sign a user out of a request that was not what it seemed.
+  static AuthorizationException _unreadableBody() => AuthorizationException(
+    ErrorResponse(
+      ErrorResponse.invalidRequest,
+      'The body of the request cannot be read.',
+      null,
+    ),
+    statusCode: 400,
+  );
 
   /// The end session endpoint (OpenID Connect RP-Initiated Logout 1.0): of
   /// a GET or POST of a client that signs its user out, of its
@@ -748,17 +769,15 @@ abstract class OpenIdServer<Client, User>
         try {
           await req.parseBody();
           params = req.bodyAsMap;
-        } catch (_) {
-          // Not a logout of no parameters, which could sign a user out of
-          // a request that was not what it seemed.
-          throw AuthorizationException(
-            ErrorResponse(
-              ErrorResponse.invalidRequest,
-              'The body of the request cannot be read.',
-              null,
-            ),
-            statusCode: 400,
-          );
+        } on FormatException {
+          throw _unreadableBody();
+        } on AuthorizationException {
+          rethrow;
+        } on AngelHttpException catch (e) {
+          // Of the framework's 400 of a body it cannot read; of another, as
+          // a 413, its own.
+          if (e.statusCode != 400) rethrow;
+          throw _unreadableBody();
         }
       } else {
         params = req.queryParameters;
@@ -785,7 +804,7 @@ abstract class OpenIdServer<Client, User>
             'The "id_token_hint" is not an ID token of this provider.',
           );
         }
-        subject = claims['sub'] as String?;
+        subject = claims['sub'] as String;
         var aud = claims['aud'];
         audience = aud is String
             ? [aud]

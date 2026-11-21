@@ -41,6 +41,8 @@
 * **Registration management:** If `managesClientRegistrations`, a client that registers itself is also issued a `registration_access_token` and its `registration_client_uri`, at which `registrationManagementEndpoint` lets it read, update and delete its registration (RFC 7592): it finds the registration by `findRegistration`, of the token, which is `invalid_token` for a client that does not exist too; a PUT replaces all its metadata, as a registration is checked, of its `client_id` and its `client_secret`, if given, and is stored by `updateClient`, which may be given a new secret and token, of `rotatesClientSecretOnUpdate` and `rotatesRegistrationAccessToken`; a GET and a PUT give the token (RFC 7592 §3); a DELETE is given to `deleteClient`, a 204. `updateClient` and `deleteClient` refuse by default. An empty `client_secret` of a PUT is none, as at the token endpoint
 * **Client metadata:** `checkClientMetadata` is given the metadata of a registration, or of an update, before the server checks it: to refuse metadata of its own, as of OpenID Connect, or to add defaults
 * **Server metadata:** `ServerMetadata.copyWith`
+* **Authorization requests:** `checkAuthorizationRequest` is given each authorization request's parameters, before `requestAuthorizationCode`, to check those the server does not know, as of OpenID Connect; its errors are redirected as the endpoint's others
+* **Redirect URIs:** `redirectUriProblem` gives why a URI may not be a redirect URI, by the rules of registration, and `loopbackHosts` is exported
 
 ### Fixes in 10.0.0
 

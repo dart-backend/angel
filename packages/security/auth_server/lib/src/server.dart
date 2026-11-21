@@ -719,6 +719,7 @@ abstract class AuthorizationServer<Client, User> {
         if (responseType == 'code') {
           await _checkPkceChallenge(client, params, state);
         }
+        await checkAuthorizationRequest(client, params, state, req);
 
         // Grab scopes
         var scopes = await _getScopes(req, body: post);
@@ -1247,6 +1248,19 @@ abstract class AuthorizationServer<Client, User> {
     RequestContext req,
   ) => false;
 
+  /// Checks an authorization request of [client], of its [params], of the
+  /// query or of the form, and of [state], before `requestAuthorizationCode`
+  /// is given it, of parameters that the server does not know, as of OpenID
+  /// Connect. Throw an [AuthorizationException], as of `invalid_request`,
+  /// to refuse it: of a registered redirect URI, it is redirected, as the
+  /// endpoint's other errors are. By default, it does nothing.
+  FutureOr<void> checkAuthorizationRequest(
+    Client client,
+    Map<String, dynamic> params,
+    String state,
+    RequestContext req,
+  ) {}
+
   /// The metadata of a registration, or of an update of one, of [metadata]
   /// as the client gave it, before the server checks it, once the request
   /// is authenticated: throw an [AuthorizationException] of
@@ -1766,31 +1780,13 @@ abstract class AuthorizationServer<Client, User> {
 
     var redirectUris = <Uri>[];
     for (var value in strings('redirect_uris') ?? const <String>[]) {
-      var uri = Uri.tryParse(value);
-      String? problem;
-      if (uri == null || !uri.isAbsolute || uri.hasFragment) {
-        problem = 'must be absolute, of no fragment';
-      } else if (uri.isScheme('http') && !loopbackHosts.contains(uri.host)) {
-        problem = 'must be https, or http of localhost';
-      } else if ((uri.isScheme('https') || uri.isScheme('http')) &&
-          uri.host.isEmpty) {
-        problem = 'must have a host';
-      } else if (!uri.isScheme('https') &&
-          !uri.isScheme('http') &&
-          !uri.scheme.contains('.')) {
-        // A native app's private-use scheme is a reverse domain name
-        // (RFC 8252 §7.1); any other, as `javascript:`, is refused.
-        problem =
-            'must be https, http of localhost, or of a reverse domain '
-            'name scheme, such as "com.example.app:"';
-      }
-      if (problem != null) {
+      if (redirectUriProblem(value) case var problem?) {
         throw _invalidMetadata(
           'The redirect URI "$value" $problem.',
           error: ErrorResponse.invalidRedirectUri,
         );
       }
-      redirectUris.add(uri!);
+      redirectUris.add(Uri.parse(value));
     }
     if (redirectUris.isEmpty && responseTypes.isNotEmpty) {
       throw _invalidMetadata(

@@ -5,6 +5,35 @@ import 'server.dart';
 /// [Uri.host], which drops the brackets of `[::1]`.
 const loopbackHosts = {'localhost', '127.0.0.1', '::1'};
 
+/// Why [value] may not be a redirect URI of a client, as of its
+/// `redirect_uris` or `post_logout_redirect_uris`, or `null` if it may: it
+/// must be absolute, of no fragment, and `https`, `http` of [loopbackHosts],
+/// or of the private-use scheme of a native app, a reverse domain name, such
+/// as `com.example.app:` (RFC 8252 §7.1); any other scheme, as
+/// `javascript:`, is refused.
+///
+/// The reason completes a sentence of the URI: "The redirect URI ... must
+/// have a host."
+String? redirectUriProblem(String value) {
+  var uri = Uri.tryParse(value);
+  if (uri == null || !uri.isAbsolute || uri.hasFragment) {
+    return 'must be absolute, of no fragment';
+  }
+  if (uri.isScheme('http') && !loopbackHosts.contains(uri.host)) {
+    return 'must be https, or http of localhost';
+  }
+  if ((uri.isScheme('https') || uri.isScheme('http')) && uri.host.isEmpty) {
+    return 'must have a host';
+  }
+  if (!uri.isScheme('https') &&
+      !uri.isScheme('http') &&
+      !uri.scheme.contains('.')) {
+    return 'must be https, http of localhost, or of a reverse domain name '
+        'scheme, such as "com.example.app:"';
+  }
+  return null;
+}
+
 /// The metadata of an authorization server (RFC 8414), which
 /// [AuthorizationServer.metadataEndpoint] serves, so that clients find its
 /// endpoints and what it supports.

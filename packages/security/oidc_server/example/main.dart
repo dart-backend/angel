@@ -61,6 +61,9 @@ class _Client {
 /// What a provider stores of a code, until it is exchanged.
 typedef _Code = ({
   String user,
+  String clientId,
+  String? redirectUri,
+  DateTime authTime,
   List<String> scopes,
   OpenIdRequest openId,
   Pkce pkce,
@@ -78,6 +81,9 @@ class _Provider extends OpenIdServer<_Client, String> {
   final _codes = <String, _Code>{};
   final _tokens = <String, AccessToken<_Client, String>>{};
   var _next = 0;
+
+  /// When alice signed in, of the session the app would keep: of this run.
+  final _signedInAt = DateTime.now();
 
   @override
   _Client? findClient(String? clientId) =>
@@ -114,12 +120,29 @@ class _Provider extends OpenIdServer<_Client, String> {
     ResponseContext res,
     bool implicit,
   ) async {
-    // Here, an app signs the user in and asks for their consent first.
+    var openId = req.container!.make<OpenIdRequest>();
+    // Here, an app reads its session: alice is signed in, and has consented.
+    // Of prompt=none, this throws login_required and the like, which are
+    // redirected; of what it gives, the app would prompt the user first.
+    var needed = openId.interactions(
+      signedIn: true,
+      authTime: _signedInAt,
+      consented: true,
+    );
+    if (needed.isNotEmpty) {
+      res.write('Here, the user would be asked to: ${needed.join(', ')}.');
+      return;
+    }
     var code = 'code-${_next++}';
     _codes[code] = (
       user: 'alice',
+      // Of the client and redirect URI it was issued to, checked as it is
+      // redeemed, and of when the user signed in, not when it is redeemed.
+      clientId: client.id,
+      redirectUri: redirectUri,
+      authTime: _signedInAt,
       scopes: scopes.toList(),
-      openId: req.container!.make<OpenIdRequest>(),
+      openId: openId,
       pkce: req.container!.make<Pkce>(),
     );
     await res.redirect(
@@ -135,8 +158,12 @@ class _Provider extends OpenIdServer<_Client, String> {
     RequestContext req,
     ResponseContext res,
   ) async {
+    // Used once, whatever comes of it; of the client it was issued to, and
+    // of the same redirect URI, if it is given (RFC 6749 §4.1.3).
     var stored = _codes.remove(authCode);
-    if (stored == null) {
+    if (stored == null ||
+        stored.clientId != client?.id ||
+        (redirectUri != null && redirectUri != stored.redirectUri)) {
       throw AuthorizationException(
         ErrorResponse(ErrorResponse.invalidGrant, 'Unknown code.', ''),
       );
@@ -157,7 +184,8 @@ class _Provider extends OpenIdServer<_Client, String> {
         user: stored.user,
         client: client!,
         nonce: stored.openId.nonce,
-        authTime: DateTime.now(),
+        authTime: stored.authTime,
+        requireAuthTime: stored.openId.maxAge != null,
         accessToken: accessToken,
       ),
     );

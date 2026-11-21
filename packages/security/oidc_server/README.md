@@ -86,13 +86,13 @@ await storeSecretSomehow(json.encode(key.toJson()));
 var loaded = OpenIdSigningKey.fromJwk(json.decode(await readSecretSomehow()));
 ```
 
-The first key of a client's algorithm signs its ID tokens: of `idTokenAlgorithmOf` the client, or of `RS256`, the default of OpenID Connect, for a client of none. The JSON Web Key Set publishes all of them, of their public members alone. To rotate, put a new key first among those of its algorithm, and remove the old one once the ID tokens it signed have expired. A key whose private exponent is not of its modulus, as of a stored key that was damaged, is refused as it loads. RSA keys must be of at least 2048 bits, and the server must have an `RS256` key.
+The first key of a client's algorithm signs its ID tokens: of `idTokenAlgorithmOf` the client, or of `RS256`, the default of OpenID Connect, for a client of none. The JSON Web Key Set publishes all of them, of their public members alone. To rotate, put a new key first among those of its algorithm, and remove the old one once the ID tokens it signed have expired. A key whose private part is not of its public one, as of a stored key that was damaged or mis-pasted, is refused as it loads, of a test signature that its public key verifies, of `RS256` and `ES256` alike. RSA keys must be of at least 2048 bits, and the server must have an `RS256` key.
 
 `RS256` signatures are made with RSA blinding, as BoringSSL and OpenSSL make them, so that the time a signature takes tells nothing of the key, and each is checked before it is given out, against a fault of the computation, which could leak a factor of the key. The arithmetic is of pure Dart, and is not constant-time otherwise. `ES256` signatures are of `package:jose_plus`, whose curve arithmetic is not constant-time: prefer `RS256` where timing attacks against the server are a concern.
 
 ## ID tokens
 
-An authorization request of the `openid` scope asks for an ID token. `requestAuthorizationCode` is given its `OpenIdRequest` in `req.container`, as it is the `Pkce`: store its `nonce` with the code, and when the user authenticated. Making it throws `invalid_request` of a malformed `max_age` or `prompt`, which the authorization endpoint redirects, as its other errors.
+An authorization request of the `openid` scope asks for an ID token. `requestAuthorizationCode` is given its `OpenIdRequest` in `req.container`, as it is the `Pkce`: store its `nonce` with the code, and when the user authenticated. The OpenID Connect parameters of every authorization request are checked, of the `checkAuthorizationRequest` of `angel3_auth_server`, whether the app reads them or not: a malformed `max_age` or `prompt` is `invalid_request`, which the authorization endpoint redirects, as its other errors. `prompt=none` is the app's to answer, as only it knows whether the user is signed in: call `interactions`, below, or the user is prompted after all.
 
 ```dart
 var openId = req.container!.make<OpenIdRequest>();
@@ -114,7 +114,7 @@ var idToken = issueIdToken(
 return IdTokenResponse(accessToken, idToken: idToken, expiresIn: 3600);
 ```
 
-It has the `iss`, `sub`, `aud`, `exp` and `iat` of OpenID Connect Core §2, the `nonce` of the request, its `auth_time`, and the `at_hash` of the access token. Give `requireAuthTime: true` of a request of `max_age`, or a client of `require_auth_time`, of which the ID token must have an `auth_time`: it then throws an `ArgumentError` of no `authTime`, rather than issue a token without it. It is valid for `idTokenLifetime` (default 10 minutes). Of a refresh token grant, issue one of no `nonce`, and of the `authTime` of the first.
+It has the `iss`, `sub`, `aud`, `exp` and `iat` of OpenID Connect Core §2, which `claims` of your own, as `acr` or `amr`, may not set, nor its `nonce`, `auth_time` or `at_hash`, the `nonce` of the request, its `auth_time`, and the `at_hash` of the access token. Give `requireAuthTime: true` of a request of `max_age`, or a client of `require_auth_time`, of which the ID token must have an `auth_time`: it then throws an `ArgumentError` of no `authTime`, rather than issue a token without it. It is valid for `idTokenLifetime` (default 10 minutes). Of a refresh token grant, issue one of no `nonce`, and of the `authTime` of the first.
 
 ## UserInfo
 
@@ -154,7 +154,7 @@ Future<void> endSession(
 }
 ```
 
-Its `id_token_hint` must be an ID token of the provider, of its keys and issuer, expired or not; its `client_id` the audience of the hint; and its `post_logout_redirect_uri` one of `postLogoutRedirectUrisOf` the client, or the request is `invalid_request`, a 400, which is never redirected. A request of no hint could be of anyone's link: ask the user whether to sign out first, in `endSession`, and redirect them to `request.redirectUri` once they did. Unless `endSession` answers, the user is redirected to the `post_logout_redirect_uri`, with the `state`, or told that they signed out. By default, `endSession` refuses, a 403.
+Its `id_token_hint` must be an ID token of the provider, of its keys and issuer, expired or not, of the type `JWT` or none, of a `sub` and an `aud`, and not a logout token, so that no other JWT of the provider's keys passes for one; its `client_id` the audience of the hint; and its `post_logout_redirect_uri` one of `postLogoutRedirectUrisOf` the client, or the request is `invalid_request`, a 400, which is never redirected. A request of no hint could be of anyone's link: ask the user whether to sign out first, in `endSession`, and redirect them to `request.redirectUri` once they did. Unless `endSession` answers, the user is redirected to the `post_logout_redirect_uri`, with the `state`, or told that they signed out. By default, `endSession` refuses, a 403.
 
 ## Client registration
 

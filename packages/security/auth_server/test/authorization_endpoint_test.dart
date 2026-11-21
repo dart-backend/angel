@@ -107,6 +107,26 @@ void main() {
       });
     });
 
+    test(
+      'checkAuthorizationRequest may refuse it, which is redirected',
+      () async {
+        var response = await authorize({
+          'response_type': 'code',
+          'client_id': 'foo',
+          'state': 's',
+          'scope': 'grant',
+          'x_refuse': 'yes',
+        });
+        expect(response, hasStatus(302));
+        var location = Uri.parse(response.headers['location']!);
+        expect(
+          location.queryParameters,
+          containsPair('error', 'invalid_request'),
+        );
+        expect(location.queryParameters, containsPair('state', 's'));
+      },
+    );
+
     test('an implicit grant is refused by default, in the fragment', () async {
       await client.close();
       await connect(registers: true, allowsImplicit: false);
@@ -270,6 +290,20 @@ class _Server extends AuthorizationServer<PseudoApplication, PseudoUser> {
 
   @override
   bool allowsImplicitGrant(PseudoApplication client) => allowsImplicit;
+
+  @override
+  void checkAuthorizationRequest(
+    PseudoApplication client,
+    Map<String, dynamic> params,
+    String state,
+    RequestContext req,
+  ) {
+    if (params['x_refuse'] == 'yes') {
+      throw AuthorizationException(
+        ErrorResponse(ErrorResponse.invalidRequest, 'Refused.', state),
+      );
+    }
+  }
 
   @override
   PseudoApplication? findClient(String? clientId) =>
