@@ -28,17 +28,20 @@ abstract class _Model { String? get name; }
     return errors;
   }
 
+  // A build resolves the SDK and the package's sources, so each may take
+  // longer than the default 30 seconds.
+  const timeout = Timeout(Duration(minutes: 2));
+
   test('a constant instance of a class is accepted', () async {
     expect(await errorsFor("pragma('x')"), isEmpty);
-  });
+  }, timeout: timeout);
 
-  test('a value that is not an annotation is rejected', () async {
-    for (var value in ["'not an annotation'", 'null', '1', '[pragma("x")]']) {
+  for (var value in ["'not an annotation'", 'null', '1', '[pragma("x")]']) {
+    test('a value that is not an annotation is rejected: $value', () async {
       expect(
         (await errorsFor(value)).join(),
         contains('must be a constant instance of a class'),
-        reason: value,
       );
-    }
-  });
+    }, timeout: timeout);
+  }
 }

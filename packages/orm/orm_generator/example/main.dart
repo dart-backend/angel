@@ -13,8 +13,10 @@ void main() async {
     ..orWhere((w) => w.salary.greaterThanOrEqualTo(75000))
     ..join('companies', 'company_id', 'id');
 
-  var richPerson = await (query.getOne(_FakeExecutor()) as FutureOr<Employee>);
-  print(richPerson.toJson());
+  var richPerson = await query.getOne(const _FakeExecutor());
+  if (richPerson.isPresent) {
+    print(richPerson.value.toJson());
+  }
 }
 
 class _FakeExecutor extends QueryExecutor {
@@ -33,8 +35,9 @@ class _FakeExecutor extends QueryExecutor {
     print(
       '_FakeExecutor received query: $query and values: $substitutionValues',
     );
+    // A row of the query's fields, in their order.
     return [
-      [1, 'Rich', 'Person', 100000.0, now, now],
+      [1, now, now, 'Rich', 'Person', 'rich-1', 100000.0],
     ];
   }
 
@@ -44,8 +47,7 @@ class _FakeExecutor extends QueryExecutor {
   }
 
   @override
-  // TODO: implement dialect
-  Dialect get dialect => PostgreSQLDialect();
+  Dialect get dialect => const PostgreSQLDialect();
 }
 
 @orm

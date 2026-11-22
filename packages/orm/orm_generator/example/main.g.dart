@@ -92,17 +92,25 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
       return Optional.empty();
     }
     var model = Employee(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      firstName: fields.contains('first_name') ? (row[3] as String?) : null,
-      lastName: fields.contains('last_name') ? (row[4] as String?) : null,
-      uniqueId: fields.contains('unique_id') ? (row[5] as String?) : null,
-      salary: fields.contains('salary') ? mapToDouble(row[6]) : null,
+      firstName: fields.contains('first_name')
+          ? (row[fields.indexOf('first_name')] as String?)
+          : null,
+      lastName: fields.contains('last_name')
+          ? (row[fields.indexOf('last_name')] as String?)
+          : null,
+      uniqueId: fields.contains('unique_id')
+          ? (row[fields.indexOf('unique_id')] as String?)
+          : null,
+      salary: fields.contains('salary')
+          ? mapToDouble(row[fields.indexOf('salary')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -319,6 +327,40 @@ class EmployeeDecoder extends Converter<Map, Employee> {
 class EmployeeSerializer extends Codec<Employee, Map> {
   const EmployeeSerializer();
 
+  /// The name of the JSON Schema of [Employee].
+  static const String schemaName = 'Employee';
+
+  /// The JSON Schema of the map that [toMap] writes of [Employee], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'first_name': {
+        'type': ['string', 'null'],
+      },
+      'last_name': {
+        'type': ['string', 'null'],
+      },
+      'unique_id': {
+        'type': ['string', 'null'],
+      },
+      'salary': {
+        'type': ['number', 'null'],
+      },
+    },
+  };
+
   @override
   EmployeeEncoder get encoder => const EmployeeEncoder();
 
@@ -343,6 +385,13 @@ class EmployeeSerializer extends Codec<Employee, Map> {
       uniqueId: map['unique_id'] as String?,
       salary: map['salary'] as double?,
     );
+  }
+
+  /// Adds the JSON Schema of [Employee], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(EmployeeEntity? model) {
