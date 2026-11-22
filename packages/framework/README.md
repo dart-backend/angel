@@ -197,7 +197,9 @@ How it behaves:
 * **Check who signed it.** A `SecurityContext` that trusts more than your clients' CAs, such as `SecurityContext(withTrustedRoots: true)`, accepts any certificate that they sign, so check its `issuer` or `subject` too.
 * **Verification happens in the handshake.** A certificate that doesn't verify against the trusted certificates of the `SecurityContext`, such as a self-signed one, fails the handshake, so the request never reaches the app.
 * **HTTP/2.** `AngelHttp2` takes `requestClientCertificate` and `requireClientCertificate` too, for its HTTP/2 requests and the HTTP/1 requests of `allowHttp1`. So do `startSharedSecure` and `startSharedHttp2`, for servers shared by several isolates, and `AngelHttp.secure`, whose `clientAuthoritiesPath` is the .pem of the trusted CAs.
-* **Behind a reverse proxy** that terminates TLS, `clientCertificate` is `null`, as the server's TLS connection is to the proxy. A proxy may forward the client's certificate in a header, which the app must read itself, and only from the proxy.
+* **Behind a reverse proxy** that terminates TLS, `clientCertificate` is `null`, as the server's TLS connection is to the proxy. A proxy may forward the client's certificate in a header, which the app must read itself, and only from the proxy. The [angel3_auth_server README](https://pub.dev/packages/angel3_auth_server#behind-a-reverse-proxy) has nginx and Apache configurations that do it.
+* **With `angel3_production`**, `--client-ca-file` and `--require-client-certificate` turn it on for every instance, with `--ssl` or `--http2`.
+* **OAuth 2.0 clients.** `angel3_auth_server` authenticates clients by certificate and binds access tokens to it (RFC 8705).
 * **What a certificate gives.** `X509Certificate` of `dart:io` has its `subject`, `issuer`, validity dates, `der`, `pem` and `sha1`. The SHA-256 of its `der` is the thumbprint that RFC 8705 binds tokens to.
 
 ## Full-stack with Kelicap
@@ -243,9 +245,10 @@ Angel3 is a collection of packages: pick the ones a project needs. Each is descr
 | [angel3_orm_generator](https://pub.dev/packages/angel3_orm_generator) | Generates the ORM's query classes and migrations from models |
 | [angel3_orm_postgres](https://pub.dev/packages/angel3_orm_postgres) | PostgreSQL executor for the ORM, with transactions and savepoints |
 | [angel3_orm_mysql](https://pub.dev/packages/angel3_orm_mysql) | MySQL and MariaDB executors for the ORM |
+| [angel3_orm_sqlite](https://pub.dev/packages/angel3_orm_sqlite) | SQLite executors for the ORM, run in background isolates |
 | [angel3_orm_service](https://pub.dev/packages/angel3_orm_service) | A service over the ORM's query classes |
 | [angel3_migration](https://pub.dev/packages/angel3_migration) | Schema DSL for database migrations |
-| [angel3_migration_runner](https://pub.dev/packages/angel3_migration_runner) | Runs migrations on PostgreSQL, MySQL and MariaDB |
+| [angel3_migration_runner](https://pub.dev/packages/angel3_migration_runner) | Runs migrations on PostgreSQL, MySQL, MariaDB and SQLite |
 | [angel3_mongo](https://pub.dev/packages/angel3_mongo) | A service backed by MongoDB |
 | [angel3_rethinkdb](https://pub.dev/packages/angel3_rethinkdb) | A service backed by RethinkDB, with changefeeds |
 | [angel3_sembast](https://pub.dev/packages/angel3_sembast) | A service backed by Sembast, an embedded NoSQL database |
@@ -256,7 +259,7 @@ Angel3 is a collection of packages: pick the ones a project needs. Each is descr
 | [angel3_auth](https://pub.dev/packages/angel3_auth) | Authentication with JWTs, local and Basic strategies |
 | [angel3_auth_client](https://pub.dev/packages/angel3_auth_client) | Sign in users with OAuth2 providers, such as Google or GitHub |
 | [angel3_auth_twitter](https://github.com/dart-backend/angel/tree/master/packages/security/auth_twitter) | Sign in users with Twitter OAuth 1.0a (not published) |
-| [angel3_auth_server](https://pub.dev/packages/angel3_auth_server) | Building blocks of an OAuth 2.0 authorization server, with PKCE |
+| [angel3_auth_server](https://pub.dev/packages/angel3_auth_server) | Building blocks of an OAuth 2.0 / 2.1 authorization server, with PKCE, introspection, client registration and mutual TLS |
 | [angel3_oidc_server](https://pub.dev/packages/angel3_oidc_server) | An OpenID Provider (OpenID Connect) on top of `angel3_auth_server` |
 | [angel3_security](https://pub.dev/packages/angel3_security) | CSRF protection, signed cookies and rate limiting |
 | [angel3_cors](https://pub.dev/packages/angel3_cors) | Cross-Origin Resource Sharing (CORS) middleware |
@@ -282,7 +285,7 @@ Angel3 is a collection of packages: pick the ones a project needs. Each is descr
 | [angel3_user_agent](https://pub.dev/packages/angel3_user_agent) | Parses the user agent of requests |
 | [angel3_validate](https://pub.dev/packages/angel3_validate) | Validates request bodies and queries, on the server and the client |
 | [angel3_hot](https://pub.dev/packages/angel3_hot) | Hot reloading of the server during development |
-| [angel3_production](https://pub.dev/packages/angel3_production) | Runs the app in several isolates, with respawning and graceful shutdown |
+| [angel3_production](https://pub.dev/packages/angel3_production) | Runs the app in several isolates, with respawning, graceful shutdown and client certificates |
 | [angel3_test](https://pub.dev/packages/angel3_test) | Testing utilities: a client that sends mock requests, and matchers |
 | [angel3_mock_request](https://pub.dev/packages/angel3_mock_request) | Mock `dart:io` requests and responses, for tests without a server |
 

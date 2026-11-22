@@ -113,6 +113,10 @@ class RunnerOptions {
   final Map<String, Object?> removeResponseHeaders = {};
   final Map<String, Object> responseHeaders = {};
 
+  /// Throws an [ArgumentError] of [ssl] or [http2] without a
+  /// [certificateFile] and a [keyFile], of a [clientCaFile] without [ssl] or
+  /// [http2], or of [requireClientCertificate] without [clientCaFile]: none
+  /// of them could serve as asked.
   RunnerOptions({
     this.hostname = '127.0.0.1',
     this.port = 3000,
@@ -128,9 +132,60 @@ class RunnerOptions {
     this.keyPassword,
     this.clientCaFile,
     this.requireClientCertificate = false,
-  });
+  }) {
+    if (_problem(
+          ssl: ssl,
+          http2: http2,
+          certificateFile: certificateFile,
+          keyFile: keyFile,
+          clientCaFile: clientCaFile,
+          requireClientCertificate: requireClientCertificate,
+        )
+        case var problem?) {
+      throw ArgumentError(problem);
+    }
+  }
+
+  /// What is wrong with the TLS options, if anything.
+  static String? _problem({
+    required bool ssl,
+    required bool http2,
+    required String? certificateFile,
+    required String? keyFile,
+    required String? clientCaFile,
+    required bool requireClientCertificate,
+  }) {
+    if ((ssl || http2) && certificateFile == null) {
+      return 'Missing --certificate-file option.';
+    } else if ((ssl || http2) && keyFile == null) {
+      return 'Missing --key-file option.';
+    } else if (clientCaFile != null && !ssl && !http2) {
+      return '--client-ca-file needs --ssl or --http2.';
+    } else if (requireClientCertificate && clientCaFile == null) {
+      return '--require-client-certificate needs --client-ca-file.';
+    }
+    return null;
+  }
 
   factory RunnerOptions.fromArgResults(ArgResults argResults) {
+    var ssl = argResults['ssl'] as bool? ?? false;
+    var http2 = argResults['http2'] as bool? ?? false;
+    var certificateFile = argResults['certificate-file'] as String?;
+    var keyFile = argResults['key-file'] as String?;
+    var clientCaFile = argResults['client-ca-file'] as String?;
+    var requireClientCertificate =
+        argResults['require-client-certificate'] as bool? ?? false;
+    if (_problem(
+          ssl: ssl,
+          http2: http2,
+          certificateFile: certificateFile,
+          keyFile: keyFile,
+          clientCaFile: clientCaFile,
+          requireClientCertificate: requireClientCertificate,
+        )
+        case var problem?) {
+      throw ArgParserException(problem);
+    }
     return RunnerOptions(
       hostname: argResults['address'] as String,
       port: _intOption(argResults, 'port', 0, 65535),
@@ -138,19 +193,18 @@ class RunnerOptions {
       useZone: argResults['use-zone'] as bool? ?? false,
       respawn: argResults['respawn'] as bool? ?? true,
       quiet: argResults['quiet'] as bool? ?? false,
-      certificateFile: argResults['certificate-file'] as String?,
-      keyFile: argResults['key-file'] as String?,
-      ssl: argResults['ssl'] as bool? ?? false,
-      http2: argResults['http2'] as bool? ?? false,
+      certificateFile: certificateFile,
+      keyFile: keyFile,
+      ssl: ssl,
+      http2: http2,
       certificatePassword:
           argResults['certificate-password'] as String? ??
           Platform.environment[certificatePasswordVariable],
       keyPassword:
           argResults['key-password'] as String? ??
           Platform.environment[keyPasswordVariable],
-      clientCaFile: argResults['client-ca-file'] as String?,
-      requireClientCertificate:
-          argResults['require-client-certificate'] as bool? ?? false,
+      clientCaFile: clientCaFile,
+      requireClientCertificate: requireClientCertificate,
     );
   }
 }

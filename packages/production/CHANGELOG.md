@@ -4,7 +4,11 @@
 
 ### New in 10.1.0
 
-* **Mutual TLS:** `--client-ca-file` asks each client for a certificate, which a handler reads as `req.clientCertificate`, and trusts the CAs of the file to sign it, for `--ssl` and `--http2`. `--require-client-certificate` refuses a client that presents none. `RunnerOptions` takes them as `clientCaFile` and `requireClientCertificate`. Requires `angel3_framework` 10.2.0
+* **Mutual TLS:** `--client-ca-file` asks each client for a certificate, which a handler reads as `req.clientCertificate`, and trusts the CAs of the file to sign it, for `--ssl` and `--http2`. `--require-client-certificate` refuses a client that presents none. `RunnerOptions` takes them as `clientCaFile` and `requireClientCertificate`, and throws an `ArgumentError` of a `clientCaFile` without `ssl` or `http2`, or of `requireClientCertificate` without `clientCaFile`, which `run` reports as usage errors. Requires `angel3_framework` 10.2.0
+
+### Fixes in 10.1.0
+
+* **Options:** `RunnerOptions` throws an `ArgumentError` of `ssl` or `http2` without a `certificateFile` and a `keyFile`, so `spawnIsolate` refuses them as `run` does, where an instance failed to start
 
 ## 10.0.0
 

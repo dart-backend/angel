@@ -182,21 +182,6 @@ class Runner {
       options.responseHeaders.addAll(responseHeaders);
       options.removeResponseHeaders.addAll(removeResponseHeaders);
 
-      if (options.ssl || options.http2) {
-        if (options.certificateFile == null) {
-          throw ArgParserException('Missing --certificate-file option.');
-        } else if (options.keyFile == null) {
-          throw ArgParserException('Missing --key-file option.');
-        }
-      } else if (options.clientCaFile != null) {
-        throw ArgParserException('--client-ca-file needs --ssl or --http2.');
-      }
-      if (options.requireClientCertificate && options.clientCaFile == null) {
-        throw ArgParserException(
-          '--require-client-certificate needs --client-ca-file.',
-        );
-      }
-
       print(darkGray.wrap(_banner));
       print('Starting `$name` application...');
 

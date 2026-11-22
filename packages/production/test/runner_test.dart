@@ -736,7 +736,8 @@ void main() {
       expect(await getCertificate(args, withCertificate: true), subject);
       await expectLater(
         getCertificate(args, withCertificate: false),
-        throwsA(anything),
+        // Refused in the handshake: not a timeout, or a failure to start.
+        throwsA(isA<IOException>()),
       );
     });
 
@@ -746,12 +747,20 @@ void main() {
       expect(await getCertificate(args, withCertificate: true), subject);
       await expectLater(
         getCertificate(args, withCertificate: false),
-        throwsA(anything),
+        // Refused in the handshake: not a timeout, or a failure to start.
+        throwsA(isA<IOException>()),
       );
     });
   });
 
   group('arguments', () {
+    test('--ssl without --certificate-file is a usage error', () async {
+      await capture(
+        () => Runner('app', closingApp).run(['--ssl', '--key-file', 'k.pem']),
+      );
+      expect(exitCode, 64);
+    });
+
     test(
       '--client-ca-file without --ssl or --http2 is a usage error',
       () async {
@@ -794,6 +803,43 @@ void main() {
       expect(exitCode, 0);
       expect(lines, isNotEmpty);
     });
+  });
+
+  test('RunnerOptions refuses TLS options that it cannot serve', () {
+    Matcher refused(String message) => throwsA(
+      isA<ArgumentError>().having((e) => e.message, 'message', message),
+    );
+    expect(
+      () => RunnerOptions(ssl: true, keyFile: 'key.pem'),
+      refused('Missing --certificate-file option.'),
+    );
+    expect(
+      () => RunnerOptions(http2: true, certificateFile: 'cert.pem'),
+      refused('Missing --key-file option.'),
+    );
+    expect(
+      () => RunnerOptions(clientCaFile: 'ca.pem'),
+      refused('--client-ca-file needs --ssl or --http2.'),
+    );
+    expect(
+      () => RunnerOptions(
+        ssl: true,
+        certificateFile: 'cert.pem',
+        keyFile: 'key.pem',
+        requireClientCertificate: true,
+      ),
+      refused('--require-client-certificate needs --client-ca-file.'),
+    );
+    expect(
+      RunnerOptions(
+        http2: true,
+        certificateFile: 'cert.pem',
+        keyFile: 'key.pem',
+        clientCaFile: 'ca.pem',
+        requireClientCertificate: true,
+      ).requireClientCertificate,
+      isTrue,
+    );
   });
 
   test('passwords may be given by environment variables', () {
