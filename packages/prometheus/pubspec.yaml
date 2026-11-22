@@ -1,0 +1,24 @@
+name: angel3_prometheus
+version: 10.0.0
+description: Prometheus metrics for Angel3 applications. Times each request, counts those in progress, and serves the metrics in the Prometheus text format.
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dart-backend/angel/
+issue_tracker: https://github.com/dart-backend/angel/issues
+topics:
+  - prometheus
+  - metrics
+  - monitoring
+
+resolution: workspace
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+dependencies:
+  angel3_framework: ^10.2.0
+  http_parser: ^4.0.0
+  prometheus_client: ^1.0.0
+dev_dependencies:
+  angel3_mock_request: ^10.0.0
+  angel3_production: ^10.1.0
+  http: ^1.0.0
+  lints: ^6.0.0
+  test: ^1.24.0

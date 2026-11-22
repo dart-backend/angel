@@ -286,6 +286,7 @@ Angel3 is a collection of packages: pick the ones a project needs. Each is descr
 | [angel3_validate](https://pub.dev/packages/angel3_validate) | Validates request bodies and queries, on the server and the client |
 | [angel3_hot](https://pub.dev/packages/angel3_hot) | Hot reloading of the server during development |
 | [angel3_production](https://pub.dev/packages/angel3_production) | Runs the app in several isolates, with respawning, graceful shutdown and client certificates |
+| [angel3_prometheus](https://pub.dev/packages/angel3_prometheus) | Prometheus metrics of the requests, served for each instance (new) |
 | [angel3_test](https://pub.dev/packages/angel3_test) | Testing utilities: a client that sends mock requests, and matchers |
 | [angel3_mock_request](https://pub.dev/packages/angel3_mock_request) | Mock `dart:io` requests and responses, for tests without a server |
 

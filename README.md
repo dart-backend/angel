@@ -32,6 +32,7 @@ The available features in Angel3 include:
 * Dependency injection with or without `dart:mirrors`
 * Compiled into executable binary with `dart compile exe`
 * Support rootless container deployment via `podman` and `podman compose`
+* Prometheus metrics, for Grafana dashboards
 
 ## The Core Framework
 
@@ -69,6 +70,7 @@ They can broadly be categorized as follows:
    * client: A client-side library designed to interface seamlessly with Angel3 backends directly from Dart/Flutter.
    * cache & redis: Caching interfaces with Redis integration to improve response times.
    * hot & production: Tooling for hot-reloading the server during development, and managing clustering/multi-threading under production loads, over HTTP, HTTPS or HTTP/2, with optional client certificates.
+   * prometheus: Prometheus metrics of the requests (rate, status, response time, requests in progress) and of the process, served for each instance.
    * test & mock_request: Testing utilities for mocking HTTP requests without spinning up a real server.
    * static: For serving static assets (images, CSS, JS) efficiently.
    * shelf, proxy, paginate, validate, user_agent, http_exception: Shelf interop, request forwarding, pagination, validation, user agent parsing and HTTP errors.
@@ -112,6 +114,7 @@ Branch: `master`
 
 Minor releases of single packages, listed in full in each `CHANGELOG.md`:
 
+* New package `angel3_prometheus`: Prometheus metrics of the requests and the process, with a port for each instance of `angel3_production`
 * Mutual TLS: the servers of `angel3_framework` 10.2.0 ask for, or require, client certificates, which a handler reads as `req.clientCertificate`; `angel3_production` 10.1.0 turns them on with `--client-ca-file` and `--require-client-certificate`; `angel3_auth_server` 10.1.0 authenticates OAuth2 clients by certificate (`tls_client_auth`, `self_signed_tls_client_auth`) and binds access tokens to it (RFC 8705), also behind nginx or Apache
 * Framework 10.1.0: `RequestContext.bodyFieldsAll` gives every value of each form field
 * ORM: SQLite support, with `SqliteDialect` (`angel3_orm` 10.2.0) and `SqliteMigrationRunner` (`angel3_migration_runner` 10.1.0); `angel3_orm` 10.1.0 makes updates, inserts and deletes with joins, a `limit` or JSON predicates correct, with breaking changes listed in its `CHANGELOG.md`; `angel3_orm_postgres` 10.1.0 requires PostgreSQL 16 or later
