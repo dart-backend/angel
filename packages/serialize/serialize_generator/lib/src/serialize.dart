@@ -184,7 +184,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           if (ctx.excluded[key]?.canSerialize == false) return;
           buf.writeln('''
         if (model.$key == null) {
-          throw FormatException("$msg");
+          throw FormatException(${_dartLiteral(msg)});
         }
         ''');
         });
@@ -285,7 +285,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             }
           }
 
-          buf.write("'$alias': $serializedRepresentation");
+          buf.write("${_dartLiteral(alias ?? '')}: $serializedRepresentation");
         }
 
         buf.write('};');
@@ -340,20 +340,12 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         // Required Fields
         ctx.requiredFields.forEach((key, msg) {
           if (ctx.excluded[key]?.canDeserialize == false) return;
-          var name = ctx.resolveFieldName(key);
-          if (msg.contains("'")) {
-            buf.writeln('''
-            if (map['$name'] == null) {
-              throw FormatException("$msg");
+          var name = _dartLiteral(ctx.resolveFieldName(key) ?? key);
+          buf.writeln('''
+            if (map[$name] == null) {
+              throw FormatException(${_dartLiteral(msg)});
             }
           ''');
-          } else {
-            buf.writeln('''
-            if (map['$name'] == null) {
-              throw FormatException('$msg');
-            }
-          ''');
-          }
         });
 
         buf.writeln('return ${ctx.modelClassName}(');
@@ -372,11 +364,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           if (ctx.excluded[field.name]?.canDeserialize == false) continue;
 
           var alias = ctx.resolveFieldName(field.name ?? '');
+          // The key, as a Dart string literal: an alias may hold `'` or `$`.
+          var aliasLiteral = _dartLiteral(alias ?? '');
 
           if (i++ > 0) buf.write(', ');
 
           var deserializedRepresentation =
-              "map['$alias'] as ${typeToString(type, ctx.clazz.library)}";
+              "map[$aliasLiteral] as ${typeToString(type, ctx.clazz.library)}";
 
           if (type.nullabilitySuffix == NullabilitySuffix.question) {
             deserializedRepresentation += '?';
@@ -401,7 +395,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           var fieldNameDeserializer = ctx.fieldInfo[field.name]?.deserializer;
           if (fieldNameDeserializer != null) {
             deserializedRepresentation =
-                "$fieldNameDeserializer(map['$alias'])";
+                "$fieldNameDeserializer(map[$aliasLiteral])";
           } else if (dateTimeTypeChecker.isAssignableFromType(type)) {
             if (field.type.nullabilitySuffix != NullabilitySuffix.question) {
               if (defaultValue.toLowerCase() == 'null') {
@@ -411,21 +405,22 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               }
             }
             deserializedRepresentation =
-                "map['$alias'] != null ? "
-                "(map['$alias'] is DateTime ? (map['$alias'] as DateTime) : DateTime.parse(map['$alias'].toString()))"
+                "map[$aliasLiteral] != null ? "
+                "(map[$aliasLiteral] is DateTime ? (map[$aliasLiteral] as DateTime) : DateTime.parse(map[$aliasLiteral].toString()))"
                 ' : $defaultValue';
           }
           // Serialize model classes via `XSerializer.toMap`
           else if (isModelClass(type)) {
             var genClass = modelClassNameOf(type);
-            var fromMap = "${genClass}Serializer.fromMap(map['$alias'] as Map)";
+            var fromMap =
+                "${genClass}Serializer.fromMap(map[$aliasLiteral] as Map)";
             // Without a default, a non-nullable model is required: a missing
             // one throws, as a missing `String` does, rather than give `null`.
             deserializedRepresentation =
                 type.nullabilitySuffix != NullabilitySuffix.question &&
                     defaultValue == 'null'
                 ? fromMap
-                : "map['$alias'] != null ? $fromMap : $defaultValue";
+                : "map[$aliasLiteral] != null ? $fromMap : $defaultValue";
           } else if (type is InterfaceType) {
             if (isListOfModelType(type)) {
               if (defaultValue == 'null') {
@@ -434,8 +429,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               var genClass = modelClassNameOf(type.typeArguments[0]);
 
               deserializedRepresentation =
-                  "map['$alias'] is Iterable"
-                  " ? List.unmodifiable(((map['$alias'] as Iterable)"
+                  "map[$aliasLiteral] is Iterable"
+                  " ? List.unmodifiable(((map[$aliasLiteral] as Iterable)"
                   '.whereType<Map>())'
                   '.map(${genClass}Serializer.fromMap))'
                   ' : $defaultValue';
@@ -448,10 +443,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               var genClass = modelClassNameOf(type.typeArguments[1]);
               deserializedRepresentation =
                   '''
-                map['$alias'] is Map
-                  ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
+                map[$aliasLiteral] is Map
+                  ? Map.unmodifiable((map[$aliasLiteral] as Map).keys.fold({}, (out, key) {
                        return out..[key] = ${genClass}Serializer
-                        .fromMap(((map['$alias'] as Map)[key]) as Map);
+                        .fromMap(((map[$aliasLiteral] as Map)[key]) as Map);
                     }))
                   : $defaultValue
             ''';
@@ -462,16 +457,16 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               var fallback =
                   defaultValue == 'null' &&
                       type.nullabilitySuffix != NullabilitySuffix.question
-                  ? "map['$alias'] as $enumType"
+                  ? "map[$aliasLiteral] as $enumType"
                   : defaultValue;
               deserializedRepresentation =
                   '''
-            map['$alias'] is $enumType
-              ? map['$alias'] as $enumType
-              : map['$alias'] is String
-              ? $enumType.values.byName(map['$alias'] as String)
-              : map['$alias'] is int
-              ? $enumType.values[map['$alias'] as int]
+            map[$aliasLiteral] is $enumType
+              ? map[$aliasLiteral] as $enumType
+              : map[$aliasLiteral] is String
+              ? $enumType.values.byName(map[$aliasLiteral] as String)
+              : map[$aliasLiteral] is int
+              ? $enumType.values[map[$aliasLiteral] as int]
               : $fallback
             ''';
 
@@ -488,8 +483,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               ).accept(DartEmitter(useNullSafetySyntax: true));
               deserializedRepresentation =
                   '''
-                map['$alias'] is Iterable
-                  ? (map['$alias'] as Iterable).cast<$arg>().toList()
+                map[$aliasLiteral] is Iterable
+                  ? (map[$aliasLiteral] as Iterable).cast<$arg>().toList()
                   : $defaultValue
                 ''';
             } else if (const TypeChecker.typeNamed(Map)
@@ -509,24 +504,24 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               }
               deserializedRepresentation =
                   '''
-                map['$alias'] is Map
-                  ? (map['$alias'] as Map).cast<$key, $value>()
+                map[$aliasLiteral] is Map
+                  ? (map[$aliasLiteral] as Map).cast<$key, $value>()
                   : $defaultValue
                 ''';
             } else if (const TypeChecker.typeNamed(Uint8List)
                 .isAssignableFromType(type)) {
               deserializedRepresentation =
                   '''
-            map['$alias'] is Uint8List
-              ? (map['$alias'] as Uint8List)
+            map[$aliasLiteral] is Uint8List
+              ? (map[$aliasLiteral] as Uint8List)
               :
               (
-                map['$alias'] is Iterable<int>
-                  ? Uint8List.fromList((map['$alias'] as Iterable<int>).toList())
+                map[$aliasLiteral] is Iterable<int>
+                  ? Uint8List.fromList((map[$aliasLiteral] as Iterable<int>).toList())
                   :
                   (
-                    map['$alias'] is String
-                      ? Uint8List.fromList(base64.decode(map['$alias'] as String))
+                    map[$aliasLiteral] is String
+                      ? Uint8List.fromList(base64.decode(map[$aliasLiteral] as String))
                       : $defaultValue
                   )
               )
@@ -579,7 +574,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 ..type = Reference('String')
                 ..name = field.name
                 ..assignment = Code(
-                  "'${ctx.resolveFieldName(field.name ?? '')}'",
+                  _dartLiteral(ctx.resolveFieldName(field.name ?? '') ?? ''),
                 );
             }),
           );

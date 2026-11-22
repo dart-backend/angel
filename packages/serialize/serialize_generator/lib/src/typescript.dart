@@ -230,7 +230,11 @@ class TypeScriptDefinitionBuilder implements Builder {
           buildStep,
         );
 
-        // foo: string;
+        // foo: string; a key that is not an identifier is quoted, as
+        // "it's odd": string.
+        if (alias != null && !_typeScriptIdentifier.hasMatch(alias)) {
+          alias = jsonEncode(alias);
+        }
         if (!ctx.requiredFields.containsKey(field.name)) {
           if (alias != null) {
             alias += '?';
@@ -261,3 +265,6 @@ class TypeScriptDefinitionBuilder implements Builder {
     );
   }
 }
+
+/// A name that TypeScript takes as a property name without quotes.
+final RegExp _typeScriptIdentifier = RegExp(r'^[A-Za-z_$][A-Za-z0-9_$]*$');

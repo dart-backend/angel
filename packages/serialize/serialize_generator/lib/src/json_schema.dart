@@ -1,12 +1,23 @@
 part of 'serialize_generator.dart';
 
+/// The Dart source of [text], in single quotes, or in double quotes if it
+/// has a `'` but no `"`, as `"Missing required field 'name'"`.
+String _dartString(String text) {
+  var quote = text.contains("'") && !text.contains('"') ? '"' : "'";
+  var escaped = text
+      .replaceAll(r'\', r'\\')
+      .replaceAll(quote, '\\$quote')
+      .replaceAll(r'$', r'\$')
+      .replaceAll('\n', r'\n');
+  return '$quote$escaped$quote';
+}
+
 /// The Dart source of a JSON value, of strings, numbers, booleans, `null`,
 /// lists and maps.
 String _dartLiteral(Object? value) => switch (value) {
   null => 'null',
   bool() || num() => '$value',
-  String() =>
-    "'${value.replaceAll(r'\', r'\\').replaceAll("'", r"\'").replaceAll(r'$', r'\$').replaceAll('\n', r'\n')}'",
+  String() => _dartString(value),
   List() => '[${value.map(_dartLiteral).join(', ')}]',
   Map() =>
     '{${value.entries.map((e) => '${_dartLiteral(e.key)}: ${_dartLiteral(e.value)}').join(', ')}}',

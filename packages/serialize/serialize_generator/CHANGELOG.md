@@ -13,6 +13,7 @@
 
 ### Fixes in 10.1.0
 
+* **Aliases:** An `alias` with `'`, `$` or `\`, such as `$ref`, is written as an escaped string in `toMap`, `fromMap`, the `Fields` class and the messages of required fields, where it made the generated code fail to compile, or read another key, and is quoted in the TypeScript definitions where it is not an identifier
 * **Nested models:** `toMap` writes `null` of a nullable `Map` of models that is `null`, where the generated code did not compile
 * **Nested models:** `toMap` writes `null` of a nullable model field that is `null`, where it threw "Required field [model] cannot be null", as of a `@BelongsTo Author? author` that is not set
 * **Nested models:** A non-nullable model field without a default is required by `fromMap`, where it was read as `null`, so the generated class did not compile

@@ -644,7 +644,7 @@ class AuthorSerializer extends Codec<Author, Map> {
     }
 
     if (model.age == null) {
-      throw FormatException("Custom message for missing `age`");
+      throw FormatException('Custom message for missing `age`');
     }
 
     return {
