@@ -64,6 +64,18 @@ class HasMapDecoder extends Converter<Map, HasMap> {
 class HasMapSerializer extends Codec<HasMap, Map> {
   const HasMapSerializer();
 
+  /// The name of the JSON Schema of [HasMap].
+  static const String schemaName = 'HasMap';
+
+  /// The JSON Schema of the map that [toMap] writes of [HasMap], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'value': {'type': 'string'},
+    },
+  };
+
   @override
   HasMapEncoder get encoder => const HasMapEncoder();
 
@@ -76,6 +88,13 @@ class HasMapSerializer extends Codec<HasMap, Map> {
     }
 
     return HasMap(value: _fromString(map['value']));
+  }
+
+  /// Adds the JSON Schema of [HasMap], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(HasMapEntity? model) {

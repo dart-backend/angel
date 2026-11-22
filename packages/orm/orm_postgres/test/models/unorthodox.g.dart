@@ -1302,6 +1302,20 @@ class UnorthodoxDecoder extends Converter<Map, Unorthodox> {
 class UnorthodoxSerializer extends Codec<Unorthodox, Map> {
   const UnorthodoxSerializer();
 
+  /// The name of the JSON Schema of [Unorthodox].
+  static const String schemaName = 'Unorthodox';
+
+  /// The JSON Schema of the map that [toMap] writes of [Unorthodox], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'name': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   UnorthodoxEncoder get encoder => const UnorthodoxEncoder();
 
@@ -1310,6 +1324,13 @@ class UnorthodoxSerializer extends Codec<Unorthodox, Map> {
 
   static Unorthodox fromMap(Map map) {
     return Unorthodox(name: map['name'] as String?);
+  }
+
+  /// Adds the JSON Schema of [Unorthodox], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(UnorthodoxEntity? model) {
@@ -1345,6 +1366,39 @@ class WeirdJoinDecoder extends Converter<Map, WeirdJoin> {
 class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
   const WeirdJoinSerializer();
 
+  /// The name of the JSON Schema of [WeirdJoin].
+  static const String schemaName = 'WeirdJoin';
+
+  /// The JSON Schema of the map that [toMap] writes of [WeirdJoin], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {'type': 'integer'},
+      'unorthodox': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Unorthodox'},
+          {'type': 'null'},
+        ],
+      },
+      'song': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Song'},
+          {'type': 'null'},
+        ],
+      },
+      'numbas': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Numba'},
+      },
+      'foos': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Foo'},
+      },
+    },
+    'required': ['id'],
+  };
+
   @override
   WeirdJoinEncoder get encoder => const WeirdJoinEncoder();
 
@@ -1375,6 +1429,17 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [WeirdJoin], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    UnorthodoxSerializer.addJsonSchemas(schemas);
+    SongSerializer.addJsonSchemas(schemas);
+    NumbaSerializer.addJsonSchemas(schemas);
+    FooSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(WeirdJoinEntity? model) {
@@ -1432,6 +1497,34 @@ class SongDecoder extends Converter<Map, Song> {
 class SongSerializer extends Codec<Song, Map> {
   const SongSerializer();
 
+  /// The name of the JSON Schema of [Song].
+  static const String schemaName = 'Song';
+
+  /// The JSON Schema of the map that [toMap] writes of [Song], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'weird_join_id': {
+        'type': ['integer', 'null'],
+      },
+      'title': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   SongEncoder get encoder => const SongEncoder();
 
@@ -1454,6 +1547,13 @@ class SongSerializer extends Codec<Song, Map> {
       weirdJoinId: map['weird_join_id'] as int?,
       title: map['title'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [Song], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(SongEntity? model) {
@@ -1509,6 +1609,23 @@ class NumbaDecoder extends Converter<Map, Numba> {
 class NumbaSerializer extends Codec<Numba, Map> {
   const NumbaSerializer();
 
+  /// The name of the JSON Schema of [Numba].
+  static const String schemaName = 'Numba';
+
+  /// The JSON Schema of the map that [toMap] writes of [Numba], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'i': {
+        'type': ['integer', 'null'],
+      },
+      'parent': {
+        'type': ['integer', 'null'],
+      },
+    },
+  };
+
   @override
   NumbaEncoder get encoder => const NumbaEncoder();
 
@@ -1517,6 +1634,13 @@ class NumbaSerializer extends Codec<Numba, Map> {
 
   static Numba fromMap(Map map) {
     return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
+  }
+
+  /// Adds the JSON Schema of [Numba], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(NumbaEntity? model) {
@@ -1554,6 +1678,24 @@ class FooDecoder extends Converter<Map, Foo> {
 class FooSerializer extends Codec<Foo, Map> {
   const FooSerializer();
 
+  /// The name of the JSON Schema of [Foo].
+  static const String schemaName = 'Foo';
+
+  /// The JSON Schema of the map that [toMap] writes of [Foo], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'bar': {
+        'type': ['string', 'null'],
+      },
+      'weird_joins': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/WeirdJoin'},
+      },
+    },
+  };
+
   @override
   FooEncoder get encoder => const FooEncoder();
 
@@ -1571,6 +1713,14 @@ class FooSerializer extends Codec<Foo, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [Foo], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    WeirdJoinSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(FooEntity? model) {
@@ -1613,6 +1763,29 @@ class FooPivotDecoder extends Converter<Map, FooPivot> {
 class FooPivotSerializer extends Codec<FooPivot, Map> {
   const FooPivotSerializer();
 
+  /// The name of the JSON Schema of [FooPivot].
+  static const String schemaName = 'FooPivot';
+
+  /// The JSON Schema of the map that [toMap] writes of [FooPivot], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'weird_join': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/WeirdJoin'},
+          {'type': 'null'},
+        ],
+      },
+      'foo': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Foo'},
+          {'type': 'null'},
+        ],
+      },
+    },
+  };
+
   @override
   FooPivotEncoder get encoder => const FooPivotEncoder();
 
@@ -1626,6 +1799,15 @@ class FooPivotSerializer extends Codec<FooPivot, Map> {
           : null,
       foo: map['foo'] != null ? FooSerializer.fromMap(map['foo'] as Map) : null,
     );
+  }
+
+  /// Adds the JSON Schema of [FooPivot], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    WeirdJoinSerializer.addJsonSchemas(schemas);
+    FooSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(FooPivotEntity? model) {

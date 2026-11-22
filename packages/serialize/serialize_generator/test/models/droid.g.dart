@@ -119,6 +119,35 @@ class DroidDecoder extends Converter<Map, Droid> {
 class DroidSerializer extends Codec<Droid, Map> {
   const DroidSerializer();
 
+  /// The name of the JSON Schema of [Droid].
+  static const String schemaName = 'Droid';
+
+  /// The JSON Schema of the map that [toMap] writes of [Droid], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'position': {'type': 'string'},
+      'age': {'type': 'number'},
+      'description': {'type': 'string'},
+    },
+    'required': ['position', 'age', 'description'],
+  };
+
   @override
   DroidEncoder get encoder => const DroidEncoder();
 
@@ -143,6 +172,13 @@ class DroidSerializer extends Codec<Droid, Map> {
       age: map['age'] as num,
       description: map['description'] as String,
     );
+  }
+
+  /// Adds the JSON Schema of [Droid], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(DroidEntity? model) {

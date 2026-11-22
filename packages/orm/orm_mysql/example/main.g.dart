@@ -275,6 +275,34 @@ class TodoDecoder extends Converter<Map, Todo> {
 class TodoSerializer extends Codec<Todo, Map> {
   const TodoSerializer();
 
+  /// The name of the JSON Schema of [Todo].
+  static const String schemaName = 'Todo';
+
+  /// The JSON Schema of the map that [toMap] writes of [Todo], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'text': {
+        'type': ['string', 'null'],
+      },
+      'is_complete': {
+        'type': ['boolean', 'null'],
+      },
+    },
+  };
+
   @override
   TodoEncoder get encoder => const TodoEncoder();
 
@@ -297,6 +325,13 @@ class TodoSerializer extends Codec<Todo, Map> {
       text: map['text'] as String?,
       isComplete: map['is_complete'] as bool? ?? false,
     );
+  }
+
+  /// Adds the JSON Schema of [Todo], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(TodoEntity? model) {

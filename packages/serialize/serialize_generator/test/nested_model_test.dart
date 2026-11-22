@@ -13,7 +13,10 @@ void main() {
   });
 
   test('a nested model serializes as its map', () {
-    var garage = Garage(main: car, spare: Car(make: 'Seat'));
+    var garage = Garage(
+      main: car,
+      spare: Car(make: 'Seat'),
+    );
     expect(GarageSerializer.toMap(garage)['spare'], {'make': 'Seat'});
   });
 
@@ -30,7 +33,10 @@ void main() {
   });
 
   test('round trip', () {
-    var garage = Garage(main: car, spare: Car(make: 'Seat'));
+    var garage = Garage(
+      main: car,
+      spare: Car(make: 'Seat'),
+    );
     expect(GarageSerializer.fromMap(GarageSerializer.toMap(garage)), garage);
   });
 }

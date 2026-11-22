@@ -13,10 +13,16 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
+  angel3_container: ^10.0.0
   angel3_framework: ^10.2.0
   angel3_route: ^10.0.2
   http_parser: ^4.0.0
 dev_dependencies:
+  angel3_container_generator: ^10.0.0
+  angel3_container_mirrors: ^10.0.0
   angel3_mock_request: ^10.0.0
+  angel3_serialize: ^10.0.0
+  angel3_serialize_generator: ^10.1.0
+  build_runner: ^2.6.0
   lints: ^6.0.0
   test: ^1.24.0

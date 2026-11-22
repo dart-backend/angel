@@ -384,6 +384,37 @@ class ProfileUserDecoder extends Converter<Map, ProfileUser> {
 class ProfileUserSerializer extends Codec<ProfileUser, Map> {
   const ProfileUserSerializer();
 
+  /// The name of the JSON Schema of [ProfileUser].
+  static const String schemaName = 'ProfileUser';
+
+  /// The JSON Schema of the map that [toMap] writes of [ProfileUser], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {'type': 'string'},
+      'profile': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/UserProfile'},
+          {'type': 'null'},
+        ],
+      },
+      'address': {'\$ref': '#/components/schemas/UserAddress'},
+    },
+    'required': ['name', 'address'],
+  };
+
   @override
   ProfileUserEncoder get encoder => const ProfileUserEncoder();
 
@@ -409,6 +440,15 @@ class ProfileUserSerializer extends Codec<ProfileUser, Map> {
           : null,
       address: UserAddressSerializer.fromMap(map['address'] as Map),
     );
+  }
+
+  /// Adds the JSON Schema of [ProfileUser], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    UserProfileSerializer.addJsonSchemas(schemas);
+    UserAddressSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(_ProfileUser? model) {
@@ -470,6 +510,20 @@ class UserProfileDecoder extends Converter<Map, UserProfile> {
 class UserProfileSerializer extends Codec<UserProfile, Map> {
   const UserProfileSerializer();
 
+  /// The name of the JSON Schema of [UserProfile].
+  static const String schemaName = 'UserProfile';
+
+  /// The JSON Schema of the map that [toMap] writes of [UserProfile], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'first_name': {'type': 'string'},
+      'last_name': {'type': 'string'},
+    },
+    'required': ['first_name', 'last_name'],
+  };
+
   @override
   UserProfileEncoder get encoder => const UserProfileEncoder();
 
@@ -481,6 +535,13 @@ class UserProfileSerializer extends Codec<UserProfile, Map> {
       firstName: map['first_name'] as String,
       lastName: map['last_name'] as String,
     );
+  }
+
+  /// Adds the JSON Schema of [UserProfile], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(_UserProfile? model) {
@@ -518,6 +579,19 @@ class UserAddressDecoder extends Converter<Map, UserAddress> {
 class UserAddressSerializer extends Codec<UserAddress, Map> {
   const UserAddressSerializer();
 
+  /// The name of the JSON Schema of [UserAddress].
+  static const String schemaName = 'UserAddress';
+
+  /// The JSON Schema of the map that [toMap] writes of [UserAddress], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'city': {'type': 'string'},
+    },
+    'required': ['city'],
+  };
+
   @override
   UserAddressEncoder get encoder => const UserAddressEncoder();
 
@@ -526,6 +600,13 @@ class UserAddressSerializer extends Codec<UserAddress, Map> {
 
   static UserAddress fromMap(Map map) {
     return UserAddress(city: map['city'] as String);
+  }
+
+  /// Adds the JSON Schema of [UserAddress], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(_UserAddress? model) {

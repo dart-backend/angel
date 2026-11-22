@@ -383,6 +383,35 @@ class BikeDecoder extends Converter<Map, Bike> {
 class BikeSerializer extends Codec<Bike, Map> {
   const BikeSerializer();
 
+  /// The name of the JSON Schema of [Bike].
+  static const String schemaName = 'Bike';
+
+  /// The JSON Schema of the map that [toMap] writes of [Bike], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'make': {'type': 'string'},
+      'description': {'type': 'string'},
+      'family_friendly': {'type': 'boolean'},
+      'recalled_at': {'type': 'string', 'format': 'date-time'},
+      'price': {'type': 'number'},
+      'width': {'type': 'integer'},
+    },
+    'required': ['make', 'description', 'family_friendly', 'price', 'width'],
+  };
+
   @override
   BikeEncoder get encoder => const BikeEncoder();
 
@@ -413,6 +442,13 @@ class BikeSerializer extends Codec<Bike, Map> {
       price: map['price'] as double,
       width: map['width'] as int,
     );
+  }
+
+  /// Adds the JSON Schema of [Bike], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(EntityBike? model) {

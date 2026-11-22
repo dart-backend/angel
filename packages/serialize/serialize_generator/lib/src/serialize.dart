@@ -137,6 +137,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           generateFromMapMethod(clazz, ctx, file);
         }
 
+        _addJsonSchema(clazz, ctx);
+
         if (serializers.contains(Serializers.map) ||
             serializers.contains(Serializers.json)) {
           generateToMapMethod(clazz, ctx, file);
@@ -243,23 +245,30 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                   'model.${field.name}$question.map((m) => $m).toList()';
               log.fine('serializedRepresentation => $serializedRepresentation');
             } else if (isMapToModelType(type)) {
+              var nullable =
+                  field.type.nullabilitySuffix == NullabilitySuffix.question;
+              var bang = nullable ? '!' : '';
               serializedRepresentation =
-                  '''model.${field.name}.keys.fold({}, (map, key) {
+                  '''model.${field.name}$bang.keys.fold({}, (map, key) {
               return map..[key] =
-              ${serializerToMap(type.typeArguments[1], 'model.${field.name}[key]')};
+              ${serializerToMap(type.typeArguments[1], 'model.${field.name}$bang[key]')};
             })''';
-            } else if (type.element is Enum) {
-              var convert =
-                  (field.type.nullabilitySuffix == NullabilitySuffix.question)
-                  ? '!'
-                  : '';
-
+              if (nullable) {
+                serializedRepresentation =
+                    'model.${field.name} == null ? null : $serializedRepresentation';
+              }
+            } else if (type.element is EnumElement) {
+              // Its index, which `fromMap` reads back.
+              var enumType =
+                  (typeToString(type, ctx.clazz.library) ??
+                          type.element.name ??
+                          '')
+                      .replaceAll('?', '');
+              var index = '$enumType.values.indexOf(model.${field.name}';
               serializedRepresentation =
-                  '''
-            model.${field.name} != null ?
-              ${type.getDisplayString()}.values.indexOf(model.${field.name}$convert)
-              : null
-            ''';
+                  field.type.nullabilitySuffix == NullabilitySuffix.question
+                  ? 'model.${field.name} == null ? null : $index!)'
+                  : '$index)';
             } else if (const TypeChecker.typeNamed(Uint8List)
                 .isAssignableFromType(type)) {
               var convert =

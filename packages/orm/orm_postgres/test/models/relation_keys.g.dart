@@ -1127,6 +1127,31 @@ class UserIdentityDecoder extends Converter<Map, UserIdentity> {
 class UserIdentitySerializer extends Codec<UserIdentity, Map> {
   const UserIdentitySerializer();
 
+  /// The name of the JSON Schema of [UserIdentity].
+  static const String schemaName = 'UserIdentity';
+
+  /// The JSON Schema of the map that [toMap] writes of [UserIdentity], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'handle': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   UserIdentityEncoder get encoder => const UserIdentityEncoder();
 
@@ -1148,6 +1173,13 @@ class UserIdentitySerializer extends Codec<UserIdentity, Map> {
           : null,
       handle: map['handle'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [UserIdentity], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(UserIdentityEntity? model) {
@@ -1199,6 +1231,47 @@ class LoginDecoder extends Converter<Map, Login> {
 class LoginSerializer extends Codec<Login, Map> {
   const LoginSerializer();
 
+  /// The name of the JSON Schema of [Login].
+  static const String schemaName = 'Login';
+
+  /// The JSON Schema of the map that [toMap] writes of [Login], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'user_identity': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/UserIdentity'},
+          {'type': 'null'},
+        ],
+      },
+      'backup_identity': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/UserIdentity'},
+          {'type': 'null'},
+        ],
+      },
+      'grants': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Grant'},
+      },
+    },
+  };
+
   @override
   LoginEncoder get encoder => const LoginEncoder();
 
@@ -1233,6 +1306,15 @@ class LoginSerializer extends Codec<Login, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [Login], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    UserIdentitySerializer.addJsonSchemas(schemas);
+    GrantSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(LoginEntity? model) {
@@ -1300,6 +1382,29 @@ class LoginGrantDecoder extends Converter<Map, LoginGrant> {
 class LoginGrantSerializer extends Codec<LoginGrant, Map> {
   const LoginGrantSerializer();
 
+  /// The name of the JSON Schema of [LoginGrant].
+  static const String schemaName = 'LoginGrant';
+
+  /// The JSON Schema of the map that [toMap] writes of [LoginGrant], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'login': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Login'},
+          {'type': 'null'},
+        ],
+      },
+      'grant': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Grant'},
+          {'type': 'null'},
+        ],
+      },
+    },
+  };
+
   @override
   LoginGrantEncoder get encoder => const LoginGrantEncoder();
 
@@ -1315,6 +1420,15 @@ class LoginGrantSerializer extends Codec<LoginGrant, Map> {
           ? GrantSerializer.fromMap(map['grant'] as Map)
           : null,
     );
+  }
+
+  /// Adds the JSON Schema of [LoginGrant], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    LoginSerializer.addJsonSchemas(schemas);
+    GrantSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(LoginGrantEntity? model) {
@@ -1355,6 +1469,35 @@ class GrantDecoder extends Converter<Map, Grant> {
 class GrantSerializer extends Codec<Grant, Map> {
   const GrantSerializer();
 
+  /// The name of the JSON Schema of [Grant].
+  static const String schemaName = 'Grant';
+
+  /// The JSON Schema of the map that [toMap] writes of [Grant], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'logins': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Login'},
+      },
+    },
+  };
+
   @override
   GrantEncoder get encoder => const GrantEncoder();
 
@@ -1383,6 +1526,14 @@ class GrantSerializer extends Codec<Grant, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [Grant], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    LoginSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(GrantEntity? model) {

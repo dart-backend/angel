@@ -862,6 +862,41 @@ class UserDecoder extends Converter<Map, User> {
 class UserSerializer extends Codec<User, Map> {
   const UserSerializer();
 
+  /// The name of the JSON Schema of [User].
+  static const String schemaName = 'User';
+
+  /// The JSON Schema of the map that [toMap] writes of [User], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'username': {
+        'type': ['string', 'null'],
+      },
+      'password': {
+        'type': ['string', 'null'],
+      },
+      'email': {
+        'type': ['string', 'null'],
+      },
+      'roles': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Role'},
+      },
+    },
+  };
+
   @override
   UserEncoder get encoder => const UserEncoder();
 
@@ -892,6 +927,14 @@ class UserSerializer extends Codec<User, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [User], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    RoleSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(UserEntity? model) {
@@ -955,6 +998,29 @@ class RoleUserDecoder extends Converter<Map, RoleUser> {
 class RoleUserSerializer extends Codec<RoleUser, Map> {
   const RoleUserSerializer();
 
+  /// The name of the JSON Schema of [RoleUser].
+  static const String schemaName = 'RoleUser';
+
+  /// The JSON Schema of the map that [toMap] writes of [RoleUser], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'role': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Role'},
+          {'type': 'null'},
+        ],
+      },
+      'user': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/User'},
+          {'type': 'null'},
+        ],
+      },
+    },
+  };
+
   @override
   RoleUserEncoder get encoder => const RoleUserEncoder();
 
@@ -970,6 +1036,15 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
           ? UserSerializer.fromMap(map['user'] as Map)
           : null,
     );
+  }
+
+  /// Adds the JSON Schema of [RoleUser], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    RoleSerializer.addJsonSchemas(schemas);
+    UserSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(RoleUserEntity? model) {
@@ -1010,6 +1085,35 @@ class RoleDecoder extends Converter<Map, Role> {
 class RoleSerializer extends Codec<Role, Map> {
   const RoleSerializer();
 
+  /// The name of the JSON Schema of [Role].
+  static const String schemaName = 'Role';
+
+  /// The JSON Schema of the map that [toMap] writes of [Role], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'users': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/User'},
+      },
+    },
+  };
+
   @override
   RoleEncoder get encoder => const RoleEncoder();
 
@@ -1038,6 +1142,14 @@ class RoleSerializer extends Codec<Role, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [Role], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    UserSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(RoleEntity? model) {

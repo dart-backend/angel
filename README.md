@@ -33,7 +33,7 @@ The available features in Angel3 include:
 * Compiled into executable binary with `dart compile exe`
 * Support rootless container deployment via `podman` and `podman compose`
 * Prometheus metrics, for Grafana dashboards
-* OpenAPI 3.1 documents and a Swagger UI page, of the routes and services
+* OpenAPI 3.1 documents and a Swagger UI page, of the routes, services and controllers, with the schemas of `@serializable` models
 
 ## The Core Framework
 
@@ -72,7 +72,7 @@ They can broadly be categorized as follows:
    * cache & redis: Caching interfaces with Redis integration to improve response times.
    * hot & production: Tooling for hot-reloading the server during development, and managing clustering/multi-threading under production loads, over HTTP, HTTPS or HTTP/2, with optional client certificates.
    * prometheus: Prometheus metrics of the requests (rate, status, response time, requests in progress) and of the process, served for each instance.
-   * openapi: OpenAPI 3.1 documents built from the routes and services, served with a Swagger UI page.
+   * openapi: OpenAPI 3.1 documents built from the routes, services and controllers, with the JSON Schemas that serialize_generator generates of the models, served with a Swagger UI page.
    * test & mock_request: Testing utilities for mocking HTTP requests without spinning up a real server.
    * static: For serving static assets (images, CSS, JS) efficiently.
    * shelf, proxy, paginate, validate, user_agent, http_exception: Shelf interop, request forwarding, pagination, validation, user agent parsing and HTTP errors.
@@ -126,7 +126,6 @@ Minor releases of single packages, listed in full in each `CHANGELOG.md`:
 
 * Performance optimization
 * Out of the box SAML2 support
-* Open API: schemas generated from `@serializable` models, and descriptions of controller methods
 * Expand ORM to support
   * SQL Server
   * Oracle DB

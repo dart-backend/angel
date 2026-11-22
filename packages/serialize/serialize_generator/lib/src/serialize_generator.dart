@@ -18,6 +18,8 @@ import 'package:source_gen/source_gen.dart' hide LibraryBuilder;
 import 'build_context.dart';
 import 'context.dart';
 
+part 'json_schema.dart';
+
 part 'model.dart';
 
 part 'serialize.dart';

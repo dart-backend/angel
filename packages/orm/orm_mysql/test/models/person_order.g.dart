@@ -603,6 +603,40 @@ class PersonOrderDecoder extends Converter<Map, PersonOrder> {
 class PersonOrderSerializer extends Codec<PersonOrder, Map> {
   const PersonOrderSerializer();
 
+  /// The name of the JSON Schema of [PersonOrder].
+  static const String schemaName = 'PersonOrder';
+
+  /// The JSON Schema of the map that [toMap] writes of [PersonOrder], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'person_id': {
+        'type': ['integer', 'null'],
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'price': {
+        'type': ['number', 'null'],
+      },
+      'deleted': {
+        'type': ['boolean', 'null'],
+      },
+    },
+  };
+
   @override
   PersonOrderEncoder get encoder => const PersonOrderEncoder();
 
@@ -627,6 +661,13 @@ class PersonOrderSerializer extends Codec<PersonOrder, Map> {
       price: map['price'] as double?,
       deleted: map['deleted'] as bool?,
     );
+  }
+
+  /// Adds the JSON Schema of [PersonOrder], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(PersonOrderEntity? model) {
@@ -693,6 +734,43 @@ class OrderWithPersonInfoDecoder extends Converter<Map, OrderWithPersonInfo> {
 class OrderWithPersonInfoSerializer extends Codec<OrderWithPersonInfo, Map> {
   const OrderWithPersonInfoSerializer();
 
+  /// The name of the JSON Schema of [OrderWithPersonInfo].
+  static const String schemaName = 'OrderWithPersonInfo';
+
+  /// The JSON Schema of the map that [toMap] writes of [OrderWithPersonInfo], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'price': {
+        'type': ['number', 'null'],
+      },
+      'deleted': {
+        'type': ['boolean', 'null'],
+      },
+      'person_name': {
+        'type': ['string', 'null'],
+      },
+      'person_age': {
+        'type': ['integer', 'null'],
+      },
+    },
+  };
+
   @override
   OrderWithPersonInfoEncoder get encoder => const OrderWithPersonInfoEncoder();
 
@@ -718,6 +796,13 @@ class OrderWithPersonInfoSerializer extends Codec<OrderWithPersonInfo, Map> {
       personName: map['person_name'] as String?,
       personAge: map['person_age'] as int?,
     );
+  }
+
+  /// Adds the JSON Schema of [OrderWithPersonInfo], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(OrderWithPersonInfoEntity? model) {

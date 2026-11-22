@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http_parser/http_parser.dart';
 
@@ -82,6 +83,26 @@ class OpenApi {
     this.extra = const {},
   });
 
+  /// The schemas of `@serializable` models, for [schemas], of the
+  /// `addJsonSchemas` of their serializers, which add the schemas of the
+  /// models each holds:
+  ///
+  /// ```dart
+  /// OpenApi(
+  ///   title: 'Todo API',
+  ///   schemas: OpenApi.schemasOf([TodoSerializer.addJsonSchemas]),
+  /// );
+  /// ```
+  static Map<String, Map<String, dynamic>> schemasOf(
+    Iterable<void Function(Map<String, Map<String, dynamic>> schemas)> adders,
+  ) {
+    var schemas = <String, Map<String, dynamic>>{};
+    for (var add in adders) {
+      add(schemas);
+    }
+    return schemas;
+  }
+
   /// A JSON Schema that refers to the schema [name] of [schemas].
   static Map<String, dynamic> ref(String name) => {
     r'$ref': '#/components/schemas/$name',
@@ -135,6 +156,7 @@ class OpenApi {
       }
     }
 
+    var annotated = _controllerOperations(app);
     var own = {_strip(documentPath), if (uiPath != null) _strip(uiPath!)};
     for (var route in flatten<RequestHandler>(app).routes) {
       var method = route.method.toUpperCase();
@@ -143,7 +165,9 @@ class OpenApi {
       if (own.contains(path) || servicePaths.contains(path)) continue;
       if (include != null && !include!(route)) continue;
       for (var p in openApiPathsOf(path)) {
-        var described = _described['$method ${p.path}'];
+        var described =
+            _described['$method ${p.path}'] ??
+            (route.handlers.isEmpty ? null : annotated[route.handlers.last]);
         add(
           method,
           p.path,
@@ -167,6 +191,42 @@ class OpenApi {
       if (schemas.isNotEmpty) 'components': {'schemas': schemas},
       ...extra,
     };
+  }
+
+  /// The `@OpenApiOperation` annotations of the methods of the app's
+  /// controllers, by the handler of the route of each, which a flattened
+  /// route keeps as its last handler. A controller whose class its
+  /// reflector cannot reflect has none.
+  Map<Function, OpenApiOperation> _controllerOperations(Angel app) {
+    var operations = <Function, OpenApiOperation>{};
+    var reflector = app.container.reflector;
+    for (var controller in app.controllers.values) {
+      ReflectedClass? clazz;
+      try {
+        clazz = reflector.reflectClass(controller.runtimeType);
+      } on ArgumentError {
+        continue;
+      } on UnsupportedError {
+        continue;
+      }
+      for (var declaration in clazz?.declarations ?? const []) {
+        var annotations = [
+          for (var a in declaration.function?.annotations ?? const [])
+            a.reflectee,
+        ];
+        var operation = annotations.whereType<OpenApiOperation>().firstOrNull;
+        if (operation == null) continue;
+        // The name of its route, as `Controller` gives it.
+        var expose = annotations.whereType<Expose>().firstOrNull;
+        var name = expose?.as?.isNotEmpty == true
+            ? expose!.as!
+            : declaration.name;
+        var route = controller.routeMappings[name];
+        if (route == null || route.handlers.isEmpty) continue;
+        operations[route.handlers.last] = operation;
+      }
+    }
+    return operations;
   }
 
   /// The operations of the service mounted at [base]: those of its routes

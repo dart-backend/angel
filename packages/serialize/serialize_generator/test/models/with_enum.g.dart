@@ -82,6 +82,30 @@ class WithEnumDecoder extends Converter<Map, WithEnum> {
 class WithEnumSerializer extends Codec<WithEnum, Map> {
   const WithEnumSerializer();
 
+  /// The name of the JSON Schema of [WithEnum].
+  static const String schemaName = 'WithEnum';
+
+  /// The JSON Schema of the map that [toMap] writes of [WithEnum], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'type': {
+        'type': ['integer', 'null'],
+        'enum': [0, 1, 2, null],
+        'description': 'The index of WithEnumType: a, b, c',
+      },
+      'final_list': {
+        'type': ['array', 'null'],
+        'items': {'type': 'integer'},
+      },
+      'image_bytes': {
+        'type': ['string', 'null'],
+        'contentEncoding': 'base64',
+      },
+    },
+  };
+
   @override
   WithEnumEncoder get encoder => const WithEnumEncoder();
 
@@ -114,12 +138,21 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
     );
   }
 
+  /// Adds the JSON Schema of [WithEnum], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+  }
+
   static Map<String, dynamic> toMap(WithEnumEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
     return {
-      'type': model.type,
+      'type': model.type == null
+          ? null
+          : WithEnumType.values.indexOf(model.type!),
       'final_list': model.finalList,
       'image_bytes': model.imageBytes != null
           ? base64.encode(model.imageBytes!)

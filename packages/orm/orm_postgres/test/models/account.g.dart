@@ -346,6 +346,36 @@ class AccountDecoder extends Converter<Map, Account> {
 class AccountSerializer extends Codec<Account, Map> {
   const AccountSerializer();
 
+  /// The name of the JSON Schema of [Account].
+  static const String schemaName = 'Account';
+
+  /// The JSON Schema of the map that [toMap] writes of [Account], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'description': {'type': 'string'},
+      'name': {'type': 'string'},
+      'price': {'type': 'number'},
+      'assets': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Asset'},
+      },
+    },
+    'required': ['description', 'name', 'price'],
+  };
+
   @override
   AccountEncoder get encoder => const AccountEncoder();
 
@@ -376,6 +406,14 @@ class AccountSerializer extends Codec<Account, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [Account], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    AssetSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(AccountEntity? model) {

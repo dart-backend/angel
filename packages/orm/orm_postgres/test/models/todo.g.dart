@@ -1123,6 +1123,28 @@ class UserDecoder extends Converter<Map, User> {
 class UserSerializer extends Codec<User, Map> {
   const UserSerializer();
 
+  /// The name of the JSON Schema of [User].
+  static const String schemaName = 'User';
+
+  /// The JSON Schema of the map that [toMap] writes of [User], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {'type': 'integer'},
+      'name': {'type': 'string'},
+      'todos': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/UserTodo'},
+      },
+      'address': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/UserAddress'},
+      },
+    },
+    'required': ['id', 'name'],
+  };
+
   @override
   UserEncoder get encoder => const UserEncoder();
 
@@ -1148,6 +1170,15 @@ class UserSerializer extends Codec<User, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [User], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    UserTodoSerializer.addJsonSchemas(schemas);
+    UserAddressSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(UserEntity? model) {
@@ -1196,6 +1227,21 @@ class UserAddressDecoder extends Converter<Map, UserAddress> {
 class UserAddressSerializer extends Codec<UserAddress, Map> {
   const UserAddressSerializer();
 
+  /// The name of the JSON Schema of [UserAddress].
+  static const String schemaName = 'UserAddress';
+
+  /// The JSON Schema of the map that [toMap] writes of [UserAddress], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {'type': 'integer'},
+      'user_id': {'type': 'integer'},
+      'address': {'type': 'string'},
+    },
+    'required': ['id', 'user_id', 'address'],
+  };
+
   @override
   UserAddressEncoder get encoder => const UserAddressEncoder();
 
@@ -1208,6 +1254,13 @@ class UserAddressSerializer extends Codec<UserAddress, Map> {
       userId: map['user_id'] as int,
       address: map['address'] as String,
     );
+  }
+
+  /// Adds the JSON Schema of [UserAddress], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(UserAddressEntity? model) {
@@ -1247,6 +1300,29 @@ class UserTodoDecoder extends Converter<Map, UserTodo> {
 class UserTodoSerializer extends Codec<UserTodo, Map> {
   const UserTodoSerializer();
 
+  /// The name of the JSON Schema of [UserTodo].
+  static const String schemaName = 'UserTodo';
+
+  /// The JSON Schema of the map that [toMap] writes of [UserTodo], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {'type': 'integer'},
+      'user_id': {'type': 'integer'},
+      'title': {'type': 'string'},
+      'todo_values': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/TodoValue'},
+      },
+      'todo_notes': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/TodoNote'},
+      },
+    },
+    'required': ['id', 'user_id', 'title'],
+  };
+
   @override
   UserTodoEncoder get encoder => const UserTodoEncoder();
 
@@ -1273,6 +1349,15 @@ class UserTodoSerializer extends Codec<UserTodo, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [UserTodo], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    TodoValueSerializer.addJsonSchemas(schemas);
+    TodoNoteSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(UserTodoEntity? model) {
@@ -1332,6 +1417,24 @@ class TodoValueDecoder extends Converter<Map, TodoValue> {
 class TodoValueSerializer extends Codec<TodoValue, Map> {
   const TodoValueSerializer();
 
+  /// The name of the JSON Schema of [TodoValue].
+  static const String schemaName = 'TodoValue';
+
+  /// The JSON Schema of the map that [toMap] writes of [TodoValue], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {'type': 'integer'},
+      'value': {'type': 'string'},
+      'todo_id': {'type': 'integer'},
+      'description': {
+        'type': ['string', 'null'],
+      },
+    },
+    'required': ['id', 'value', 'todo_id'],
+  };
+
   @override
   TodoValueEncoder get encoder => const TodoValueEncoder();
 
@@ -1345,6 +1448,13 @@ class TodoValueSerializer extends Codec<TodoValue, Map> {
       todoId: map['todo_id'] as int,
       description: map['description'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [TodoValue], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(TodoValueEntity? model) {
@@ -1396,6 +1506,24 @@ class TodoNoteDecoder extends Converter<Map, TodoNote> {
 class TodoNoteSerializer extends Codec<TodoNote, Map> {
   const TodoNoteSerializer();
 
+  /// The name of the JSON Schema of [TodoNote].
+  static const String schemaName = 'TodoNote';
+
+  /// The JSON Schema of the map that [toMap] writes of [TodoNote], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {'type': 'integer'},
+      'note': {'type': 'string'},
+      'todo_id': {'type': 'integer'},
+      'description': {
+        'type': ['string', 'null'],
+      },
+    },
+    'required': ['id', 'note', 'todo_id'],
+  };
+
   @override
   TodoNoteEncoder get encoder => const TodoNoteEncoder();
 
@@ -1409,6 +1537,13 @@ class TodoNoteSerializer extends Codec<TodoNote, Map> {
       todoId: map['todo_id'] as int,
       description: map['description'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [TodoNote], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(TodoNoteEntity? model) {

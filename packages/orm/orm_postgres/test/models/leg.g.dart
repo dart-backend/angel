@@ -500,6 +500,37 @@ class LegDecoder extends Converter<Map, Leg> {
 class LegSerializer extends Codec<Leg, Map> {
   const LegSerializer();
 
+  /// The name of the JSON Schema of [Leg].
+  static const String schemaName = 'Leg';
+
+  /// The JSON Schema of the map that [toMap] writes of [Leg], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'foot': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Foot'},
+          {'type': 'null'},
+        ],
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   LegEncoder get encoder => const LegEncoder();
 
@@ -524,6 +555,14 @@ class LegSerializer extends Codec<Leg, Map> {
           : null,
       name: map['name'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [Leg], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    FootSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(LegEntity? model) {
@@ -579,6 +618,34 @@ class FootDecoder extends Converter<Map, Foot> {
 class FootSerializer extends Codec<Foot, Map> {
   const FootSerializer();
 
+  /// The name of the JSON Schema of [Foot].
+  static const String schemaName = 'Foot';
+
+  /// The JSON Schema of the map that [toMap] writes of [Foot], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'leg_id': {
+        'type': ['integer', 'null'],
+      },
+      'n_toes': {
+        'type': ['number', 'null'],
+      },
+    },
+  };
+
   @override
   FootEncoder get encoder => const FootEncoder();
 
@@ -601,6 +668,13 @@ class FootSerializer extends Codec<Foot, Map> {
       legId: map['leg_id'] as int?,
       nToes: map['n_toes'] as double?,
     );
+  }
+
+  /// Adds the JSON Schema of [Foot], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(FootEntity? model) {

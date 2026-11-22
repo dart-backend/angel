@@ -14,6 +14,7 @@
 - [Describing operations](#describing-operations)
   - [Schemas](#schemas)
   - [Anything else](#anything-else)
+  - [Controllers](#controllers)
 - [Serving the document](#serving-the-document)
 - [Things to know](#things-to-know)
 
@@ -112,7 +113,17 @@ openApi.describe(
 
 ### Schemas
 
-Give the schemas that operations refer to, by name, which `OpenApi.ref` refers to:
+`angel3_serialize_generator` 10.1.0 generates the JSON Schema of each `@serializable` model. `OpenApi.schemasOf` collects them, with those of the models they hold, and `OpenApi.ref` of a serializer's `schemaName` refers to one:
+
+```dart
+var openApi = OpenApi(
+  title: 'Todo API',
+  schemas: OpenApi.schemasOf([TodoSerializer.addJsonSchemas]),
+);
+openApi.describeService('todos', schema: OpenApi.ref(TodoSerializer.schemaName));
+```
+
+Or give schemas of your own, by name:
 
 ```dart
 var openApi = OpenApi(
@@ -150,6 +161,28 @@ var openApi = OpenApi(
 
 A `components` of `extra` replaces the one of `schemas`, so give both there if you give security schemes.
 
+### Controllers
+
+Annotate a method of a `Controller` with `@OpenApiOperation`, which takes what `describe` does:
+
+```dart
+@Expose('/users')
+class UserController extends Controller {
+  @Expose('/:id')
+  @OpenApiOperation(
+    summary: 'Read a user',
+    tags: ['users'],
+    responses: {
+      200: OpenApiResponse('The user'),
+      404: OpenApiResponse('No such user'),
+    },
+  )
+  Map<String, dynamic> read(String id) => {'id': id};
+}
+```
+
+The annotations are read through the app's reflector, as the controller's `@Expose` annotations are: a `MirrorsReflector`, or the reflection data of `angel3_container_generator` without `dart:mirrors`, of an `@injectable` controller whose library imports `angel3_openapi`. A `describe` of the same operation takes precedence over the annotation.
+
 ## Serving the document
 
 `configureServer` serves:
@@ -164,5 +197,3 @@ Without `configureServer`, `openApi.documentOf(app)` gives the document, and `op
 - **Who may read it.** The document lists every route of the app. Configure it only where it should be public, or put a middleware before it that checks who asks.
 - **In production** (`ANGEL_ENV=production`), the document is built once, when first asked for, and again after `describe`.
 - **Mounted apps.** The services of `app.use` are documented as services; those of a mounted router or child app are documented as plain routes.
-- **Schemas** are not generated from `@serializable` models yet: give them in `schemas`.
-- **Controllers.** The routes of a `Controller` are documented as other routes are.

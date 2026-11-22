@@ -481,6 +481,31 @@ class NumberDecoder extends Converter<Map, Number> {
 class NumberSerializer extends Codec<Number, Map> {
   const NumberSerializer();
 
+  /// The name of the JSON Schema of [Number].
+  static const String schemaName = 'Number';
+
+  /// The JSON Schema of the map that [toMap] writes of [Number], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'two': {
+        'type': ['integer', 'null'],
+      },
+    },
+  };
+
   @override
   NumberEncoder get encoder => const NumberEncoder();
 
@@ -502,6 +527,13 @@ class NumberSerializer extends Codec<Number, Map> {
           : null,
       two: map['two'] as int?,
     );
+  }
+
+  /// Adds the JSON Schema of [Number], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(NumberEntity? model) {
@@ -548,6 +580,37 @@ class AlphabetDecoder extends Converter<Map, Alphabet> {
 class AlphabetSerializer extends Codec<Alphabet, Map> {
   const AlphabetSerializer();
 
+  /// The name of the JSON Schema of [Alphabet].
+  static const String schemaName = 'Alphabet';
+
+  /// The JSON Schema of the map that [toMap] writes of [Alphabet], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'value': {
+        'type': ['string', 'null'],
+      },
+      'numbers': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Number'},
+          {'type': 'null'},
+        ],
+      },
+    },
+  };
+
   @override
   AlphabetEncoder get encoder => const AlphabetEncoder();
 
@@ -572,6 +635,14 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
           ? NumberSerializer.fromMap(map['numbers'] as Map)
           : null,
     );
+  }
+
+  /// Adds the JSON Schema of [Alphabet], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    NumberSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(AlphabetEntity? model) {

@@ -537,6 +537,44 @@ class OrderDecoder extends Converter<Map, Order> {
 class OrderSerializer extends Codec<Order, Map> {
   const OrderSerializer();
 
+  /// The name of the JSON Schema of [Order].
+  static const String schemaName = 'Order';
+
+  /// The JSON Schema of the map that [toMap] writes of [Order], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'customer': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Customer'},
+          {'type': 'null'},
+        ],
+      },
+      'employee_id': {
+        'type': ['integer', 'null'],
+      },
+      'order_date': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'shipper_id': {
+        'type': ['integer', 'null'],
+      },
+    },
+  };
+
   @override
   OrderEncoder get encoder => const OrderEncoder();
 
@@ -567,6 +605,14 @@ class OrderSerializer extends Codec<Order, Map> {
           : null,
       shipperId: map['shipper_id'] as int?,
     );
+  }
+
+  /// Adds the JSON Schema of [Order], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    CustomerSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(EntityOrder? model) {
@@ -632,6 +678,28 @@ class CustomerDecoder extends Converter<Map, Customer> {
 class CustomerSerializer extends Codec<Customer, Map> {
   const CustomerSerializer();
 
+  /// The name of the JSON Schema of [Customer].
+  static const String schemaName = 'Customer';
+
+  /// The JSON Schema of the map that [toMap] writes of [Customer], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+    },
+  };
+
   @override
   CustomerEncoder get encoder => const CustomerEncoder();
 
@@ -652,6 +720,13 @@ class CustomerSerializer extends Codec<Customer, Map> {
                 : DateTime.parse(map['updated_at'].toString()))
           : null,
     );
+  }
+
+  /// Adds the JSON Schema of [Customer], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(EntityCustomer? model) {

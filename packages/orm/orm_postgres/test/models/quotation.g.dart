@@ -217,6 +217,26 @@ class QuotationDecoder extends Converter<Map, Quotation> {
 class QuotationSerializer extends Codec<Quotation, Map> {
   const QuotationSerializer();
 
+  /// The name of the JSON Schema of [Quotation].
+  static const String schemaName = 'Quotation';
+
+  /// The JSON Schema of the map that [toMap] writes of [Quotation], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'price': {
+        'type': ['number', 'null'],
+      },
+    },
+  };
+
   @override
   QuotationEncoder get encoder => const QuotationEncoder();
 
@@ -229,6 +249,13 @@ class QuotationSerializer extends Codec<Quotation, Map> {
       name: map['name'] as String?,
       price: map['price'] as double?,
     );
+  }
+
+  /// Adds the JSON Schema of [Quotation], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(QuotationEntity? model) {

@@ -120,6 +120,23 @@ class GamepadButtonDecoder extends Converter<Map, GamepadButton> {
 class GamepadButtonSerializer extends Codec<GamepadButton, Map> {
   const GamepadButtonSerializer();
 
+  /// The name of the JSON Schema of [GamepadButton].
+  static const String schemaName = 'GamepadButton';
+
+  /// The JSON Schema of the map that [toMap] writes of [GamepadButton], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'radius': {
+        'type': ['integer', 'null'],
+      },
+    },
+  };
+
   @override
   GamepadButtonEncoder get encoder => const GamepadButtonEncoder();
 
@@ -131,6 +148,13 @@ class GamepadButtonSerializer extends Codec<GamepadButton, Map> {
       name: map['name'] as String?,
       radius: map['radius'] as int?,
     );
+  }
+
+  /// Adds the JSON Schema of [GamepadButton], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(GamepadButtonEntity? model) {
@@ -168,6 +192,24 @@ class GamepadDecoder extends Converter<Map, Gamepad> {
 class GamepadSerializer extends Codec<Gamepad, Map> {
   const GamepadSerializer();
 
+  /// The name of the JSON Schema of [Gamepad].
+  static const String schemaName = 'Gamepad';
+
+  /// The JSON Schema of the map that [toMap] writes of [Gamepad], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'buttons': {
+        'type': ['array', 'null'],
+        'items': {'\$ref': '#/components/schemas/GamepadButton'},
+      },
+      'dynamic_map': {
+        'type': ['object', 'null'],
+      },
+    },
+  };
+
   @override
   GamepadEncoder get encoder => const GamepadEncoder();
 
@@ -187,6 +229,14 @@ class GamepadSerializer extends Codec<Gamepad, Map> {
           ? (map['dynamic_map'] as Map).cast<String, dynamic>()
           : {},
     );
+  }
+
+  /// Adds the JSON Schema of [Gamepad], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    GamepadButtonSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(GamepadEntity? model) {

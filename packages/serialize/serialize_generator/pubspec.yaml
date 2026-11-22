@@ -22,6 +22,7 @@ dependencies:
   source_gen: ^4.0.0
   logging: ^1.2.0
 dev_dependencies:
+  json_schema: ^5.2.2
   build_test: ^3.5.0
   build_runner: ^2.6.0
   collection: ^1.17.0

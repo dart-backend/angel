@@ -94,6 +94,25 @@ class GarageDecoder extends Converter<Map, Garage> {
 class GarageSerializer extends Codec<Garage, Map> {
   const GarageSerializer();
 
+  /// The name of the JSON Schema of [Garage].
+  static const String schemaName = 'Garage';
+
+  /// The JSON Schema of the map that [toMap] writes of [Garage], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'main': {'\$ref': '#/components/schemas/Car'},
+      'spare': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Car'},
+          {'type': 'null'},
+        ],
+      },
+    },
+    'required': ['main'],
+  };
+
   @override
   GarageEncoder get encoder => const GarageEncoder();
 
@@ -107,6 +126,14 @@ class GarageSerializer extends Codec<Garage, Map> {
           ? CarSerializer.fromMap(map['spare'] as Map)
           : null,
     );
+  }
+
+  /// Adds the JSON Schema of [Garage], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    CarSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(GarageEntity? model) {
@@ -147,6 +174,19 @@ class CarDecoder extends Converter<Map, Car> {
 class CarSerializer extends Codec<Car, Map> {
   const CarSerializer();
 
+  /// The name of the JSON Schema of [Car].
+  static const String schemaName = 'Car';
+
+  /// The JSON Schema of the map that [toMap] writes of [Car], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'make': {'type': 'string'},
+    },
+    'required': ['make'],
+  };
+
   @override
   CarEncoder get encoder => const CarEncoder();
 
@@ -155,6 +195,13 @@ class CarSerializer extends Codec<Car, Map> {
 
   static Car fromMap(Map map) {
     return Car(make: map['make'] as String);
+  }
+
+  /// Adds the JSON Schema of [Car], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(CarEntity? model) {

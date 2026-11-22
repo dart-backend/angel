@@ -20,6 +20,10 @@ class OpenApiResponse {
 
 /// What [OpenApi.describe] says of an operation, a route of a method and a
 /// path, beyond what its route gives.
+///
+/// It is also an annotation of a `Controller`'s method, which
+/// `OpenApi.documentOf` reads through the app's reflector:
+/// `@OpenApiOperation(summary: 'Read a user')`.
 class OpenApiOperation {
   final String? summary, description, operationId;
   final List<String> tags;

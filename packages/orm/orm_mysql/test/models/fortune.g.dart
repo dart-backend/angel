@@ -193,6 +193,23 @@ class FortuneDecoder extends Converter<Map, Fortune> {
 class FortuneSerializer extends Codec<Fortune, Map> {
   const FortuneSerializer();
 
+  /// The name of the JSON Schema of [Fortune].
+  static const String schemaName = 'Fortune';
+
+  /// The JSON Schema of the map that [toMap] writes of [Fortune], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['integer', 'null'],
+      },
+      'message': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   FortuneEncoder get encoder => const FortuneEncoder();
 
@@ -201,6 +218,13 @@ class FortuneSerializer extends Codec<Fortune, Map> {
 
   static Fortune fromMap(Map map) {
     return Fortune(id: map['id'] as int?, message: map['message'] as String?);
+  }
+
+  /// Adds the JSON Schema of [Fortune], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(FortuneEntity? model) {
