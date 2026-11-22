@@ -369,6 +369,9 @@ class Router<T> {
       for (var route in r.routes) {
         var pos = scanner.position;
 
+        // A route that the path cannot match, without parsing it.
+        if (!cleanRelative.startsWith(route._literalPrefix, pos)) continue;
+
         if (route is SymlinkRoute<T>) {
           if (route.parser != null) {
             if (_tryParse(route.parser, scanner)?.successful == true) {

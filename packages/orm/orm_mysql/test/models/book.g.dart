@@ -628,8 +628,12 @@ class BookSerializer extends Codec<Book, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'author': AuthorSerializer.toMap(model.author),
-      'partner_author': AuthorSerializer.toMap(model.partnerAuthor),
+      'author': model.author == null
+          ? null
+          : AuthorSerializer.toMap(model.author),
+      'partner_author': model.partnerAuthor == null
+          ? null
+          : AuthorSerializer.toMap(model.partnerAuthor),
       'name': model.name,
     };
   }

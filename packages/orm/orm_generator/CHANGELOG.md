@@ -1,5 +1,15 @@
 # Change Log
 
+## 10.1.0
+
+### New in 10.1.0
+
+* **JSON columns:** A field of a `@serializable` class that is not an ORM model, such as `ProfileEntity? get profile`, is stored as JSON: in a `jsonb` column, written with its serializer's `toMap` and read with its `fromMap`, of a map or of JSON text, as PostgreSQL, MySQL, MariaDB and SQLite give it. Its query's `where` has a `MapSqlExpressionBuilder` of it. A non-nullable one needs `angel3_serialize_generator` 10.1.0, which this version requires
+
+### Fixes in 10.1.0
+
+* **Queries:** The `expressionBuilders` of a query's `where` lists only the builders it has: a field of a type that has none, which is left out with a warning, made the generated code fail to compile, with "The getter ... isn't defined"
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

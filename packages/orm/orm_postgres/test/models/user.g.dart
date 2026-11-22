@@ -977,8 +977,8 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
       throw FormatException("Required field [model] cannot be null");
     }
     return {
-      'role': RoleSerializer.toMap(model.role),
-      'user': UserSerializer.toMap(model.user),
+      'role': model.role == null ? null : RoleSerializer.toMap(model.role),
+      'user': model.user == null ? null : UserSerializer.toMap(model.user),
     };
   }
 }

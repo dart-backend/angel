@@ -1244,8 +1244,12 @@ class LoginSerializer extends Codec<Login, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'name': model.name,
-      'user_identity': UserIdentitySerializer.toMap(model.userIdentity),
-      'backup_identity': UserIdentitySerializer.toMap(model.backupIdentity),
+      'user_identity': model.userIdentity == null
+          ? null
+          : UserIdentitySerializer.toMap(model.userIdentity),
+      'backup_identity': model.backupIdentity == null
+          ? null
+          : UserIdentitySerializer.toMap(model.backupIdentity),
       'grants': model.grants.map((m) => GrantSerializer.toMap(m)).toList(),
     };
   }
@@ -1318,8 +1322,8 @@ class LoginGrantSerializer extends Codec<LoginGrant, Map> {
       throw FormatException("Required field [model] cannot be null");
     }
     return {
-      'login': LoginSerializer.toMap(model.login),
-      'grant': GrantSerializer.toMap(model.grant),
+      'login': model.login == null ? null : LoginSerializer.toMap(model.login),
+      'grant': model.grant == null ? null : GrantSerializer.toMap(model.grant),
     };
   }
 }

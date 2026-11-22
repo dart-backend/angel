@@ -134,6 +134,14 @@ class AnimalSerializer extends Codec<Animal, Map> {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.genus == null) {
+      throw FormatException("Missing required field 'genus' on Animal.");
+    }
+
+    if (model.species == null) {
+      throw FormatException("Missing required field 'species' on Animal.");
+    }
+
     return {'genus': model.genus, 'species': model.species};
   }
 }
@@ -191,6 +199,14 @@ class BirdSerializer extends Codec<Bird, Map> {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.genus == null) {
+      throw FormatException("Missing required field 'genus' on Bird.");
+    }
+
+    if (model.species == null) {
+      throw FormatException("Missing required field 'species' on Bird.");
+    }
+
     return {
       'genus': model.genus,
       'species': model.species,

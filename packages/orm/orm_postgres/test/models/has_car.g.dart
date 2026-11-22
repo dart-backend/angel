@@ -315,6 +315,10 @@ class HasCarSerializer extends Codec<HasCar, Map> {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.type == null) {
+      throw FormatException("Missing required field 'type' on HasCar.");
+    }
+
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

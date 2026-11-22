@@ -55,6 +55,8 @@ An instance that fails to *start* the first time (a port in use, a bad certifica
 
 When combined with `systemd`, deploying Angel3 applications on Linux can be very simple.
 
+Set `ANGEL_ENV=production` in the environment of the runner, as with `Environment=ANGEL_ENV=production` in a `systemd` unit or `ENV ANGEL_ENV=production` in a `Dockerfile`. The runner does not set it: without it, every instance runs in development mode, which resolves the routes of each request again instead of caching them, and is much slower with many routes. See [Production mode](https://pub.dev/packages/angel3_framework#production-mode) of the framework.
+
 ### Message Passing
 
 The `Runner` class uses [`belatuk_pub_sub`](<https://pub.dev/packages/belatuk_pub_sub>) to coordinate message passing between isolates. When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it. It is injected into your application's `Container` as `pub_sub.Client`, so you can use it as follows:

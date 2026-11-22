@@ -108,6 +108,21 @@ void main() async {
 
 See the [example](example/) directory for services, views, error handling and more.
 
+## Production mode
+
+Set the `ANGEL_ENV` environment variable to `production` when deploying:
+
+```bash
+ANGEL_ENV=production dart bin/main.dart
+```
+
+Without it, the app runs in development mode, which is slower:
+
+* **Routes.** In production, the route tree, including groups and mounted routers, is flattened once, and the routes that a path resolves to are cached, for up to `app.maxHandlerCacheSize` paths (1024 by default). In development, every request resolves its path against the routes again.
+* **Timing.** In development, each request is also timed, for its log record.
+
+`app.environment.isProduction` tells which mode an app runs in, and `Angel(environment: AngelEnvironment('production'))` sets it in code, such as in a test.
+
 ## Running without `dart:mirrors` (AOT)
 
 `dart compile exe` and Flutter do not support `dart:mirrors`. Create the app without a `reflector` and it runs with reflection disabled:

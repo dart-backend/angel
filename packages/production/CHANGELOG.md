@@ -8,6 +8,7 @@
 
 ### Fixes in 10.1.0
 
+* **Docs:** The README says to set `ANGEL_ENV=production` for the runner, which does not set it, as instances are much slower without it
 * **Docs:** The README has a Metrics section: how to serve the metrics of each instance on a port of its own, for Prometheus, with `angel3_prometheus`
 * **Options:** `RunnerOptions` throws an `ArgumentError` of `ssl` or `http2` without a `certificateFile` and a `keyFile`, so `spawnIsolate` refuses them as `run` does, where an instance failed to start
 

@@ -583,7 +583,9 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'value': model.value,
-      'numbers': NumberSerializer.toMap(model.numbers),
+      'numbers': model.numbers == null
+          ? null
+          : NumberSerializer.toMap(model.numbers),
     };
   }
 }

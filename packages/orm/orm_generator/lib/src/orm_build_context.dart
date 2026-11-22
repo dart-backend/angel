@@ -413,6 +413,14 @@ Future<OrmBuildContext?> buildOrmContext(
   return ctx;
 }
 
+/// Whether [field] is of a `@serializable` class without a relationship
+/// annotation, such as `Profile? get profile`, which is stored as JSON: of
+/// its serializer's `toMap`, and read back with its `fromMap`.
+bool isJsonModelField(OrmBuildContext ctx, OrmField field) =>
+    field is! RelationFieldImpl &&
+    !ctx.relations.containsKey(field.displayName) &&
+    isModelClass(field.type);
+
 /// Whether a `@Column` (or `@PrimaryKey`) annotation passes a column type
 /// itself: `Column`'s `type` always has a value, `ColumnType.varChar` when it
 /// is not given.
@@ -445,6 +453,10 @@ ColumnType inferColumnType(DartType type) {
     return ColumnType.jsonb;
   }
   if (const TypeChecker.typeNamed(List).isAssignableFromType(type)) {
+    return ColumnType.jsonb;
+  }
+  // A `@serializable` class that is not a relation, stored as JSON.
+  if (isModelClass(type)) {
     return ColumnType.jsonb;
   }
   if (type is InterfaceType && type.element is EnumElement) {

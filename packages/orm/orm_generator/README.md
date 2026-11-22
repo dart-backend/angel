@@ -59,6 +59,33 @@ Run the following command to generate the required `.g.dart` files for Angel3 OR
     dart run build_runner build
 ```
 
+## JSON columns
+
+A field of a `@serializable` class that is not a model of its own, such as a profile, is stored as JSON, in a `jsonb` column on PostgreSQL:
+
+```dart
+@serializable
+@orm
+abstract class UserEntity extends Model {
+  String? get name;
+
+  ProfileEntity? get profile;
+}
+
+@serializable
+abstract class ProfileEntity {
+  String? get firstName;
+
+  String? get lastName;
+}
+```
+
+* **Stored and read** with the class's serializer: `ProfileSerializer.toMap` when written, and `ProfileSerializer.fromMap` when read, of the map that PostgreSQL gives or the JSON text of MySQL, MariaDB and SQLite.
+* **Queried** as a map: `UserQuery()..where!.profile['first_name'].asString?.equals('Ana')`.
+* **Nullable or not.** A nullable one, as `ProfileEntity?`, is `NULL` when it is `null`. A non-nullable one needs `angel3_serialize_generator` 10.1.0 or later, and must be among the fields of a query that reads it.
+
+A field of a type that the generator cannot store, or query, is left out of the query's `where` with a warning, rather than generating code that does not compile.
+
 ## Supported database
 
 * PostgreSQL version 16 or later

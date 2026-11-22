@@ -176,16 +176,16 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         var buf = StringBuffer();
 
-        /*
-      ctx.requiredFields.forEach((key, msg) {
-        if (ctx.excluded[key]?.canSerialize == false) return;
-        buf.writeln('''
+        // A required field (`isNullable: false`) that is null throws, as
+        // `fromMap` does of a map without it.
+        ctx.requiredFields.forEach((key, msg) {
+          if (ctx.excluded[key]?.canSerialize == false) return;
+          buf.writeln('''
         if (model.$key == null) {
           throw FormatException("$msg");
         }
         ''');
-      });
-      */
+        });
 
         buf.writeln('return {');
         var i = 0;
@@ -226,6 +226,11 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               type,
               'model.${field.name}',
             );
+            // `toMap` throws for `null`.
+            if (field.type.nullabilitySuffix == NullabilitySuffix.question) {
+              serializedRepresentation =
+                  'model.${field.name} == null ? null : $serializedRepresentation';
+            }
           } else if (type is InterfaceType) {
             if (isListOfModelType(type)) {
               var m = serializerToMap(type.typeArguments[0], 'm');
@@ -404,10 +409,14 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           // Serialize model classes via `XSerializer.toMap`
           else if (isModelClass(type)) {
             var genClass = modelClassNameOf(type);
+            var fromMap = "${genClass}Serializer.fromMap(map['$alias'] as Map)";
+            // Without a default, a non-nullable model is required: a missing
+            // one throws, as a missing `String` does, rather than give `null`.
             deserializedRepresentation =
-                "map['$alias'] != null"
-                " ? ${genClass}Serializer.fromMap(map['$alias'] as Map)"
-                ' : $defaultValue';
+                type.nullabilitySuffix != NullabilitySuffix.question &&
+                    defaultValue == 'null'
+                ? fromMap
+                : "map['$alias'] != null ? $fromMap : $defaultValue";
           } else if (type is InterfaceType) {
             if (isListOfModelType(type)) {
               if (defaultValue == 'null') {

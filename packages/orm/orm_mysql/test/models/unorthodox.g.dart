@@ -1383,8 +1383,10 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
     }
     return {
       'id': model.id,
-      'unorthodox': UnorthodoxSerializer.toMap(model.unorthodox),
-      'song': SongSerializer.toMap(model.song),
+      'unorthodox': model.unorthodox == null
+          ? null
+          : UnorthodoxSerializer.toMap(model.unorthodox),
+      'song': model.song == null ? null : SongSerializer.toMap(model.song),
       'numbas': model.numbas.map((m) => NumbaSerializer.toMap(m)).toList(),
       'foos': model.foos.map((m) => FooSerializer.toMap(m)).toList(),
     };
@@ -1631,8 +1633,10 @@ class FooPivotSerializer extends Codec<FooPivot, Map> {
       throw FormatException("Required field [model] cannot be null");
     }
     return {
-      'weird_join': WeirdJoinSerializer.toMap(model.weirdJoin),
-      'foo': FooSerializer.toMap(model.foo),
+      'weird_join': model.weirdJoin == null
+          ? null
+          : WeirdJoinSerializer.toMap(model.weirdJoin),
+      'foo': model.foo == null ? null : FooSerializer.toMap(model.foo),
     };
   }
 }

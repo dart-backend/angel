@@ -82,6 +82,10 @@ class HasMapSerializer extends Codec<HasMap, Map> {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.value == null) {
+      throw FormatException("Missing required field 'value' on HasMap.");
+    }
+
     return {'value': _toString(model.value)};
   }
 }

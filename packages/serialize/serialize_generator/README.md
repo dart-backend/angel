@@ -15,7 +15,7 @@ In your `pubspec.yaml`:
 dependencies:
   angel3_serialize: ^10.0.0
 dev_dependencies:
-  angel3_serialize_generator: ^10.0.0
+  angel3_serialize_generator: ^10.1.0
   build_runner: ^2.4.0
 ```
 
@@ -41,6 +41,17 @@ dev_dependencies:
     ```
 
     The generated class is named without the `Entity` suffix (or a `_` prefix): `Todo`, with `TodoSerializer`, `TodoFields` and a `todoSerializer` codec. A class whose name only ends with the letters of the suffix, such as `UserIdentity`, keeps its name.
+
+### Required fields
+
+A field annotated `@SerializableField(isNullable: false)` is required: `fromMap` throws a `FormatException` of a map without it, and `toMap` of a model whose value of it is `null`.
+
+### Nested models
+
+A field of another `@serializable` class is serialized with that class's serializer, `toMap` and `fromMap`:
+
+* **Nullable**, as `AuthorEntity? author`: `null` is written, and read, as `null`.
+* **Non-nullable**, as `AuthorEntity author`, without a default: it is required, and `fromMap` throws of a map without it.
 
 ## Migrating from 9.x to 10.0.0
 

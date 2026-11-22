@@ -49,6 +49,22 @@ class Route<T> {
 
   Parser<RouteResult>? get parser => _parser ??= _routeDefinition?.compile();
 
+  /// The text that a path must start with to match this route: its leading
+  /// constant segments, joined by `/`, as its [parser] matches them exactly.
+  /// Checking it first spares the parser of most routes that a path cannot
+  /// match, which is most of them.
+  late final String _literalPrefix = _literalPrefixOf(_routeDefinition);
+
+  static String _literalPrefixOf(RouteDefinition? definition) {
+    var constants = <String>[];
+    for (var segment in definition?.segments ?? const <RouteSegment>[]) {
+      // Not a subclass, whose text may be matched otherwise.
+      if (segment.runtimeType != ConstantSegment) break;
+      constants.add((segment as ConstantSegment).text ?? '');
+    }
+    return constants.join('/');
+  }
+
   @override
   String toString() {
     return '$method $path => $handlers';

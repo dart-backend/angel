@@ -548,6 +548,14 @@ class AuthorSerializer extends Codec<Author, Map> {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.name == null) {
+      throw FormatException("Missing required field 'name' on Author.");
+    }
+
+    if (model.age == null) {
+      throw FormatException("Custom message for missing `age`");
+    }
+
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -555,7 +563,9 @@ class AuthorSerializer extends Codec<Author, Map> {
       'name': model.name,
       'age': model.age,
       'books': model.books.map((m) => BookSerializer.toMap(m)).toList(),
-      'newest_book': BookSerializer.toMap(model.newestBook),
+      'newest_book': model.newestBook == null
+          ? null
+          : BookSerializer.toMap(model.newestBook),
     };
   }
 }
@@ -706,6 +716,10 @@ abstract class BookmarkSerializer {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.page == null) {
+      throw FormatException("Missing required field 'page' on Bookmark.");
+    }
+
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

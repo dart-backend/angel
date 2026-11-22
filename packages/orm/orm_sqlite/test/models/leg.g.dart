@@ -534,7 +534,7 @@ class LegSerializer extends Codec<Leg, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'foot': FootSerializer.toMap(model.foot),
+      'foot': model.foot == null ? null : FootSerializer.toMap(model.foot),
       'name': model.name,
     };
   }

@@ -577,7 +577,9 @@ class OrderSerializer extends Codec<Order, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'customer': CustomerSerializer.toMap(model.customer),
+      'customer': model.customer == null
+          ? null
+          : CustomerSerializer.toMap(model.customer),
       'employee_id': model.employeeId,
       'order_date': model.orderDate?.toIso8601String(),
       'shipper_id': model.shipperId,
