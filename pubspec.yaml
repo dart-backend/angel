@@ -31,6 +31,7 @@ workspace:
   - packages/websocket
   - packages/hot
   - packages/production
+  - packages/prometheus
   - packages/test
   - packages/sync
   - packages/security/auth_server

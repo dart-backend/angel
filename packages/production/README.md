@@ -113,6 +113,32 @@ var instanceInfo = app.container.make<InstanceInfo>();
 print('This is instance #${instanceInfo.id}');
 ```
 
+### Metrics
+
+Each instance is an isolate with metrics of its own, and the instances share the app's port, so a scrape of that port by Prometheus reaches one instance at random. Serve the metrics of each instance on a port of its own instead, from its `InstanceInfo`, and add them up in Prometheus. [angel3_prometheus](https://pub.dev/packages/angel3_prometheus) times the requests and serves the metrics:
+
+```dart
+Future<void> configureServer(Angel app) async {
+  var metrics = PrometheusMetrics();
+  // First, so that it measures every request.
+  await app.configure(metrics.configureServer);
+
+  app.get('/hello', (req, res) => 'Hello!');
+
+  // Last: instance #0 serves its metrics on 9100, #1 on 9101, and so on.
+  var instance = app.container.make<InstanceInfo>();
+  await metrics.serve(app, InternetAddress.loopbackIPv4, 9100 + instance.id);
+}
+```
+
+Prometheus then scrapes `127.0.0.1:9100` up to `9100` plus `--concurrency` minus one. The README of `angel3_prometheus` lists the metrics, and queries for Grafana.
+
+Things to know, with or without that package:
+
+- **Close the metrics server, and open it last.** A server that an instance opens is closed when the instance closes only if a shutdown hook closes it, as `serve` does. Open it last in `configureServer`: an instance that fails to start exits its isolate without closing the app, and a port that the isolate has bound stays bound to the process, so an instance started again in its place could not bind it.
+- **A middleware that measures requests** with `app.all('*', ...)` or `app.fallback(...)`, and returns `true`, makes a path that no other route matches an empty `200` instead of a `404`. End the routes with `app.fallback((req, res) => throw AngelHttpException.notFound())`, or use `angel3_prometheus`, which keeps the `404`.
+- **Memory and CPU** are those of the one process of all the instances. `process_resident_memory_bytes` is the same from each instance; for CPU, use the Prometheus node exporter, or cAdvisor for containers.
+
 ### Command-line Options
 
 The `Runner` class supplies options like the following:

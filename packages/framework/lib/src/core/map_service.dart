@@ -15,6 +15,11 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   final bool allowQuery;
 
   /// If set to `true` (default), then the service will manage an `id` string and `createdAt` and `updatedAt` fields.
+  ///
+  /// The dates are stored as ISO 8601 strings, as `DateTime.toIso8601String`
+  /// gives them, not as `DateTime`s, so that an item can be sent as JSON as
+  /// it is. A model's generated `fromMap` parses them back, and a GraphQL
+  /// `Date` field accepts them (as of `graphql_server2` 9.0.0).
   final bool autoIdAndDateFields;
 
   /// If set to `true` (default), then the keys `created_at` and `updated_at` will automatically be snake_cased.
