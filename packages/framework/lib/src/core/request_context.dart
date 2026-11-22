@@ -10,7 +10,8 @@ import 'dart:io'
         HttpException,
         HttpHeaders,
         HttpSession,
-        InternetAddress;
+        InternetAddress,
+        X509Certificate;
 
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
@@ -128,6 +129,26 @@ abstract class RequestContext<RawRequest> {
 
   /// The remote address requesting this resource.
   InternetAddress get remoteAddress;
+
+  /// The certificate that the client presented in the TLS handshake of this
+  /// request's connection (mutual TLS), or `null` if it presented none.
+  ///
+  /// A server only asks for one if it was started with
+  /// `requestClientCertificate: true`, as by `AngelHttp.fromSecurityContext`
+  /// or `AngelHttp2`. The certificate has been verified against the trusted
+  /// certificates of the server's `SecurityContext`, as by
+  /// `setClientAuthorities` or `setTrustedCertificates`; a client whose
+  /// certificate does not verify fails the handshake, and never reaches the
+  /// app. A context that trusts more than the CAs of your clients, such as
+  /// one of `withTrustedRoots: true`, accepts any certificate that they
+  /// sign, so check the certificate's issuer or subject as well.
+  ///
+  /// Behind a reverse proxy that terminates TLS, this is `null`: the
+  /// certificate, if any, is of the proxy's connection to the client.
+  ///
+  /// `null` for a request of no TLS connection, as of a test or a driver
+  /// that does not know one.
+  X509Certificate? get clientCertificate => null;
 
   /// The user's HTTP session.
   HttpSession? get session;

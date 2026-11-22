@@ -55,6 +55,51 @@ Future<void> failingApp(Angel app) async {
   throw StateError('no database');
 }
 
+/// Answers the subject of the request's client certificate, or `none`.
+Future<void> certificateApp(Angel app) async {
+  app.get('/cert', (req, res) => req.clientCertificate?.subject ?? 'none');
+}
+
+/// The body of a GET of `/cert` of the server of a run of [args], over
+/// HTTP/1.1, of the client certificate of the test CA if [withCertificate].
+Future<String> getCertificate(
+  List<String> args, {
+  required bool withCertificate,
+}) async {
+  var runner = Runner('app', certificateApp);
+  var lines = <String>[];
+  var context = SecurityContext();
+  if (withCertificate) {
+    context
+      ..useCertificateChain('test/fixtures/mtls/client.pem')
+      ..usePrivateKey('test/fixtures/mtls/client.key');
+  }
+  var client = HttpClient(context: context)
+    ..badCertificateCallback = (_, _, _) => true;
+  try {
+    return await capture(() async {
+      var running = runner.run([
+        '-j', '1', '-p', '0', ...args, //
+        '--certificate-file', 'test/dev.pem',
+        '--key-file', 'test/dev.key', '--key-password', 'dartdart',
+      ]);
+      try {
+        await printed(lines, 'listening at');
+        var url = RegExp(r'listening at (\S+)')
+            .firstMatch(plain(lines).join('\n'))![1]!;
+        var rq = await client.getUrl(Uri.parse(url).replace(path: '/cert'));
+        var rs = await rq.close();
+        return await rs.transform(utf8.decoder).join();
+      } finally {
+        runner.stop();
+        await running.timeout(const Duration(seconds: 15));
+      }
+    }, lines).then((r) => r.$2);
+  } finally {
+    client.close(force: true);
+  }
+}
+
 Future<void> closingApp(Angel app) async {
   app.shutdownHooks.add((_) => print('closed the database'));
   app.get('/', (req, res) => 'ok');
@@ -658,7 +703,89 @@ void main() {
     },
   );
 
+  group('--client-ca-file', () {
+    const subject = '"/CN=test-client/O=Angel3"';
+    const ca = ['--client-ca-file', 'test/fixtures/mtls/ca.pem'];
+
+    test('asks for a client certificate, with --ssl', () async {
+      expect(
+        await getCertificate(['--ssl', ...ca], withCertificate: true),
+        subject,
+      );
+      expect(
+        await getCertificate(['--ssl', ...ca], withCertificate: false),
+        '"none"',
+      );
+    });
+
+    test('asks for a client certificate, with --http2', () async {
+      // Without ALPN, so it is served by the HTTP/1 fallback, over the
+      // HTTP/2 server's socket.
+      expect(
+        await getCertificate(['--http2', ...ca], withCertificate: true),
+        subject,
+      );
+    });
+
+    test('asks for none without it', () async {
+      expect(await getCertificate(['--ssl'], withCertificate: true), '"none"');
+    });
+
+    test('--require-client-certificate refuses a client without one', () async {
+      const args = ['--ssl', ...ca, '--require-client-certificate'];
+      expect(await getCertificate(args, withCertificate: true), subject);
+      await expectLater(
+        getCertificate(args, withCertificate: false),
+        // Refused in the handshake: not a timeout, or a failure to start.
+        throwsA(isA<IOException>()),
+      );
+    });
+
+    test('--require-client-certificate refuses a client without one, with '
+        '--http2', () async {
+      const args = ['--http2', ...ca, '--require-client-certificate'];
+      expect(await getCertificate(args, withCertificate: true), subject);
+      await expectLater(
+        getCertificate(args, withCertificate: false),
+        // Refused in the handshake: not a timeout, or a failure to start.
+        throwsA(isA<IOException>()),
+      );
+    });
+  });
+
   group('arguments', () {
+    test('--ssl without --certificate-file is a usage error', () async {
+      await capture(
+        () => Runner('app', closingApp).run(['--ssl', '--key-file', 'k.pem']),
+      );
+      expect(exitCode, 64);
+    });
+
+    test(
+      '--client-ca-file without --ssl or --http2 is a usage error',
+      () async {
+        await capture(
+          () => Runner(
+            'app',
+            closingApp,
+          ).run(['--client-ca-file', 'test/fixtures/mtls/ca.pem']),
+        );
+        expect(exitCode, 64);
+      },
+    );
+
+    test('--require-client-certificate without --client-ca-file is a usage '
+        'error', () async {
+      await capture(
+        () => Runner('app', closingApp).run([
+          '--ssl', '--require-client-certificate', //
+          '--certificate-file', 'test/dev.pem',
+          '--key-file', 'test/dev.key', '--key-password', 'dartdart',
+        ]),
+      );
+      expect(exitCode, 64);
+    });
+
     test('a port that is not a number is a usage error', () async {
       await capture(() => Runner('app', closingApp).run(['-p', 'x']));
       expect(exitCode, 64);
@@ -676,6 +803,43 @@ void main() {
       expect(exitCode, 0);
       expect(lines, isNotEmpty);
     });
+  });
+
+  test('RunnerOptions refuses TLS options that it cannot serve', () {
+    Matcher refused(String message) => throwsA(
+      isA<ArgumentError>().having((e) => e.message, 'message', message),
+    );
+    expect(
+      () => RunnerOptions(ssl: true, keyFile: 'key.pem'),
+      refused('Missing --certificate-file option.'),
+    );
+    expect(
+      () => RunnerOptions(http2: true, certificateFile: 'cert.pem'),
+      refused('Missing --key-file option.'),
+    );
+    expect(
+      () => RunnerOptions(clientCaFile: 'ca.pem'),
+      refused('--client-ca-file needs --ssl or --http2.'),
+    );
+    expect(
+      () => RunnerOptions(
+        ssl: true,
+        certificateFile: 'cert.pem',
+        keyFile: 'key.pem',
+        requireClientCertificate: true,
+      ),
+      refused('--require-client-certificate needs --client-ca-file.'),
+    );
+    expect(
+      RunnerOptions(
+        http2: true,
+        certificateFile: 'cert.pem',
+        keyFile: 'key.pem',
+        clientCaFile: 'ca.pem',
+        requireClientCertificate: true,
+      ).requireClientCertificate,
+      isTrue,
+    );
   });
 
   test('passwords may be given by environment variables', () {

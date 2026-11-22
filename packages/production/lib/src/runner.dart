@@ -182,14 +182,6 @@ class Runner {
       options.responseHeaders.addAll(responseHeaders);
       options.removeResponseHeaders.addAll(removeResponseHeaders);
 
-      if (options.ssl || options.http2) {
-        if (options.certificateFile == null) {
-          throw ArgParserException('Missing --certificate-file option.');
-        } else if (options.keyFile == null) {
-          throw ArgParserException('Missing --key-file option.');
-        }
-      }
-
       print(darkGray.wrap(_banner));
       print('Starting `$name` application...');
 
@@ -355,7 +347,14 @@ class Runner {
           password: options.certificatePassword,
         )
         ..usePrivateKey(options.keyFile!, password: options.keyPassword);
+      if (options.clientCaFile case var clientCaFile?) {
+        securityContext
+          ..setClientAuthorities(clientCaFile)
+          ..setTrustedCertificates(clientCaFile);
+      }
     }
+    var requestClientCertificate = options.clientCaFile != null;
+    var requireClientCertificate = options.requireClientCertificate;
 
     Driver driver;
     if (options.http2) {
@@ -365,7 +364,13 @@ class Runner {
       var http2 = AngelHttp2.custom(
         app,
         securityContext,
-        startSharedHttp2,
+        (address, port, ctx) => startSharedHttp2(
+          address,
+          port,
+          ctx,
+          requestClientCertificate: requestClientCertificate,
+          requireClientCertificate: requireClientCertificate,
+        ),
         useZone: options.useZone,
         allowHttp1: true,
       );
@@ -373,7 +378,11 @@ class Runner {
     } else if (options.ssl) {
       driver = AngelHttp.custom(
         app,
-        startSharedSecure(securityContext!),
+        startSharedSecure(
+          securityContext!,
+          requestClientCertificate: requestClientCertificate,
+          requireClientCertificate: requireClientCertificate,
+        ),
         useZone: options.useZone,
       );
     } else {

@@ -6,6 +6,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:logging/logging.dart';
 
 import 'access_token.dart';
+import 'client_certificate.dart';
 import 'exception.dart';
 import 'metadata.dart';
 import 'pkce.dart';
@@ -182,6 +183,41 @@ abstract class AuthorizationServer<Client, User> {
   /// id, and a client that gives a secret is taken to be confidential, as
   /// of the client credentials grant and of introspection.
   FutureOr<bool> verifyClient(Client client, String? clientSecret);
+
+  /// The client certificate of [req] (mutual TLS, RFC 8705), or `null` if
+  /// it presented none: by default, the certificate of the TLS connection
+  /// of the request, `RequestContext.clientCertificate`, which the server
+  /// must ask for, as by `requestClientCertificate: true`.
+  ///
+  /// Behind a reverse proxy that terminates TLS, override it to read the
+  /// certificate that the proxy forwards, with
+  /// [ClientCertificate.fromPem], of a header that only the proxy sets:
+  /// strip the header of any request that does not come from the proxy, or
+  /// any client can claim any certificate.
+  FutureOr<ClientCertificate?> clientCertificateOf(RequestContext req) {
+    var certificate = req.clientCertificate;
+    return certificate == null ? null : ClientCertificate.ofX509(certificate);
+  }
+
+  /// Whether [certificate], of [clientCertificateOf], authenticates
+  /// [client] (RFC 8705 §2), of a request that gives its `client_id` and no
+  /// secret: as of `tls_client_auth`, a certificate of a trusted CA whose
+  /// subject is the one the client registered, or of
+  /// `self_signed_tls_client_auth`, one whose key is of the client's JWKS.
+  ///
+  /// Return `true` only for a client that authenticates by its certificate.
+  /// A client that does is confidential, as one of a secret is, so it may
+  /// use the client credentials grant, and introspect tokens. If it returns
+  /// `false`, [verifyClient] is given a `null` secret, as of a public
+  /// client: return `false` from it for a client of mutual TLS, so that it
+  /// is not authenticated by its `client_id` alone.
+  ///
+  /// By default, `false`: no client authenticates by a certificate.
+  FutureOr<bool> verifyClientCertificate(
+    Client client,
+    ClientCertificate certificate,
+    RequestContext req,
+  ) => false;
 
   /// Retrieves the PKCE `code_verifier` parameter from a [RequestContext], or throws.
   Future<String> getPkceCodeVerifier(
@@ -409,6 +445,19 @@ abstract class AuthorizationServer<Client, User> {
               : 'The access token has expired.',
           401,
         );
+      }
+      // Of a token bound to a client certificate, which must be presented
+      // with it (RFC 8705 §3).
+      if (token.certificateThumbprint case var thumbprint?) {
+        var certificate = await clientCertificateOf(req);
+        if (certificate?.thumbprint != thumbprint) {
+          throw refuse(
+            ErrorResponse.invalidToken,
+            'The access token is bound to a client certificate that the '
+            'request did not present.',
+            401,
+          );
+        }
       }
       var granted = token.scopes.toSet();
       if (!required.every(granted.contains)) {
@@ -971,7 +1020,12 @@ abstract class AuthorizationServer<Client, User> {
   /// whether the client may have none. A `client_id` of the form, given
   /// with the header, must be of its client.
   ///
-  /// Also whether the client gave a secret, as a confidential client does.
+  /// A request of no secret, of a client certificate of
+  /// [clientCertificateOf], is first of [verifyClientCertificate] (RFC 8705
+  /// §2).
+  ///
+  /// Also whether the client is confidential: of a secret, or of a
+  /// certificate.
   Future<(Client, bool)> _authenticateClient(
     RequestContext req,
     ResponseContext res,
@@ -1008,6 +1062,16 @@ abstract class AuthorizationServer<Client, User> {
     // secret (RFC 6749 §2.2), and the authorization endpoint names an
     // unknown one.
     var client = await findClient(clientId);
+    if (client != null && clientSecret == null) {
+      if (await clientCertificateOf(req) case var certificate?) {
+        if (await verifyClientCertificate(client, certificate, req)) {
+          if (header != null) {
+            _checkFormOfHeader(body, clientId, clientSecret, state);
+          }
+          return (client, true);
+        }
+      }
+    }
     if (client == null || !await verifyClient(client, clientSecret)) {
       throw _invalidClient(res, 'Invalid client credentials.', state);
     }
@@ -1251,6 +1315,9 @@ abstract class AuthorizationServer<Client, User> {
         if (token.scopes.isNotEmpty) 'scope': token.scopes.join(' '),
         if (token.expiresAt case var expiresAt?) 'exp': seconds(expiresAt),
         if (token.issuedAt case var issuedAt?) 'iat': seconds(issuedAt),
+        // Of a token bound to a client certificate (RFC 8705 §3.2).
+        if (token.certificateThumbprint case var thumbprint?)
+          'cnf': {'x5t#S256': thumbprint},
         ...claims,
         // Last, as the claims may not make it otherwise.
         'active': true,
@@ -1466,7 +1533,9 @@ abstract class AuthorizationServer<Client, User> {
   /// token are `null` unless they are new, as of a rotation, or of a client
   /// that is no longer public: store them only then, and keep the current
   /// ones otherwise; but if its [ClientRegistration.tokenEndpointAuthMethod]
-  /// is `none`, the client is now public: delete its secret.
+  /// is `none`, the client is now public, and if it is `tls_client_auth` or
+  /// `self_signed_tls_client_auth`, it now authenticates by its certificate:
+  /// delete its secret.
   ///
   /// Throw `invalid_client_metadata` or `invalid_redirect_uri` to refuse a
   /// value, or change [ClientRegistration.metadata] to register another.
@@ -1714,6 +1783,23 @@ abstract class AuthorizationServer<Client, User> {
     'software_statement',
   };
 
+  /// The client authentication methods of mutual TLS (RFC 8705 §2), of
+  /// which the server issues no secret.
+  static const _tlsAuthMethods = {
+    'tls_client_auth',
+    'self_signed_tls_client_auth',
+  };
+
+  /// The metadata of the subject of the certificate of a client of
+  /// `tls_client_auth`, of which it registers one (RFC 8705 §2.1.2).
+  static const _tlsSubjectMetadata = [
+    'tls_client_auth_subject_dn',
+    'tls_client_auth_san_dns',
+    'tls_client_auth_san_uri',
+    'tls_client_auth_san_ip',
+    'tls_client_auth_san_email',
+  ];
+
   /// Of the ids and secrets that the server issues.
   static final Random _random = Random.secure();
 
@@ -1801,6 +1887,8 @@ abstract class AuthorizationServer<Client, User> {
       authMethod,
     ], metadata.clientAuthMethods);
     var public = authMethod == 'none';
+    // Of no secret, as the client authenticates by its certificate.
+    var secretless = public || _tlsAuthMethods.contains(authMethod);
     if (public && grantTypes.contains('client_credentials')) {
       throw _invalidMetadata(
         'A client without a secret may not use the client credentials grant.',
@@ -1859,11 +1947,52 @@ abstract class AuthorizationServer<Client, User> {
     if (body['jwks_uri'] != null && body['jwks'] != null) {
       throw _invalidMetadata('"jwks_uri" and "jwks" may not both be given.');
     }
+    if (body['jwks'] case var jwks? when jwks is! Map) {
+      throw _invalidMetadata('"jwks" must be a JSON Web Key Set.');
+    }
 
-    var wasPublic = current?.tokenEndpointAuthMethod == 'none';
+    // Of mutual TLS (RFC 8705 §2.1.2, §2.2.2, §3.4).
+    var subjects = [
+      for (var name in _tlsSubjectMetadata)
+        if (string(name) != null) name,
+    ];
+    if (authMethod == 'tls_client_auth' && subjects.length != 1) {
+      throw _invalidMetadata(
+        'A client of "tls_client_auth" must register exactly one of '
+        '${_tlsSubjectMetadata.map((name) => '"$name"').join(', ')}.',
+      );
+    }
+    if (authMethod == 'self_signed_tls_client_auth' &&
+        body['jwks'] == null &&
+        body['jwks_uri'] == null) {
+      throw _invalidMetadata(
+        'A client of "self_signed_tls_client_auth" must register its '
+        '"jwks" or "jwks_uri".',
+      );
+    }
+    switch (body['tls_client_certificate_bound_access_tokens']) {
+      case null || false:
+        break;
+      case true when metadata.tlsClientCertificateBoundAccessTokens:
+        break;
+      case true:
+        throw _invalidMetadata(
+          'The server does not issue certificate-bound access tokens.',
+        );
+      default:
+        throw _invalidMetadata(
+          '"tls_client_certificate_bound_access_tokens" must be a boolean.',
+        );
+    }
+
+    var wasSecretless =
+        current != null &&
+        (current.tokenEndpointAuthMethod == 'none' ||
+            _tlsAuthMethods.contains(current.tokenEndpointAuthMethod));
     return ClientRegistration(
       clientId: current?.clientId ?? _randomString(16),
-      clientSecret: public || (current != null && !wasPublic && !newSecret)
+      clientSecret:
+          secretless || (current != null && !wasSecretless && !newSecret)
           ? null
           : _randomString(32),
       issuedAt: current?.issuedAt ?? DateTime.now(),
@@ -1931,6 +2060,13 @@ abstract class AuthorizationServer<Client, User> {
       if (metadata.scopes != null)
         'scopes_supported': metadata.scopes!.toList(),
       'service_documentation': ?url(metadata.serviceDocumentation),
+      if (metadata.tlsClientCertificateBoundAccessTokens)
+        'tls_client_certificate_bound_access_tokens': true,
+      if (metadata.mtlsEndpointAliases case var aliases?)
+        'mtls_endpoint_aliases': {
+          for (var MapEntry(:key, :value) in aliases.entries)
+            key: value.toString(),
+        },
       ...metadata.extra,
     };
   }

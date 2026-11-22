@@ -4,7 +4,7 @@
 
 ### Fixes in 10.0.1
 
-* **Docs:** The README is rewritten in plain English, with subsections for signing keys, ID tokens, signing in and logout, and the client registration metadata as a table of rules and defaults
+* **Docs:** The README is rewritten with subsections for signing keys, ID tokens, signing in and logout, and the client registration metadata as a table of rules and defaults
 
 ## 10.0.0
 

@@ -1,10 +1,18 @@
 # Change Log
 
-## 10.0.1
+## 10.1.0
 
-### Fixes in 10.0.1
+### New in 10.1.0
 
-* **Docs:** The README is rewritten in plain English, with a Client Authentication section, subsections for the implicit grant, extension grants and registration metadata checks, and lists and tables in place of long paragraphs. Its installation snippet asks for `angel3_framework` 10.1.0, which the package requires
+* **Mutual TLS:** Clients may authenticate by a TLS client certificate (RFC 8705 §2). `verifyClientCertificate` decides whether the certificate of a request that gives a `client_id` and no secret is the client's; a client that it accepts is confidential, so it may use the client credentials grant and introspect tokens. `clientCertificateOf` gives the certificate of a request, by default of its TLS connection, and may be overridden to read one that a reverse proxy forwards, with `ClientCertificate.fromPem`. Requires `angel3_framework` 10.2.0
+* **Certificate-bound access tokens:** `AccessToken.certificateThumbprint` binds a token to a client certificate (RFC 8705 §3): `requireToken` refuses it, `invalid_token`, of a request that does not present that certificate, and introspection gives it as the `x5t#S256` of `cnf`. `ClientCertificate.thumbprint` is the thumbprint to store
+* **Metadata:** `ServerMetadata` takes `tlsClientCertificateBoundAccessTokens` and `mtlsEndpointAliases`, given as `tls_client_certificate_bound_access_tokens` and `mtls_endpoint_aliases`
+* **Registration:** A client of `tls_client_auth` must register exactly one of the `tls_client_auth_subject_dn` and `tls_client_auth_san_*` metadata, and one of `self_signed_tls_client_auth` its `jwks` or `jwks_uri`; neither is issued a secret. `tls_client_certificate_bound_access_tokens` must be a boolean, and may be `true` only of a server that binds tokens
+
+### Fixes in 10.1.0
+
+* **Registration:** A `jwks` that is not a JSON object is `invalid_client_metadata`, where it was registered as it was
+* **Docs:** The README is rewritten with a Client Authentication section, subsections for the implicit grant, extension grants and registration metadata checks, and lists and tables in place of long paragraphs. A Mutual TLS section covers certificate authentication, bound tokens, and reverse proxies, with nginx and Apache httpd configurations that forward the client certificate, and accept self-signed ones. Its installation snippet asks for `angel3_framework` 10.2.0, which the package requires
 
 ## 10.0.0
 

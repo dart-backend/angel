@@ -13,6 +13,7 @@ import 'dart:io'
 import 'package:angel3_framework/angel3_framework.dart';
 
 import '../core/core.dart';
+import 'bind_secure.dart';
 import 'connections.dart';
 import 'headers.dart';
 import 'http_request_context.dart';
@@ -64,15 +65,35 @@ class AngelHttp
     return AngelHttp._(app, serverGenerator, useZone);
   }
 
+  /// An HTTPS server of [context].
+  ///
+  /// If [requestClientCertificate], the server asks each client for a
+  /// certificate (mutual TLS), which [RequestContext.clientCertificate]
+  /// gives. A client may still connect without one. Trust the
+  /// certificates that may sign one with [SecurityContext.setClientAuthorities]
+  /// and [SecurityContext.setTrustedCertificates]: a client whose certificate
+  /// does not verify fails the handshake.
+  ///
+  /// If [requireClientCertificate], the server asks for one too, and a
+  /// client that presents none fails the handshake: every request then has
+  /// a [RequestContext.clientCertificate].
   factory AngelHttp.fromSecurityContext(
     Angel app,
     SecurityContext context, {
     bool useZone = true,
+    bool requestClientCertificate = false,
+    bool requireClientCertificate = false,
   }) {
     return AngelHttp._(
       app,
       (address, int port) {
-        return HttpServer.bindSecure(address, port, context);
+        return bindSecure(
+          address,
+          port,
+          context,
+          requestClientCertificate: requestClientCertificate,
+          requireClientCertificate: requireClientCertificate,
+        );
       },
       useZone,
       true,
@@ -84,12 +105,20 @@ class AngelHttp
   /// Provide paths to a certificate chain and server key (both .pem).
   /// If no password is provided, a random one will be generated upon running
   /// the server.
+  ///
+  /// [requestClientCertificate] and [requireClientCertificate] are as of
+  /// [AngelHttp.fromSecurityContext]:
+  /// give [clientAuthoritiesPath], a .pem of the certificates that may sign
+  /// a client's, to trust them.
   factory AngelHttp.secure(
     Angel app,
     String certificateChainPath,
     String serverKeyPath, {
     String? password,
     bool useZone = true,
+    bool requestClientCertificate = false,
+    bool requireClientCertificate = false,
+    String? clientAuthoritiesPath,
   }) {
     var certificateChain = Platform.script
         .resolve(certificateChainPath)
@@ -98,8 +127,22 @@ class AngelHttp
     var serverContext = SecurityContext();
     serverContext.useCertificateChain(certificateChain, password: password);
     serverContext.usePrivateKey(serverKey, password: password);
+    if (clientAuthoritiesPath != null) {
+      var authorities = Platform.script
+          .resolve(clientAuthoritiesPath)
+          .toFilePath();
+      serverContext
+        ..setClientAuthorities(authorities)
+        ..setTrustedCertificates(authorities);
+    }
 
-    return AngelHttp.fromSecurityContext(app, serverContext, useZone: useZone);
+    return AngelHttp.fromSecurityContext(
+      app,
+      serverContext,
+      useZone: useZone,
+      requestClientCertificate: requestClientCertificate,
+      requireClientCertificate: requireClientCertificate,
+    );
   }
 
   /// Handles [request], for use with a server created outside of

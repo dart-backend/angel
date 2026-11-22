@@ -17,14 +17,16 @@ Angel3 originated from a fork of the archived Angel framework in support of Dart
 
 The available features in Angel3 include:
 
-* OAuth2 Authentication
+* OAuth2 Authentication, as a client and as an OAuth 2.0 / 2.1 authorization server
+* OpenID Connect Provider
+* Mutual TLS (mTLS) client certificates, and certificate-bound OAuth2 tokens (RFC 8705)
 * WebSocket
 * HTTP/2
 * HTTP Streaming
 * GraphQL, with [graphql_dart](https://github.com/dart-backend/graphql_dart)
 * Server-Side HTML Rendering with JAEL, Markdown, Mustache and Jinja
 * SPA with [Kelicap](https://github.com/dukefirehawk/kelicap)
-* ORM support for PostgreSQL, MySQL and MariaDB
+* ORM support for PostgreSQL, MySQL, MariaDB and SQLite
 * MongoDB, Sembast and RethinkDB as storage
 * Cache with Redis
 * Dependency injection with or without `dart:mirrors`
@@ -45,14 +47,15 @@ They can broadly be categorized as follows:
 2. Data Modeling & Persistence (ORM)
    The framework provides an extensive ORM (angel3_orm) ecosystem with generators and database drivers:
 
-   * orm: Houses the ORM runtime, its code generator (angel3_orm_generator), the migration DSL and runner, the executors for PostgreSQL and MySQL/MariaDB, and a service adapter (angel3_orm_service).
+   * orm: Houses the ORM runtime, its code generator (angel3_orm_generator), the migration DSL and runner, the executors for PostgreSQL, MySQL/MariaDB and SQLite, and a service adapter (angel3_orm_service).
    * model: Base model abstractions for data entities.
    * serialize: Libraries to serialize/deserialize data to and from JSON using code generation (angel3_serialize_generator).
    * mongo, rethinkdb, sembast: Specialized services for MongoDB, RethinkDB, and Sembast (a NoSQL local database).
    * file_service: A service that persists data to a JSON file, for development.
 3. Authentication & Security
    * auth: Core authentication abstractions and strategies (local, token-based).
-   * auth_client & auth_server: Out-of-the-box support for OAuth2 authentication flows, as a client and as a server.
+   * auth_client & auth_server: Out-of-the-box support for OAuth2 authentication flows, as a client and as a server. The server follows OAuth 2.1 (PKCE by default, no implicit grant), with token introspection, revocation, dynamic client registration and mutual TLS.
+   * oidc_server: An OpenID Connect Provider built on auth_server: ID tokens, a JWKS endpoint, discovery, UserInfo and logout.
    * auth_twitter: Authentication with Twitter OAuth 1.0a.
    * security: Security middleware: CSRF protection, signed cookies and rate limiting.
    * cors: Middleware to handle Cross-Origin Resource Sharing effortlessly.
@@ -65,7 +68,7 @@ They can broadly be categorized as follows:
    * websocket: Integration for real-time bidirectional communication, and sync to scale it across instances.
    * client: A client-side library designed to interface seamlessly with Angel3 backends directly from Dart/Flutter.
    * cache & redis: Caching interfaces with Redis integration to improve response times.
-   * hot & production: Tooling for hot-reloading the server during development, and managing clustering/multi-threading under production loads.
+   * hot & production: Tooling for hot-reloading the server during development, and managing clustering/multi-threading under production loads, over HTTP, HTTPS or HTTP/2, with optional client certificates.
    * test & mock_request: Testing utilities for mocking HTTP requests without spinning up a real server.
    * static: For serving static assets (images, CSS, JS) efficiently.
    * shelf, proxy, paginate, validate, user_agent, http_exception: Shelf interop, request forwarding, pagination, validation, user agent parsing and HTTP errors.
@@ -86,7 +89,7 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. Each package ha
 
 Branch: `master`
 
-* Version      : 10.0.0
+* Version      : 10.x (each package's `CHANGELOG.md` gives its own version)
 * Dart version : 3.13.0 or later.
 * Publish      : Refer to all packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Status       : Production
@@ -102,17 +105,25 @@ Branch: `master`
 * Templates: Markdown values are HTML-escaped, and views outside the views directory are not read (`angel3_jinja`, `angel3_markdown`, `angel3_mustache`)
 * Requires PostgreSQL 16 or later, MySQL 8 or later, or MariaDB 10.2 or later
 * Updated the `belatuk_` dependencies to their latest releases (`belatuk_code_buffer`, `belatuk_combinator`, `belatuk_html_builder`, `belatuk_merge_map` and `belatuk_symbol_table` 6, `belatuk_range_header` 7). `angel3_html` pages are HTML-escaped by `belatuk_html_builder` 6: HTML written as it is needs `raw`
+* New packages: `angel3_oidc_server`, an OpenID Connect Provider on top of `angel3_auth_server`, and `angel3_orm_sqlite`, an ORM executor for SQLite
 * The repository is managed with `melos` 8.9 or later
+
+### Release Notes (since 10.0.0)
+
+Minor releases of single packages, listed in full in each `CHANGELOG.md`:
+
+* Mutual TLS: the servers of `angel3_framework` 10.2.0 ask for, or require, client certificates, which a handler reads as `req.clientCertificate`; `angel3_production` 10.1.0 turns them on with `--client-ca-file` and `--require-client-certificate`; `angel3_auth_server` 10.1.0 authenticates OAuth2 clients by certificate (`tls_client_auth`, `self_signed_tls_client_auth`) and binds access tokens to it (RFC 8705), also behind nginx or Apache
+* Framework 10.1.0: `RequestContext.bodyFieldsAll` gives every value of each form field
+* ORM: SQLite support, with `SqliteDialect` (`angel3_orm` 10.2.0) and `SqliteMigrationRunner` (`angel3_migration_runner` 10.1.0); `angel3_orm` 10.1.0 makes updates, inserts and deletes with joins, a `limit` or JSON predicates correct, with breaking changes listed in its `CHANGELOG.md`; `angel3_orm_postgres` 10.1.0 requires PostgreSQL 16 or later
 
 ### What is in the pipeline?
 
 * Performance optimization
-* Out of the box OIDC and SAML2 support
+* Out of the box SAML2 support
 * Integrated Open API 3 support
 * Expand ORM to support
   * SQL Server
   * Oracle DB
-  * SQLite
   * Multi-tenant architectures and SQL schema reverse engineering
 * ORM caching with Redis
 
