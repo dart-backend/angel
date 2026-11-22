@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
@@ -483,6 +484,43 @@ void executorTests(
         ]);
       } finally {
         await conn.execute('DROP TABLE big_ids');
+      }
+    });
+
+    // Issue 152: `mysql1` gave a TEXT column as a Blob, which the generated
+    // `parseRow` casts to `String?`. TEXT is sent with the type of a BLOB,
+    // and only a column of the `binary` character set is bytes.
+    test('TEXT columns are strings, and a BLOB is bytes', () async {
+      await conn.execute('''
+        CREATE TABLE texts (
+          id INT PRIMARY KEY,
+          plain TEXT,
+          tiny TINYTEXT,
+          medium MEDIUMTEXT,
+          long_text LONGTEXT,
+          bin_text TEXT COLLATE utf8mb4_bin,
+          short VARCHAR(50),
+          data BLOB
+        ) CHARACTER SET utf8mb4''');
+      try {
+        await conn.execute(
+          "INSERT INTO texts VALUES (1, 'Olá 😀', 'tiny', 'medium', 'long', "
+          "'Bin', 'short', X'00FF')",
+        );
+        var rows = await executor.query(
+          'texts',
+          'SELECT plain, tiny, medium, long_text, bin_text, short, data '
+              'FROM texts',
+          {},
+        );
+        var row = rows.single;
+        // As the generated parseRow reads a String field.
+        expect(row[0] as String?, 'Olá 😀');
+        expect(row.sublist(1, 6), ['tiny', 'medium', 'long', 'Bin', 'short']);
+        expect(row[6], isA<Uint8List>());
+        expect(row[6], [0x00, 0xFF]);
+      } finally {
+        await conn.execute('DROP TABLE texts');
       }
     });
   });
