@@ -42,7 +42,7 @@ class Route<T> {
       '$start/$end'.replaceAll(_straySlashes, ''),
       method: b.method,
       handlers: b.handlers,
-    );
+    )..name = b.name;
   }
 
   //List<T> get handlers => _handlers;

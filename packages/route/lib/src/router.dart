@@ -602,20 +602,22 @@ Router<T> flatten<T>(Router<T> router) {
       for (var route in child.routes) {
         var path = route.path.replaceAll(_straySlashes, '');
         var joined = '$base/$path'.replaceAll(_straySlashes, '');
-        flattened.addRoute(
+        var added = flattened.addRoute(
           route.method,
           joined.replaceAll(_straySlashes, ''),
           route.handlers.last,
           middleware: route.handlers.take(route.handlers.length - 1).toList(),
         );
+        added.name = route.name;
       }
     } else {
-      flattened.addRoute(
+      var added = flattened.addRoute(
         route.method,
         route.path,
         route.handlers.last,
         middleware: route.handlers.take(route.handlers.length - 1).toList(),
       );
+      added.name = route.name;
     }
   }
 

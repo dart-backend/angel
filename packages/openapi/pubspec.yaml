@@ -1,0 +1,22 @@
+name: angel3_openapi
+version: 10.0.0
+description: OpenAPI 3.1 documents of Angel3 applications, built from their routes and services, with a Swagger UI page.
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dart-backend/angel/
+issue_tracker: https://github.com/dart-backend/angel/issues
+topics:
+  - openapi
+  - swagger
+  - documentation
+
+resolution: workspace
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+dependencies:
+  angel3_framework: ^10.2.0
+  angel3_route: ^10.0.2
+  http_parser: ^4.0.0
+dev_dependencies:
+  angel3_mock_request: ^10.0.0
+  lints: ^6.0.0
+  test: ^1.24.0
