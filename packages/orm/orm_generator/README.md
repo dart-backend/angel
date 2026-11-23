@@ -59,6 +59,29 @@ Run the following command to generate the required `.g.dart` files for Angel3 OR
     dart run build_runner build
 ```
 
+## String primary keys
+
+A model that extends `Model` has an `id` that is an integer key, `serial`, which the database assigns. Declare another column type on `id`, as a UUID, and it is a key of that type, a `String`:
+
+```dart
+@serializable
+@orm
+abstract class UserEntity extends Model {
+  @override
+  @Column(type: ColumnType('uuid'), indexType: IndexType.primaryKey)
+  String? get id;
+
+  String? get name;
+}
+```
+
+* **Migration.** The column of `id` is of the type declared, and the foreign keys of other models that refer to it are of the same type and length, as `author_id` of a `@BelongsTo UserEntity author`.
+* **Queries.** `where.id` is a `StringSqlExpressionBuilder`, so `UserQuery()..where!.id.equals(uuid)` reads a user by its UUID, and `values.id` sets it.
+* **Its value.** Give the `id` of each insert, as of `package:uuid`: `UserQuery()..values.id = Uuid().v4()`. A default of the database, as `gen_random_uuid()`, cannot be declared yet: `@Column(defaultValue: RawSql(...))` does not generate. On MySQL and MariaDB, the inserted row is found by the `id` given, so an `id` must be given there in any case.
+* **Types.** `uuid` is of PostgreSQL. MySQL and MariaDB have none: use `@Column(type: ColumnType.char, length: 36, ...)`, or `varChar`. SQLite takes `ColumnType.text`.
+
+An `id` of no column type, or of an integer one, as `ColumnType.bigSerial`, is an integer key, as before.
+
 ## JSON columns
 
 A field of a `@serializable` class that is not a model of its own, such as a profile, is stored as JSON, in a `jsonb` column on PostgreSQL:

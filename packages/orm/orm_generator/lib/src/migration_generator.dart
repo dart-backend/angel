@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -160,7 +161,12 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
               var positional = <Expression>[literal(key)];
               var named = <String, Expression>{};
 
-              if (autoIdAndDateFields != false && name == 'id') {
+              // The integer `id` of a `Model`, which the database assigns;
+              // one of another declared type, as a UUID, is of that type.
+              var ormField = ctx.effectiveFields.firstWhereOrNull(
+                (f) => f.displayName == name,
+              );
+              if (ormField != null && isSpecialId(ctx, ormField)) {
                 methodName = 'serial';
               }
 
@@ -355,20 +361,39 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
                 // Default to `int` if foreign class extends Model with implicit 'id'
                 // as primary key
+                // The type of the key it refers to: an `int` of the integer
+                // `id` of a `Model`, or else that of its column, and its
+                // length, as a UUID or `varchar` id.
+                var foreign = relationship.foreign;
+                var foreignId = foreign?.effectiveFields.firstWhereOrNull(
+                  (f) => f.displayName == 'id',
+                );
+                var foreignColumn = foreign?.columns[relationship.foreignKey!];
                 ColumnType keyType;
                 if (foreignAautoIdAndDateFields != false &&
-                    relationship.foreignKey == "id") {
+                    relationship.foreignKey == "id" &&
+                    (foreignId == null || isSpecialId(foreign!, foreignId))) {
                   keyType = ColumnType.int;
                 } else {
-                  var foreignColumn =
-                      relationship.foreign?.columns[relationship.foreignKey!];
                   keyType = _foreignKeyType(foreignColumn?.type);
                 }
 
-                var field = table.property('declare').call([
-                  literal(key),
-                  _columnTypeExpression(keyType),
-                ]);
+                // Its length if it is not the default one, as of a UUID.
+                var field =
+                    keyType.hasLength &&
+                        foreignColumn != null &&
+                        foreignColumn.length != Column.defaultLength
+                    ? table.property('declareColumn').call([
+                        literal(key),
+                        refer('Column').newInstance([], {
+                          'type': _columnTypeExpression(keyType),
+                          'length': literal(foreignColumn.length),
+                        }),
+                      ])
+                    : table.property('declare').call([
+                        literal(key),
+                        _columnTypeExpression(keyType),
+                      ]);
 
                 var ref = field.property('references').call([
                   literal(relationship.foreignTable),

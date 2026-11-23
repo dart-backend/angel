@@ -18,11 +18,41 @@ import 'readers.dart';
 bool isHasRelation(Relationship r) =>
     r.type == RelationshipType.hasOne || r.type == RelationshipType.hasMany;
 
-bool isSpecialId(OrmBuildContext ctx, OrmField field) {
+/// Whether [field] is the `id` of a model that extends `Model`, of any
+/// column type.
+bool isModelId(OrmBuildContext ctx, OrmField field) {
   return field is ClassOrmField &&
       field.displayName == 'id' &&
       const TypeChecker.typeNamed(Model)
           .isAssignableFromType(ctx.buildContext.clazz.thisType);
+}
+
+/// Whether [field] is the `id` of a `Model` that is an integer key, which
+/// the database assigns (`serial`): one whose `@Column` or `@PrimaryKey`
+/// gives no column type, or an integer one. An `id` of another type, such
+/// as `@Column(type: ColumnType('uuid'))`, is a key of that type, a
+/// `String`, as any other field is.
+bool isSpecialId(OrmBuildContext ctx, OrmField field) =>
+    isModelId(ctx, field) &&
+    !_declaresNonIntegerType((field as ClassOrmField).element);
+
+/// The column types of integer keys.
+const _integerColumnTypes = {
+  'serial',
+  'bigserial',
+  'smallserial',
+  'int',
+  'bigint',
+  'smallint',
+  'tinyint',
+};
+
+bool _declaresNonIntegerType(FieldElement field) {
+  var annotation = columnTypeChecker.firstAnnotationOf(_findElement(field));
+  if (annotation == null) return false;
+  var reader = ConstantReader(annotation);
+  if (!declaresColumnType(reader)) return false;
+  return !_integerColumnTypes.contains(reviveColumn(reader).type.name);
 }
 
 /// The element whose annotations describe [field].
@@ -53,7 +83,8 @@ OrmField? findPrimaryFieldInList(
     }
   }
 
-  var specialId = fields.firstWhereOrNull((f) => isSpecialId(ctx, f));
+  // The `id` of a `Model`, whose key it is, of any type.
+  var specialId = fields.firstWhereOrNull((f) => isModelId(ctx, f));
   // print(
   //     'Special ID on ${ctx.buildContext.originalClassName} => ${specialId?.name}');
   return specialId;
