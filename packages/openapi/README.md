@@ -81,6 +81,8 @@ A service mounted with `app.use` documents its operations, tagged with its path:
 | `PUT /todos/{id}` | `update` |
 | `DELETE /todos/{id}` | `remove` |
 
+The `index` of a `QueryableService` of `angel3_framework` lists the query parameters it takes: `$sort` and `$limit` of a `MapService`, and `$sort` and one of each column of an `OrmService` of `angel3_orm_service` 10.1.0, as `GET /todos?is_complete=true`. A service of your own lists its own by implementing it.
+
 Each operation also has a `400` response, of a body, query or id the service cannot take, and those of an item a `404`. The `{id}` is of the type of the service's ids: an `integer` of a `Service<int?, ...>`, as an `OrmService<int?, Todo, TodoQuery>`, a `number` of a `double` or `num`, and a `string` otherwise.
 
 The other routes of a service are left out: `POST /todos/{id}`, another way to `update`, and `DELETE /todos`, which removes every item, and most services refuse. Give the schema of its items, and a tag, with `describeService`:

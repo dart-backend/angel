@@ -33,6 +33,15 @@ class CounterService extends Service<int?, Map<String, dynamic>> {}
 /// A service of `double` ids.
 class ReadingService extends Service<double, Map<String, dynamic>> {}
 
+/// A service of query parameters of its own.
+class SearchService extends Service<String?, Map<String, dynamic>>
+    implements QueryableService {
+  @override
+  Map<String, Map<String, dynamic>> get indexQueryParameters => {
+    'q': {'type': 'string'},
+  };
+}
+
 /// An app of a few kinds of routes, and a service.
 Angel appOf(OpenApi openApi) {
   var app = Angel();
@@ -312,6 +321,42 @@ void main() {
       expect(idType('/todos/{id}'), 'string');
       expect(idType('/counters/{id}'), 'integer');
       expect(idType('/readings/{id}'), 'number');
+    });
+
+    test('the index of a service has its query parameters', () {
+      var app = appOf(openApi)
+        ..use('/notes', MapService(allowQuery: false))
+        ..use('/search', SearchService())
+        ..use('/counters', CounterService());
+      var paths = openApi.documentOf(app)['paths'] as Map;
+      Object? parametersOf(String path) =>
+          ((paths[path] as Map)['get'] as Map)['parameters'];
+      expect(parametersOf('/todos'), [
+        {
+          'name': r'$sort',
+          'in': 'query',
+          'schema': {'type': 'string', 'description': 'The field to sort by'},
+        },
+        {
+          'name': r'$limit',
+          'in': 'query',
+          'schema': {
+            'type': 'integer',
+            'minimum': 0,
+            'description': 'The most items to give',
+          },
+        },
+      ]);
+      expect(parametersOf('/notes'), isNull);
+      expect(parametersOf('/search'), [
+        {
+          'name': 'q',
+          'in': 'query',
+          'schema': {'type': 'string'},
+        },
+      ]);
+      // Not a QueryableService.
+      expect(parametersOf('/counters'), isNull);
     });
 
     test('describe replaces the operation of a service', () {

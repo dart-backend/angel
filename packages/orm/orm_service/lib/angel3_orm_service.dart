@@ -6,7 +6,8 @@ import 'package:angel3_orm/angel3_orm.dart';
 /// A [Service] implementation that wraps over a [Query] class generated
 /// via the Angel ORM.
 class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
-    extends Service<Id, Data> {
+    extends Service<Id, Data>
+    implements QueryableService {
   /// The [QueryExecutor] used to communicate with a database.
   final QueryExecutor executor;
 
@@ -38,6 +39,47 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     this.allowQuery = true,
     super.readData,
   });
+
+  /// `$sort`, one of the query's columns, and one of each column that a
+  /// query parameter can match, as `?level=100`, of its type: a number, a
+  /// string, a boolean or a date and time. None if [allowQuery] is `false`.
+  /// Only `$sort` when [queryCreator] creates the query asynchronously.
+  @override
+  Map<String, Map<String, dynamic>> get indexQueryParameters {
+    if (!allowQuery) return const {};
+    var query = queryCreator();
+    if (query is! TQuery) {
+      return {
+        r'$sort': {'type': 'string', 'description': 'The column to sort by'},
+      };
+    }
+    return {
+      r'$sort': {
+        'type': 'string',
+        'enum': query.fields,
+        'description': 'The column to sort by',
+      },
+      for (var builder
+          in query.where?.expressionBuilders ?? const <SqlExpressionBuilder>[])
+        builder.columnName: ?_schemaOf(builder),
+    };
+  }
+
+  /// The JSON Schema of a query parameter's value of the column of
+  /// [builder], as [_fromString] converts it; `null` of a column that a
+  /// query parameter cannot match, as of an enum or JSON.
+  static Map<String, dynamic>? _schemaOf(SqlExpressionBuilder builder) =>
+      switch (builder) {
+        NumericSqlExpressionBuilder<int>() => {'type': 'integer'},
+        NumericSqlExpressionBuilder() => {'type': 'number'},
+        StringSqlExpressionBuilder() => {'type': 'string'},
+        BooleanSqlExpressionBuilder() => {'type': 'boolean'},
+        DateTimeSqlExpressionBuilder() => {
+          'type': 'string',
+          'format': 'date-time',
+        },
+        _ => null,
+      };
 
   SqlExpressionBuilder _findBuilder(TQuery query, String name) {
     return query.where!.expressionBuilders.firstWhere(

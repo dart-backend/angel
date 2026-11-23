@@ -4,6 +4,7 @@
 
 ### New in 10.2.0
 
+* **Services:** `QueryableService`, of a service whose `index` takes query parameters from a client, gives them by name with the JSON Schema of each (`indexQueryParameters`), for documents of the API such as those of `angel3_openapi`. `MapService` implements it: `$sort` and `$limit`, or none if `allowQuery` is `false`
 * **Mutual TLS:** `AngelHttp.fromSecurityContext`, `AngelHttp.secure`, `AngelHttp2`, `startSharedSecure` and `startSharedHttp2` take `requestClientCertificate`, which asks each client for a certificate in the TLS handshake. `RequestContext.clientCertificate` gives the certificate of the request's connection, for HTTP/1 and HTTP/2 requests alike, or `null` if the client presented none; it is `null` for other drivers. `AngelHttp.secure` takes `clientAuthoritiesPath`, a .pem of the CA certificates that may sign a client's certificate, resolved like its other paths; a certificate that they did not sign fails the handshake
 * **Mutual TLS:** The same drivers and functions take `requireClientCertificate`, with which a client that presents no certificate fails the handshake, so that every request has one. For `AngelHttp`, which `HttpServer.bindSecure` cannot do it for, the server is of a `SecureServerSocket` instead
 

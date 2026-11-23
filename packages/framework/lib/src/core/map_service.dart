@@ -5,7 +5,8 @@ import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'service.dart';
 
 /// A basic service that manages an in-memory list of maps.
-class MapService extends Service<String?, Map<String, dynamic>> {
+class MapService extends Service<String?, Map<String, dynamic>>
+    implements QueryableService {
   /// If set to `true`, clients can remove all items by passing a `null` `id` to `remove`.
   ///
   /// `false` by default.
@@ -118,6 +119,21 @@ class MapService extends Service<String?, Map<String, dynamic>> {
 
     return Future.value([for (var item in result) _copy(item)]);
   }
+
+  /// `$sort`, the field to sort by, and `$limit`, the most items to give,
+  /// unless [allowQuery] is `false`. Any other parameter matches the items
+  /// of a field of that name, which are not known in advance.
+  @override
+  Map<String, Map<String, dynamic>> get indexQueryParameters => allowQuery
+      ? const {
+          r'$sort': {'type': 'string', 'description': 'The field to sort by'},
+          r'$limit': {
+            'type': 'integer',
+            'minimum': 0,
+            'description': 'The most items to give',
+          },
+        }
+      : const {};
 
   /// Copies [record] one level deep: changing a field of a record handed
   /// out (or of the data passed in) does not change what is stored, but

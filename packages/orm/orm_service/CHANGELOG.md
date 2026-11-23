@@ -1,8 +1,12 @@
 # Change Log
 
-## 10.0.1
+## 10.1.0
 
-### Fixes in 10.0.1
+### New in 10.1.0
+
+* **Query parameters:** `OrmService` is a `QueryableService` of `angel3_framework` 10.2.0, which this version requires: its `indexQueryParameters` are `$sort`, of the query's columns, and one of each column a query parameter can match, of a number, a string, a boolean or a date and time, so that `angel3_openapi` documents them. None if `allowQuery` is `false`
+
+### Fixes in 10.1.0
 
 * **`update` and `modify`:** The record keeps the id it is updated by, of a key the database does not generate, as a UUID, which `copyFrom` sets: `update` of data without an `id` failed with a `NOT NULL` error, and an `id` in the data, as in the body of a request, changed the record's key. A query callback may still set it
 * **Tests:** Connect to the PostgreSQL server of `POSTGRES_HOST` (or `POSTGRES_HOSTNAME`) and `POSTGRES_PORT`, where the port was always 5432

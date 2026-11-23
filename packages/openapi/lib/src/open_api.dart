@@ -268,6 +268,7 @@ class OpenApi {
           summary: 'List the items of $name',
           operationId: '${name}Index',
           tags: tags,
+          queryParameters: _queryParametersOf(service),
           responses: {
             200: OpenApiResponse('The items', schema: list),
             ...badRequest,
@@ -372,12 +373,26 @@ class OpenApi {
     );
   }
 
+  /// The service that [service] wraps, if it is the [HookedService] that
+  /// `app.use` gives, whose type arguments are `dynamic`.
+  static Service _inner(Service service) =>
+      service is HookedService ? service.inner : service;
+
+  /// The query parameters of the `index` of [service], if it is a
+  /// [QueryableService], as a `MapService` or an `OrmService` is.
+  static Map<String, Map<String, dynamic>> _queryParametersOf(
+    Service service,
+  ) => switch (_inner(service)) {
+    QueryableService queryable => queryable.indexQueryParameters,
+    _ => const {},
+  };
+
   /// The JSON Schema type of the ids of [service], of its `Id`: `integer`
   /// of an `int`, as an `OrmService<int?, ...>`, `number` of a `double` or
   /// `num`, else `string`. `app.use` gives a [HookedService] whose `Id` is
   /// `dynamic`, so it is that of the service it wraps.
   static String _idType(Service service) {
-    var inner = service is HookedService ? service.inner : service;
+    var inner = _inner(service);
     if (inner is Service<int?, Object?>) return 'integer';
     if (inner is Service<num?, Object?>) return 'number';
     return 'string';

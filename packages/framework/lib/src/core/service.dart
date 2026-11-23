@@ -55,6 +55,17 @@ class Providers {
   }
 }
 
+/// A service whose `index` takes query parameters from a client, as
+/// `GET /todos?$sort=name`, which documents of its API, such as the OpenAPI
+/// documents of `angel3_openapi`, list.
+///
+/// [MapService] implements it, as does `OrmService` of `angel3_orm_service`.
+abstract interface class QueryableService {
+  /// The query parameters that `index` takes from a client, by name, each of
+  /// the JSON Schema of its value: empty if it takes none.
+  Map<String, Map<String, dynamic>> get indexQueryParameters;
+}
+
 /// A front-facing interface that can present data to and operate on data on behalf of the user.
 ///
 /// Heavily inspired by FeathersJS. <3
