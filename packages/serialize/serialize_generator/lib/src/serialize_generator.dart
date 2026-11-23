@@ -1,6 +1,7 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:analyzer/dart/constant/value.dart';
@@ -17,6 +18,8 @@ import 'package:source_gen/source_gen.dart' hide LibraryBuilder;
 
 import 'build_context.dart';
 import 'context.dart';
+
+part 'json_schema.dart';
 
 part 'model.dart';
 

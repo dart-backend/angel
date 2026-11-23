@@ -1,5 +1,23 @@
 # Change Log
 
+## 10.1.0
+
+### Breaking changes in 10.1.0
+
+* **Breaking:** `toMap` writes an enum field as its index, which `fromMap` reads, where it wrote the enum value, which `json.encode` cannot encode, so a `toJson` of a model with an enum failed in a JSON response. Regenerate your models; code that reads the enum value out of a `toMap` reads its index
+* **Breaking:** `toMap` throws a `FormatException` of a required field (`@SerializableField(isNullable: false)`) that is `null`, as `fromMap` does of a map without it, where it wrote `null`. Its check had been left out of the generated code. Regenerate your models, and give such a field before serializing a model
+
+### New in 10.1.0
+
+* **JSON Schema:** Each serializer has `jsonSchema`, the JSON Schema (2020-12) of the map its `toMap` writes, `schemaName`, and `addJsonSchemas`, which adds it and those of the models it holds to a map by name, for the `components.schemas` of an OpenAPI document (`angel3_openapi`)
+
+### Fixes in 10.1.0
+
+* **Aliases:** An `alias` with `'`, `$` or `\`, such as `$ref`, is written as an escaped string in `toMap`, `fromMap`, the `Fields` class and the messages of required fields, where it made the generated code fail to compile, or read another key, and is quoted in the TypeScript definitions where it is not an identifier
+* **Nested models:** `toMap` writes `null` of a nullable `Map` of models that is `null`, where the generated code did not compile
+* **Nested models:** `toMap` writes `null` of a nullable model field that is `null`, where it threw "Required field [model] cannot be null", as of a `@BelongsTo Author? author` that is not set
+* **Nested models:** A non-nullable model field without a default is required by `fromMap`, where it was read as `null`, so the generated class did not compile
+
 ## 10.0.1
 
 ### Fixes in 10.0.1

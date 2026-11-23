@@ -402,6 +402,47 @@ class BookDecoder extends Converter<Map, Book> {
 class BookSerializer extends Codec<Book, Map> {
   const BookSerializer();
 
+  /// The name of the JSON Schema of [Book].
+  static const String schemaName = 'Book';
+
+  /// The JSON Schema of the map that [toMap] writes of [Book], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'author': {
+        'type': ['string', 'null'],
+      },
+      'title': {
+        'type': ['string', 'null'],
+      },
+      'description': {
+        'type': ['string', 'null'],
+      },
+      'page_count': {
+        'type': ['integer', 'null'],
+      },
+      'not_models': {
+        'type': ['array', 'null'],
+        'items': {'type': 'number'},
+      },
+      'camelCase': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   BookEncoder get encoder => const BookEncoder();
 
@@ -430,6 +471,13 @@ class BookSerializer extends Codec<Book, Map> {
           : [],
       camelCaseString: map['camelCase'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [Book], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(BookEntity? model) {
@@ -501,6 +549,41 @@ class AuthorDecoder extends Converter<Map, Author> {
 class AuthorSerializer extends Codec<Author, Map> {
   const AuthorSerializer();
 
+  /// The name of the JSON Schema of [Author].
+  static const String schemaName = 'Author';
+
+  /// The JSON Schema of the map that [toMap] writes of [Author], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {'type': 'string'},
+      'age': {'type': 'integer'},
+      'books': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Book'},
+      },
+      'newest_book': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Book'},
+          {'type': 'null'},
+        ],
+      },
+    },
+    'required': ['name', 'age'],
+  };
+
   @override
   AuthorEncoder get encoder => const AuthorEncoder();
 
@@ -544,10 +627,26 @@ class AuthorSerializer extends Codec<Author, Map> {
     );
   }
 
+  /// Adds the JSON Schema of [Author], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    BookSerializer.addJsonSchemas(schemas);
+  }
+
   static Map<String, dynamic> toMap(AuthorEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.name == null) {
+      throw FormatException("Missing required field 'name' on Author.");
+    }
+
+    if (model.age == null) {
+      throw FormatException('Custom message for missing `age`');
+    }
+
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -555,7 +654,9 @@ class AuthorSerializer extends Codec<Author, Map> {
       'name': model.name,
       'age': model.age,
       'books': model.books.map((m) => BookSerializer.toMap(m)).toList(),
-      'newest_book': BookSerializer.toMap(model.newestBook),
+      'newest_book': model.newestBook == null
+          ? null
+          : BookSerializer.toMap(model.newestBook),
     };
   }
 }
@@ -611,6 +712,32 @@ class LibraryDecoder extends Converter<Map, Library> {
 class LibrarySerializer extends Codec<Library, Map> {
   const LibrarySerializer();
 
+  /// The name of the JSON Schema of [Library].
+  static const String schemaName = 'Library';
+
+  /// The JSON Schema of the map that [toMap] writes of [Library], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'collection': {
+        'type': 'object',
+        'additionalProperties': {'\$ref': '#/components/schemas/Book'},
+      },
+    },
+  };
+
   @override
   LibraryEncoder get encoder => const LibraryEncoder();
 
@@ -641,6 +768,14 @@ class LibrarySerializer extends Codec<Library, Map> {
             )
           : {},
     );
+  }
+
+  /// Adds the JSON Schema of [Library], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    BookSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(LibraryEntity? model) {
@@ -676,6 +811,37 @@ abstract class LibraryFields {
 }
 
 abstract class BookmarkSerializer {
+  /// The name of the JSON Schema of [Bookmark].
+  static const String schemaName = 'Bookmark';
+
+  /// The JSON Schema of the map that [toMap] writes of [Bookmark], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'history': {
+        'type': 'array',
+        'items': {'type': 'integer'},
+      },
+      'page': {'type': 'integer'},
+      'comment': {
+        'type': ['string', 'null'],
+      },
+    },
+    'required': ['page'],
+  };
+
   static Bookmark fromMap(Map map, BookEntity book) {
     if (map['page'] == null) {
       throw FormatException("Missing required field 'page' on Bookmark.");
@@ -702,10 +868,21 @@ abstract class BookmarkSerializer {
     );
   }
 
+  /// Adds the JSON Schema of [Bookmark], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+  }
+
   static Map<String, dynamic> toMap(BookmarkEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.page == null) {
+      throw FormatException("Missing required field 'page' on Bookmark.");
+    }
+
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

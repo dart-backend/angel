@@ -198,6 +198,23 @@ class WorldDecoder extends Converter<Map, World> {
 class WorldSerializer extends Codec<World, Map> {
   const WorldSerializer();
 
+  /// The name of the JSON Schema of [World].
+  static const String schemaName = 'World';
+
+  /// The JSON Schema of the map that [toMap] writes of [World], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['integer', 'null'],
+      },
+      'randomnumber': {
+        'type': ['integer', 'null'],
+      },
+    },
+  };
+
   @override
   WorldEncoder get encoder => const WorldEncoder();
 
@@ -209,6 +226,13 @@ class WorldSerializer extends Codec<World, Map> {
       id: map['id'] as int?,
       randomnumber: map['randomnumber'] as int?,
     );
+  }
+
+  /// Adds the JSON Schema of [World], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(WorldEntity? model) {

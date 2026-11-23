@@ -359,6 +359,44 @@ class CarDecoder extends Converter<Map, Car> {
 class CarSerializer extends Codec<Car, Map> {
   const CarSerializer();
 
+  /// The name of the JSON Schema of [Car].
+  static const String schemaName = 'Car';
+
+  /// The JSON Schema of the map that [toMap] writes of [Car], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'make': {
+        'type': ['string', 'null'],
+      },
+      'description': {
+        'type': ['string', 'null'],
+      },
+      'family_friendly': {
+        'type': ['boolean', 'null'],
+      },
+      'recalled_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'price': {
+        'type': ['number', 'null'],
+      },
+    },
+  };
+
   @override
   CarEncoder get encoder => const CarEncoder();
 
@@ -388,6 +426,13 @@ class CarSerializer extends Codec<Car, Map> {
           : null,
       price: map['price'] as double?,
     );
+  }
+
+  /// Adds the JSON Schema of [Car], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(CarEntity? model) {

@@ -26,6 +26,7 @@ packages:
   - packages/hot
   - packages/production
   - packages/prometheus
+  - packages/openapi
   - packages/test
   - packages/sync
   - packages/security/auth_server

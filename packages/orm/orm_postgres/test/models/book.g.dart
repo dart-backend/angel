@@ -591,6 +591,43 @@ class BookDecoder extends Converter<Map, Book> {
 class BookSerializer extends Codec<Book, Map> {
   const BookSerializer();
 
+  /// The name of the JSON Schema of [Book].
+  static const String schemaName = 'Book';
+
+  /// The JSON Schema of the map that [toMap] writes of [Book], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'author': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Author'},
+          {'type': 'null'},
+        ],
+      },
+      'partner_author': {
+        'anyOf': [
+          {'\$ref': '#/components/schemas/Author'},
+          {'type': 'null'},
+        ],
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   BookEncoder get encoder => const BookEncoder();
 
@@ -620,6 +657,14 @@ class BookSerializer extends Codec<Book, Map> {
     );
   }
 
+  /// Adds the JSON Schema of [Book], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    AuthorSerializer.addJsonSchemas(schemas);
+  }
+
   static Map<String, dynamic> toMap(EntityBook? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
@@ -628,8 +673,12 @@ class BookSerializer extends Codec<Book, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'author': AuthorSerializer.toMap(model.author),
-      'partner_author': AuthorSerializer.toMap(model.partnerAuthor),
+      'author': model.author == null
+          ? null
+          : AuthorSerializer.toMap(model.author),
+      'partner_author': model.partnerAuthor == null
+          ? null
+          : AuthorSerializer.toMap(model.partnerAuthor),
       'name': model.name,
     };
   }
@@ -677,6 +726,34 @@ class AuthorDecoder extends Converter<Map, Author> {
 class AuthorSerializer extends Codec<Author, Map> {
   const AuthorSerializer();
 
+  /// The name of the JSON Schema of [Author].
+  static const String schemaName = 'Author';
+
+  /// The JSON Schema of the map that [toMap] writes of [Author], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'publisher': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   AuthorEncoder get encoder => const AuthorEncoder();
 
@@ -699,6 +776,13 @@ class AuthorSerializer extends Codec<Author, Map> {
       name: map['name'] as String? ?? 'Tobe Osakwe',
       publisher: map['publisher'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [Author], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(EntityAuthor? model) {

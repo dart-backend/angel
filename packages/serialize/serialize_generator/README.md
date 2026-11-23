@@ -15,7 +15,7 @@ In your `pubspec.yaml`:
 dependencies:
   angel3_serialize: ^10.0.0
 dev_dependencies:
-  angel3_serialize_generator: ^10.0.0
+  angel3_serialize_generator: ^10.1.0
   build_runner: ^2.4.0
 ```
 
@@ -42,7 +42,27 @@ dev_dependencies:
 
     The generated class is named without the `Entity` suffix (or a `_` prefix): `Todo`, with `TodoSerializer`, `TodoFields` and a `todoSerializer` codec. A class whose name only ends with the letters of the suffix, such as `UserIdentity`, keeps its name.
 
-## Migrating from 9.x to 10.0.0
+### Required fields
+
+A field annotated `@SerializableField(isNullable: false)` is required: `fromMap` throws a `FormatException` of a map without it, and `toMap` of a model whose value of it is `null`.
+
+### Nested models
+
+A field of another `@serializable` class is serialized with that class's serializer, `toMap` and `fromMap`:
+
+* **Nullable**, as `AuthorEntity? author`: `null` is written, and read, as `null`.
+* **Non-nullable**, as `AuthorEntity author`, without a default: it is required, and `fromMap` throws of a map without it.
+
+### JSON Schema
+
+Each serializer also describes the map that its `toMap` writes, as a [JSON Schema](https://json-schema.org/draft/2020-12) (2020-12, as OpenAPI 3.1 has it):
+
+* **`TodoSerializer.jsonSchema`:** the schema, a constant map. A nested model is a `$ref` to `#/components/schemas/` and its name, as an OpenAPI document holds schemas; a nullable field may be `null`; a required one, of `isNullable: false` or a non-nullable field without a default, is in `required`; an enum is the integer of its index, and a `Uint8List` base64 text.
+* **`TodoSerializer.schemaName`:** its name, `Todo`.
+* **`TodoSerializer.addJsonSchemas(schemas)`:** adds the schema to a map, by name, and those of the models it holds, as `angel3_openapi`'s `OpenApi.schemasOf` does.
+
+A field of a custom `serializer` without `serializesTo` may be anything, as its schema cannot be known.
+
 
 The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
 

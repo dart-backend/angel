@@ -277,6 +277,35 @@ class HasCarDecoder extends Converter<Map, HasCar> {
 class HasCarSerializer extends Codec<HasCar, Map> {
   const HasCarSerializer();
 
+  /// The name of the JSON Schema of [HasCar].
+  static const String schemaName = 'HasCar';
+
+  /// The JSON Schema of the map that [toMap] writes of [HasCar], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'type': {
+        'type': 'integer',
+        'enum': [0, 1, 2],
+        'description': 'The index of CarType: sedan, suv, atv',
+      },
+      'color': {'type': 'string'},
+    },
+    'required': ['type'],
+  };
+
   @override
   HasCarEncoder get encoder => const HasCarEncoder();
 
@@ -311,15 +340,26 @@ class HasCarSerializer extends Codec<HasCar, Map> {
     );
   }
 
+  /// Adds the JSON Schema of [HasCar], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+  }
+
   static Map<String, dynamic> toMap(HasCarEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.type == null) {
+      throw FormatException("Missing required field 'type' on HasCar.");
+    }
+
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'type': model.type,
+      'type': model.type == null ? null : CarType.values.indexOf(model.type!),
       'color': colorToCode(model.color),
     };
   }

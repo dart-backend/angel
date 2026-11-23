@@ -59,6 +59,67 @@ Run the following command to generate the required `.g.dart` files for Angel3 OR
     dart run build_runner build
 ```
 
+## String primary keys
+
+A model that extends `Model` has an `id` that is an integer key, `serial`, which the database assigns. Declare another column type on `id`, as a UUID, and it is a key of that type, a `String`:
+
+```dart
+@serializable
+@orm
+abstract class UserEntity extends Model {
+  @override
+  @Column(type: ColumnType.uuid, indexType: IndexType.primaryKey)
+  String? get id;
+
+  String? get name;
+}
+```
+
+> [!IMPORTANT]
+> **The `id` must be passed in on every insert.** A `String` key is not generated, neither by the ORM nor by the database: there is no auto generation of a UUID. Generate it in Dart, as with `package:uuid`, and set it before inserting:
+>
+> ```dart
+> var user = await (UserQuery()
+>       ..values.id = Uuid().v4()
+>       ..values.name = 'Jane')
+>     .insert(executor);
+> ```
+>
+> An insert without an `id` fails, as the primary key has no default, and a database default, such as `@Column(defaultValue: RawSql('gen_random_uuid()'))`, is not supported.
+
+* **Migration.** The column of `id` is of the type declared, and the foreign keys of other models that refer to it are of the same type and length, as `author_id` of a `@BelongsTo UserEntity author`.
+* **Queries.** `where.id` is a `StringSqlExpressionBuilder`, so `UserQuery()..where!.id.equals(uuid)` reads a user by its UUID, and `values.id` sets it. Pass the `id` itself, a `String`, not `idAsInt`, which is `-1` for every UUID: `where!.id.equals(user.id!)`.
+* **Types.** `ColumnType.uuid` is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type (MariaDB has one only from 10.7), and `TEXT` on SQLite, so one model runs on each of them. PostgreSQL checks the value and gives it in lower case; the others store the text as it is given, and MySQL and MariaDB compare it without regard to case, so give UUIDs in lower case, as `Uuid().v4()` does. Another type, as `ColumnType.char` of `length: 36`, is a string key too.
+
+An `id` of no column type, or of an integer one, as `ColumnType.bigSerial`, is an integer key, as before.
+
+## JSON columns
+
+A field of a `@serializable` class that is not a model of its own, such as a profile, is stored as JSON, in a `jsonb` column on PostgreSQL:
+
+```dart
+@serializable
+@orm
+abstract class UserEntity extends Model {
+  String? get name;
+
+  ProfileEntity? get profile;
+}
+
+@serializable
+abstract class ProfileEntity {
+  String? get firstName;
+
+  String? get lastName;
+}
+```
+
+* **Stored and read** with the class's serializer: `ProfileSerializer.toMap` when written, and `ProfileSerializer.fromMap` when read, of the map that PostgreSQL gives or the JSON text of MySQL, MariaDB and SQLite.
+* **Queried** as a map: `UserQuery()..where!.profile['first_name'].asString?.equals('Ana')`.
+* **Nullable or not.** A nullable one, as `ProfileEntity?`, is `NULL` when it is `null`. A non-nullable one needs `angel3_serialize_generator` 10.1.0 or later, and must be among the fields of a query that reads it.
+
+A field of a type that the generator cannot store, or query, is left out of the query's `where` with a warning, rather than generating code that does not compile.
+
 ## Supported database
 
 * PostgreSQL version 16 or later

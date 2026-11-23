@@ -65,6 +65,22 @@ class GoatDecoder extends Converter<Map, Goat> {
 class GoatSerializer extends Codec<Goat, Map> {
   const GoatSerializer();
 
+  /// The name of the JSON Schema of [Goat].
+  static const String schemaName = 'Goat';
+
+  /// The JSON Schema of the map that [toMap] writes of [Goat], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'integer': {'type': 'integer'},
+      'list': {
+        'type': 'array',
+        'items': {'type': 'integer'},
+      },
+    },
+  };
+
   @override
   GoatEncoder get encoder => const GoatEncoder();
 
@@ -78,6 +94,13 @@ class GoatSerializer extends Codec<Goat, Map> {
           ? (map['list'] as Iterable).cast<int>().toList()
           : const [34, 35],
     );
+  }
+
+  /// Adds the JSON Schema of [Goat], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(GoatEntity? model) {

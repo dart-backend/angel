@@ -527,6 +527,35 @@ class TreeDecoder extends Converter<Map, Tree> {
 class TreeSerializer extends Codec<Tree, Map> {
   const TreeSerializer();
 
+  /// The name of the JSON Schema of [Tree].
+  static const String schemaName = 'Tree';
+
+  /// The JSON Schema of the map that [toMap] writes of [Tree], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'rings': {
+        'type': ['integer', 'null'],
+      },
+      'fruits': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Fruit'},
+      },
+    },
+  };
+
   @override
   TreeEncoder get encoder => const TreeEncoder();
 
@@ -555,6 +584,14 @@ class TreeSerializer extends Codec<Tree, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [Tree], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    FruitSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(TreeEntity? model) {
@@ -610,6 +647,34 @@ class FruitDecoder extends Converter<Map, Fruit> {
 class FruitSerializer extends Codec<Fruit, Map> {
   const FruitSerializer();
 
+  /// The name of the JSON Schema of [Fruit].
+  static const String schemaName = 'Fruit';
+
+  /// The JSON Schema of the map that [toMap] writes of [Fruit], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'tree_id': {
+        'type': ['integer', 'null'],
+      },
+      'common_name': {
+        'type': ['string', 'null'],
+      },
+    },
+  };
+
   @override
   FruitEncoder get encoder => const FruitEncoder();
 
@@ -632,6 +697,13 @@ class FruitSerializer extends Codec<Fruit, Map> {
       treeId: map['tree_id'] as int?,
       commonName: map['common_name'] as String?,
     );
+  }
+
+  /// Adds the JSON Schema of [Fruit], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(FruitEntity? model) {

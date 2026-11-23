@@ -369,6 +369,9 @@ class Router<T> {
       for (var route in r.routes) {
         var pos = scanner.position;
 
+        // A route that the path cannot match, without parsing it.
+        if (!cleanRelative.startsWith(route._literalPrefix, pos)) continue;
+
         if (route is SymlinkRoute<T>) {
           if (route.parser != null) {
             if (_tryParse(route.parser, scanner)?.successful == true) {
@@ -599,20 +602,22 @@ Router<T> flatten<T>(Router<T> router) {
       for (var route in child.routes) {
         var path = route.path.replaceAll(_straySlashes, '');
         var joined = '$base/$path'.replaceAll(_straySlashes, '');
-        flattened.addRoute(
+        var added = flattened.addRoute(
           route.method,
           joined.replaceAll(_straySlashes, ''),
           route.handlers.last,
           middleware: route.handlers.take(route.handlers.length - 1).toList(),
         );
+        added.name = route.name;
       }
     } else {
-      flattened.addRoute(
+      var added = flattened.addRoute(
         route.method,
         route.path,
         route.handlers.last,
         middleware: route.handlers.take(route.handlers.length - 1).toList(),
       );
+      added.name = route.name;
     }
   }
 

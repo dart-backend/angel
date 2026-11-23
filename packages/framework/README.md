@@ -108,6 +108,21 @@ void main() async {
 
 See the [example](example/) directory for services, views, error handling and more.
 
+## Production mode
+
+Set the `ANGEL_ENV` environment variable to `production` when deploying:
+
+```bash
+ANGEL_ENV=production dart bin/main.dart
+```
+
+Without it, the app runs in development mode, which is slower:
+
+* **Routes.** In production, the route tree, including groups and mounted routers, is flattened once, and the routes that a path resolves to are cached, for up to `app.maxHandlerCacheSize` paths (1024 by default). In development, every request resolves its path against the routes again.
+* **Timing.** In development, each request is also timed, for its log record.
+
+`app.environment.isProduction` tells which mode an app runs in, and `Angel(environment: AngelEnvironment('production'))` sets it in code, such as in a test.
+
 ## Running without `dart:mirrors` (AOT)
 
 `dart compile exe` and Flutter do not support `dart:mirrors`. Create the app without a `reflector` and it runs with reflection disabled:
@@ -287,6 +302,7 @@ Angel3 is a collection of packages: pick the ones a project needs. Each is descr
 | [angel3_hot](https://pub.dev/packages/angel3_hot) | Hot reloading of the server during development |
 | [angel3_production](https://pub.dev/packages/angel3_production) | Runs the app in several isolates, with respawning, graceful shutdown and client certificates |
 | [angel3_prometheus](https://pub.dev/packages/angel3_prometheus) | Prometheus metrics of the requests, served for each instance (new) |
+| [angel3_openapi](https://pub.dev/packages/angel3_openapi) | OpenAPI 3.1 documents of the routes and services, with a Swagger UI page (new) |
 | [angel3_test](https://pub.dev/packages/angel3_test) | Testing utilities: a client that sends mock requests, and matchers |
 | [angel3_mock_request](https://pub.dev/packages/angel3_mock_request) | Mock `dart:io` requests and responses, for tests without a server |
 

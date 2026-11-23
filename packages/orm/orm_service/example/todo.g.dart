@@ -11,10 +11,10 @@ class TodoMigration extends Migration {
   void up(Schema schema) {
     schema.create('todos', (table) {
       table.serial('id').primaryKey();
-      table.boolean('is_complete').defaultsTo(false);
-      table.varChar('text');
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
+      table.varChar('text', length: 255);
+      table.boolean('is_complete').defaultsTo(false);
     });
   }
 
@@ -29,7 +29,7 @@ class TodoMigration extends Migration {
 // **************************************************************************
 
 class TodoQuery extends Query<Todo, TodoQueryWhere> {
-  TodoQuery({Set<String>? trampoline}) {
+  TodoQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TodoQueryWhere(this);
@@ -37,6 +37,8 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
 
   @override
   final TodoQueryValues values = TodoQueryValues();
+
+  List<String> _selectedFields = [];
 
   TodoQueryWhere? _where;
 
@@ -52,7 +54,23 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'is_complete', 'text', 'created_at', 'updated_at'];
+    const localFields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'text',
+      'is_complete',
+    ];
+    return _selectedFields.isEmpty
+        ? localFields
+        : localFields
+              .where((field) => _selectedFields.contains(field))
+              .toList();
+  }
+
+  TodoQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -65,45 +83,55 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
     return TodoQueryWhere(this);
   }
 
-  static Todo? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  Optional<Todo> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Todo(
-      id: row[0].toString(),
-      isComplete: (row[1] as bool?),
-      text: (row[2] as String?),
-      createdAt: (row[3] as DateTime?),
-      updatedAt: (row[4] as DateTime?),
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
+          : null,
+      text: fields.contains('text')
+          ? (row[fields.indexOf('text')] as String?)
+          : null,
+      isComplete: fields.contains('is_complete')
+          ? mapToBool(row[fields.indexOf('is_complete')])
+          : null,
     );
-    return model;
+    return Optional.of(model);
   }
 
   @override
   Optional<Todo> deserialize(List row) {
-    return Optional.ofNullable(parseRow(row));
+    return parseRow(row);
   }
 }
 
 class TodoQueryWhere extends QueryWhere {
   TodoQueryWhere(TodoQuery query)
     : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-      isComplete = BooleanSqlExpressionBuilder(query, 'is_complete'),
-      text = StringSqlExpressionBuilder(query, 'text'),
       createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at');
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      text = StringSqlExpressionBuilder(query, 'text'),
+      isComplete = BooleanSqlExpressionBuilder(query, 'is_complete');
 
   final NumericSqlExpressionBuilder<int> id;
-
-  final BooleanSqlExpressionBuilder isComplete;
-
-  final StringSqlExpressionBuilder text;
 
   final DateTimeSqlExpressionBuilder createdAt;
 
   final DateTimeSqlExpressionBuilder updatedAt;
 
+  final StringSqlExpressionBuilder text;
+
+  final BooleanSqlExpressionBuilder isComplete;
+
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, isComplete, text, createdAt, updatedAt];
+    return [id, createdAt, updatedAt, text, isComplete];
   }
 }
 
@@ -118,31 +146,36 @@ class TodoQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
-  bool? get isComplete {
-    return (values['is_complete'] as bool?);
-  }
 
-  set isComplete(bool? value) => values['is_complete'] = value;
-  String? get text {
-    return (values['text'] as String?);
-  }
-
-  set text(String? value) => values['text'] = value;
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
+  String? get text {
+    return (values['text'] as String?);
+  }
+
+  set text(String? value) => values['text'] = value;
+
+  bool? get isComplete {
+    return (values['is_complete'] as bool?);
+  }
+
+  set isComplete(bool? value) => values['is_complete'] = value;
+
   void copyFrom(Todo model) {
-    isComplete = model.isComplete;
-    text = model.text;
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
+    text = model.text;
+    isComplete = model.isComplete;
   }
 }
 
@@ -154,40 +187,43 @@ class TodoQueryValues extends MapQueryValues {
 class Todo extends _Todo {
   Todo({
     this.id,
-    this.isComplete = false,
-    required this.text,
     this.createdAt,
     this.updatedAt,
+    required this.text,
+    this.isComplete = false,
   });
 
+  /// A unique identifier corresponding to this item.
   @override
-  final String? id;
+  String? id;
+
+  /// The time at which this item was created.
+  @override
+  DateTime? createdAt;
+
+  /// The last time at which this item was updated.
+  @override
+  DateTime? updatedAt;
 
   @override
-  final bool? isComplete;
+  String? text;
 
   @override
-  final String? text;
-
-  @override
-  final DateTime? createdAt;
-
-  @override
-  final DateTime? updatedAt;
+  bool? isComplete;
 
   Todo copyWith({
     String? id,
-    bool? isComplete,
-    String? text,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? text,
+    bool? isComplete,
   }) {
     return Todo(
       id: id ?? this.id,
-      isComplete: isComplete ?? this.isComplete,
-      text: text ?? this.text,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      text: text ?? this.text,
+      isComplete: isComplete ?? this.isComplete,
     );
   }
 
@@ -195,20 +231,20 @@ class Todo extends _Todo {
   bool operator ==(other) {
     return other is _Todo &&
         other.id == id &&
-        other.isComplete == isComplete &&
-        other.text == text &&
         other.createdAt == createdAt &&
-        other.updatedAt == updatedAt;
+        other.updatedAt == updatedAt &&
+        other.text == text &&
+        other.isComplete == isComplete;
   }
 
   @override
   int get hashCode {
-    return Object.hashAll([id, isComplete, text, createdAt, updatedAt]);
+    return Object.hashAll([id, createdAt, updatedAt, text, isComplete]);
   }
 
   @override
   String toString() {
-    return 'Todo(id=$id, isComplete=$isComplete, text=$text, createdAt=$createdAt, updatedAt=$updatedAt)';
+    return 'Todo(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, text=$text, isComplete=$isComplete)';
   }
 
   Map<String, dynamic> toJson() {
@@ -239,10 +275,39 @@ class TodoDecoder extends Converter<Map, Todo> {
 class TodoSerializer extends Codec<Todo, Map> {
   const TodoSerializer();
 
+  /// The name of the JSON Schema of [Todo].
+  static const String schemaName = 'Todo';
+
+  /// The JSON Schema of the map that [toMap] writes of [Todo], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'text': {'type': 'string'},
+      'is_complete': {
+        'type': ['boolean', 'null'],
+      },
+    },
+    'required': ['text'],
+  };
+
   @override
   TodoEncoder get encoder => const TodoEncoder();
+
   @override
   TodoDecoder get decoder => const TodoDecoder();
+
   static Todo fromMap(Map map) {
     if (map['text'] == null) {
       throw FormatException("Missing required field 'text' on Todo.");
@@ -250,32 +315,42 @@ class TodoSerializer extends Codec<Todo, Map> {
 
     return Todo(
       id: map['id'] as String?,
-      isComplete: map['is_complete'] as bool? ?? false,
-      text: map['text'] as String?,
       createdAt: map['created_at'] != null
           ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
           : null,
       updatedAt: map['updated_at'] != null
           ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
           : null,
+      text: map['text'] as String?,
+      isComplete: map['is_complete'] as bool? ?? false,
     );
   }
 
-  static Map<String, dynamic> toMap(_Todo model) {
+  /// Adds the JSON Schema of [Todo], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+  }
+
+  static Map<String, dynamic> toMap(_Todo? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
+    }
     if (model.text == null) {
       throw FormatException("Missing required field 'text' on Todo.");
     }
 
     return {
       'id': model.id,
-      'is_complete': model.isComplete,
-      'text': model.text,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
+      'text': model.text,
+      'is_complete': model.isComplete,
     };
   }
 }
@@ -283,19 +358,19 @@ class TodoSerializer extends Codec<Todo, Map> {
 abstract class TodoFields {
   static const List<String> allFields = <String>[
     id,
-    isComplete,
-    text,
     createdAt,
     updatedAt,
+    text,
+    isComplete,
   ];
 
   static const String id = 'id';
 
-  static const String isComplete = 'is_complete';
-
-  static const String text = 'text';
-
   static const String createdAt = 'created_at';
 
   static const String updatedAt = 'updated_at';
+
+  static const String text = 'text';
+
+  static const String isComplete = 'is_complete';
 }

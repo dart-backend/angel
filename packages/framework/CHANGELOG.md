@@ -9,8 +9,9 @@
 
 ### Fixes in 10.2.0
 
+* **Docs:** The README has a Production mode section: what `ANGEL_ENV=production` changes, and why an app should set it when deployed
 * **Docs:** `MapService.autoIdAndDateFields` says that the dates are stored as ISO 8601 strings, not `DateTime`s
-* **Docs:** The README's package table lists `angel3_orm_sqlite` and `angel3_prometheus`, and describes the mutual TLS and OAuth 2.1 support of `angel3_auth_server` and `angel3_production`. Its Mutual TLS section points to the reverse proxy configurations of `angel3_auth_server`. Its installation snippet asks for 10.2.0
+* **Docs:** The README's package table lists `angel3_orm_sqlite`, `angel3_prometheus` and `angel3_openapi`, and describes the mutual TLS and OAuth 2.1 support of `angel3_auth_server` and `angel3_production`. Its Mutual TLS section points to the reverse proxy configurations of `angel3_auth_server`. Its installation snippet asks for 10.2.0
 
 ## 10.1.0
 

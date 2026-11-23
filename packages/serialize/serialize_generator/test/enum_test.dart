@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
@@ -11,8 +12,8 @@ void main() {
   test('enum serializes to int', () {
     var w = WithEnum(type: WithEnumType.b).toJson();
     print(w);
-    var enumType = w[WithEnumFields.type] as WithEnumType;
-    expect(enumType.index, WithEnumType.values.indexOf(WithEnumType.b));
+    expect(w[WithEnumFields.type], WithEnumType.values.indexOf(WithEnumType.b));
+    expect(json.decode(json.encode(w))[WithEnumFields.type], 1);
   });
 
   test('enum serializes null if null', () {

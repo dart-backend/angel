@@ -552,6 +552,30 @@ class ItemDecoder extends Converter<Map, Item> {
 class ItemSerializer extends Codec<Item, Map> {
   const ItemSerializer();
 
+  /// The name of the JSON Schema of [Item].
+  static const String schemaName = 'Item';
+
+  /// The JSON Schema of the map that [toMap] writes of [Item], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'description': {'type': 'string'},
+    },
+    'required': ['description'],
+  };
+
   @override
   ItemEncoder get encoder => const ItemEncoder();
 
@@ -573,6 +597,13 @@ class ItemSerializer extends Codec<Item, Map> {
           : null,
       description: map['description'] as String,
     );
+  }
+
+  /// Adds the JSON Schema of [Item], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(ItemEntity? model) {
@@ -624,6 +655,36 @@ class AssetDecoder extends Converter<Map, Asset> {
 class AssetSerializer extends Codec<Asset, Map> {
   const AssetSerializer();
 
+  /// The name of the JSON Schema of [Asset].
+  static const String schemaName = 'Asset';
+
+  /// The JSON Schema of the map that [toMap] writes of [Asset], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'description': {'type': 'string'},
+      'name': {'type': 'string'},
+      'price': {'type': 'number'},
+      'items': {
+        'type': 'array',
+        'items': {'\$ref': '#/components/schemas/Item'},
+      },
+    },
+    'required': ['description', 'name', 'price'],
+  };
+
   @override
   AssetEncoder get encoder => const AssetEncoder();
 
@@ -654,6 +715,14 @@ class AssetSerializer extends Codec<Asset, Map> {
             )
           : [],
     );
+  }
+
+  /// Adds the JSON Schema of [Asset], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+    ItemSerializer.addJsonSchemas(schemas);
   }
 
   static Map<String, dynamic> toMap(AssetEntity? model) {

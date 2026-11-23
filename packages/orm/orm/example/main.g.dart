@@ -7,8 +7,7 @@ part of 'main.dart';
 // **************************************************************************
 
 class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
-  EmployeeQuery({Query? parent, Set<String>? trampoline})
-    : super(parent: parent) {
+  EmployeeQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = EmployeeQueryWhere(this);
@@ -17,11 +16,13 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   @override
   final EmployeeQueryValues values = EmployeeQueryValues();
 
+  List<String> _selectedFields = [];
+
   EmployeeQueryWhere? _where;
 
   @override
   Map<String, String> get casts {
-    return {'salary': 'text'};
+    return {};
   }
 
   @override
@@ -31,7 +32,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
 
   @override
   List<String> get fields {
-    return const [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -39,6 +40,16 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
       'last_name',
       'salary',
     ];
+    return _selectedFields.isEmpty
+        ? localFields
+        : localFields
+              .where((field) => _selectedFields.contains(field))
+              .toList();
+  }
+
+  EmployeeQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -51,17 +62,27 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
     return EmployeeQueryWhere(this);
   }
 
-  static Optional<Employee> parseRow(List row) {
+  Optional<Employee> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Employee(
-      id: row[0].toString(),
-      createdAt: (row[1] as DateTime?),
-      updatedAt: (row[2] as DateTime?),
-      firstName: (row[3] as String?),
-      lastName: (row[4] as String?),
-      salary: double.tryParse(row[5].toString()),
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
+          : null,
+      firstName: fields.contains('first_name')
+          ? (row[fields.indexOf('first_name')] as String?)
+          : null,
+      lastName: fields.contains('last_name')
+          ? (row[fields.indexOf('last_name')] as String?)
+          : null,
+      salary: fields.contains('salary')
+          ? mapToDouble(row[fields.indexOf('salary')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -102,7 +123,7 @@ class EmployeeQueryWhere extends QueryWhere {
 class EmployeeQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'salary': 'decimal'};
+    return {};
   }
 
   String? get id {
@@ -110,31 +131,37 @@ class EmployeeQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get firstName {
     return (values['first_name'] as String?);
   }
 
   set firstName(String? value) => values['first_name'] = value;
+
   String? get lastName {
     return (values['last_name'] as String?);
   }
 
   set lastName(String? value) => values['last_name'] = value;
+
   double? get salary {
-    return double.tryParse((values['salary'] as String));
+    return (values['salary'] as double?) ?? 0.0;
   }
 
-  set salary(double? value) => values['salary'] = value.toString();
+  set salary(double? value) => values['salary'] = value;
+
   void copyFrom(Employee model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -254,10 +281,43 @@ class EmployeeDecoder extends Converter<Map, Employee> {
 class EmployeeSerializer extends Codec<Employee, Map> {
   const EmployeeSerializer();
 
+  /// The name of the JSON Schema of [Employee].
+  static const String schemaName = 'Employee';
+
+  /// The JSON Schema of the map that [toMap] writes of [Employee], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'first_name': {
+        'type': ['string', 'null'],
+      },
+      'last_name': {
+        'type': ['string', 'null'],
+      },
+      'salary': {
+        'type': ['number', 'null'],
+      },
+    },
+  };
+
   @override
   EmployeeEncoder get encoder => const EmployeeEncoder();
+
   @override
   EmployeeDecoder get decoder => const EmployeeDecoder();
+
   static Employee fromMap(Map map) {
     return Employee(
       id: map['id'] as String?,
@@ -277,9 +337,16 @@ class EmployeeSerializer extends Codec<Employee, Map> {
     );
   }
 
+  /// Adds the JSON Schema of [Employee], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+  }
+
   static Map<String, dynamic> toMap(_Employee? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

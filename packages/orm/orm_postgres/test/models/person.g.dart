@@ -415,6 +415,34 @@ class PersonDecoder extends Converter<Map, Person> {
 class PersonSerializer extends Codec<Person, Map> {
   const PersonSerializer();
 
+  /// The name of the JSON Schema of [Person].
+  static const String schemaName = 'Person';
+
+  /// The JSON Schema of the map that [toMap] writes of [Person], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'age': {
+        'type': ['integer', 'null'],
+      },
+    },
+  };
+
   @override
   PersonEncoder get encoder => const PersonEncoder();
 
@@ -437,6 +465,13 @@ class PersonSerializer extends Codec<Person, Map> {
       name: map['name'] as String?,
       age: map['age'] as int?,
     );
+  }
+
+  /// Adds the JSON Schema of [Person], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(PersonEntity? model) {
@@ -495,6 +530,26 @@ class PersonWithLastOrderDecoder extends Converter<Map, PersonWithLastOrder> {
 class PersonWithLastOrderSerializer extends Codec<PersonWithLastOrder, Map> {
   const PersonWithLastOrderSerializer();
 
+  /// The name of the JSON Schema of [PersonWithLastOrder].
+  static const String schemaName = 'PersonWithLastOrder';
+
+  /// The JSON Schema of the map that [toMap] writes of [PersonWithLastOrder], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'name': {
+        'type': ['string', 'null'],
+      },
+      'last_order_name': {
+        'type': ['string', 'null'],
+      },
+      'last_order_price': {
+        'type': ['number', 'null'],
+      },
+    },
+  };
+
   @override
   PersonWithLastOrderEncoder get encoder => const PersonWithLastOrderEncoder();
 
@@ -507,6 +562,13 @@ class PersonWithLastOrderSerializer extends Codec<PersonWithLastOrder, Map> {
       lastOrderName: map['last_order_name'] as String?,
       lastOrderPrice: map['last_order_price'] as double?,
     );
+  }
+
+  /// Adds the JSON Schema of [PersonWithLastOrder], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(PersonWithLastOrderEntity? model) {

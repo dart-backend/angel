@@ -9,6 +9,7 @@ import 'package:sqlite_async/sqlite_async.dart';
 
 import 'models/car.dart';
 import 'models/leg.dart';
+import 'models/uuid_user.dart';
 
 /// A database of the tests, of one of [backends], and its executor.
 class TestDatabase {
@@ -57,7 +58,17 @@ Future<void> _setUp(Database raw, String? schema) async {
   if (schema != null) return raw.execute(schema);
   await SqliteMigrationRunner(
     raw,
-    migrations: [LegMigration(), FootMigration(), CarMigration()],
+    migrations: [
+      LegMigration(),
+      FootMigration(),
+      CarMigration(),
+      UuidUserMigration(),
+      UuidPostMigration(),
+      UuidTagMigration(),
+      UuidGroupMigration(),
+      UuidUserTagMigration(),
+      UuidUserGroupMigration(),
+    ],
   ).up();
 }
 

@@ -109,6 +109,20 @@ class AnimalDecoder extends Converter<Map, Animal> {
 class AnimalSerializer extends Codec<Animal, Map> {
   const AnimalSerializer();
 
+  /// The name of the JSON Schema of [Animal].
+  static const String schemaName = 'Animal';
+
+  /// The JSON Schema of the map that [toMap] writes of [Animal], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'genus': {'type': 'string'},
+      'species': {'type': 'string'},
+    },
+    'required': ['genus', 'species'],
+  };
+
   @override
   AnimalEncoder get encoder => const AnimalEncoder();
 
@@ -130,10 +144,25 @@ class AnimalSerializer extends Codec<Animal, Map> {
     );
   }
 
+  /// Adds the JSON Schema of [Animal], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+  }
+
   static Map<String, dynamic> toMap(AnimalEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.genus == null) {
+      throw FormatException("Missing required field 'genus' on Animal.");
+    }
+
+    if (model.species == null) {
+      throw FormatException("Missing required field 'species' on Animal.");
+    }
+
     return {'genus': model.genus, 'species': model.species};
   }
 }
@@ -165,6 +194,23 @@ class BirdDecoder extends Converter<Map, Bird> {
 class BirdSerializer extends Codec<Bird, Map> {
   const BirdSerializer();
 
+  /// The name of the JSON Schema of [Bird].
+  static const String schemaName = 'Bird';
+
+  /// The JSON Schema of the map that [toMap] writes of [Bird], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'genus': {'type': 'string'},
+      'species': {'type': 'string'},
+      'is_sparrow': {
+        'type': ['boolean', 'null'],
+      },
+    },
+    'required': ['genus', 'species'],
+  };
+
   @override
   BirdEncoder get encoder => const BirdEncoder();
 
@@ -187,10 +233,25 @@ class BirdSerializer extends Codec<Bird, Map> {
     );
   }
 
+  /// Adds the JSON Schema of [Bird], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
+  }
+
   static Map<String, dynamic> toMap(BirdEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
+    if (model.genus == null) {
+      throw FormatException("Missing required field 'genus' on Bird.");
+    }
+
+    if (model.species == null) {
+      throw FormatException("Missing required field 'species' on Bird.");
+    }
+
     return {
       'genus': model.genus,
       'species': model.species,

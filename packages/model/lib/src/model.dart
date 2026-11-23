@@ -11,7 +11,11 @@ class Model {
 
   Model({this.id, this.createdAt, this.updatedAt});
 
-  /// Returns the [id], parsed as an [int].
+  /// Returns the [id], parsed as an [int], or `-1` if it is `null` or not an
+  /// integer.
+  ///
+  /// For an integer key only: of an id that is not an integer, such as a
+  /// UUID, it is `-1` for every record, so use [id] or [idAsString].
   int get idAsInt => int.tryParse(id ?? "") ?? -1;
 
   /// Returns the [id] or "" if null.

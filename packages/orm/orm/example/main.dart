@@ -52,7 +52,8 @@ class _FakeExecutor extends QueryExecutor {
   Dialect get dialect => _dialect;
 }
 
-@orm
+// No migration: `angel3_migration` depends on this package.
+@Orm(generateMigrations: false)
 @serializable
 abstract class _Employee extends Model {
   String? get firstName;

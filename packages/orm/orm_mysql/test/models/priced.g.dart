@@ -243,6 +243,30 @@ class PricedDecoder extends Converter<Map, Priced> {
 class PricedSerializer extends Codec<Priced, Map> {
   const PricedSerializer();
 
+  /// The name of the JSON Schema of [Priced].
+  static const String schemaName = 'Priced';
+
+  /// The JSON Schema of the map that [toMap] writes of [Priced], whose
+  /// models are `$ref`s to `#/components/schemas`.
+  static const Map<String, dynamic> jsonSchema = {
+    'type': 'object',
+    'properties': {
+      'id': {
+        'type': ['string', 'null'],
+      },
+      'created_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'updated_at': {
+        'type': ['string', 'null'],
+        'format': 'date-time',
+      },
+      'amount': {'type': 'number'},
+    },
+    'required': ['amount'],
+  };
+
   @override
   PricedEncoder get encoder => const PricedEncoder();
 
@@ -264,6 +288,13 @@ class PricedSerializer extends Codec<Priced, Map> {
           : null,
       amount: map['amount'] as double,
     );
+  }
+
+  /// Adds the JSON Schema of [Priced], and those of the models it
+  /// holds, to [schemas], by name.
+  static void addJsonSchemas(Map<String, Map<String, dynamic>> schemas) {
+    if (schemas.containsKey(schemaName)) return;
+    schemas[schemaName] = jsonSchema;
   }
 
   static Map<String, dynamic> toMap(PricedEntity? model) {

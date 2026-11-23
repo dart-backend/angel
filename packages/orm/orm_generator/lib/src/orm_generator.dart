@@ -333,6 +333,27 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // Skip fields with relationship
 
                   continue;
+                } else if (isJsonModelField(ctx, field)) {
+                  // Generated Code: row[i] == null ? null :
+                  //   ProfileSerializer.fromMap(row[i] as Map), of the JSON
+                  // text that MySQL and SQLite give, or the map of PostgreSQL.
+                  var decoded = expr
+                      .isA(refer('String'))
+                      .conditional(
+                        refer('json')
+                            .property('decode')
+                            .call([expr.asA(refer('String'))]),
+                        expr,
+                      )
+                      .asA(refer('Map'));
+                  var parsed = refer('${modelClassNameOf(fType)}Serializer')
+                      .property('fromMap')
+                      .call([decoded]);
+                  expr = fType.nullabilitySuffix == NullabilitySuffix.question
+                      ? expr
+                            .equalTo(literalNull)
+                            .conditional(literalNull, parsed)
+                      : parsed;
                 } else if (ctx.columns[field.displayName]?.type ==
                     ColumnType.json) {
                   expr = refer('json')
@@ -394,6 +415,13 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     );
                   } else if (fType.isDartCoreList) {
                     defaultRef = CodeExpression(Code('[]'));
+                  } else if (isJsonModelField(ctx, field)) {
+                    // No value stands in for a model that was not selected.
+                    defaultRef = CodeExpression(
+                      Code(
+                        "throw StateError('${field.displayName} is not among the fields of the query.')",
+                      ),
+                    );
                   }
                 }
                 expr = refer('fields')
@@ -756,24 +784,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         ..name = '${rc.pascalCase}QueryWhere'
         ..extend = refer('QueryWhere');
 
-      // Build expressionBuilders getter
-      clazz.methods.add(
-        Method((m) {
-          m
-            ..name = 'expressionBuilders'
-            ..returns = refer('List<SqlExpressionBuilder>')
-            ..annotations.add(refer('override'))
-            ..type = MethodType.getter
-            ..body = Block((b) {
-              var references = ctx.effectiveNormalFields.map(
-                (f) => refer(f.displayName),
-              );
-              b.addExpression(literalList(references).returned);
-            });
-        }),
-      );
-
       var initializers = <Code>[];
+      // The builders declared below, which a field of a type that has none
+      // is left out of.
+      var declared = <String>[];
 
       // Add builders for each field
       for (var field in ctx.effectiveNormalFields) {
@@ -825,6 +839,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         } else if (const TypeChecker.typeNamed(List)
             .isAssignableFromType(type)) {
           builderType = refer('ListSqlExpressionBuilder');
+        } else if (isJsonModelField(ctx, field)) {
+          // A `@serializable` class, stored as JSON.
+          builderType = refer('MapSqlExpressionBuilder');
 
           // Detect relationship
         } else if (name.endsWith('Id')) {
@@ -859,7 +876,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           continue;
         }
 
-        // FIXME: Crashed here.
+        declared.add(name);
         clazz.fields.add(
           Field((b) {
             //log.fine('Field: $name, BuilderType: $builderType');
@@ -890,6 +907,19 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           }),
         );
       }
+
+      clazz.methods.add(
+        Method((m) {
+          m
+            ..name = 'expressionBuilders'
+            ..returns = refer('List<SqlExpressionBuilder>')
+            ..annotations.add(refer('override'))
+            ..type = MethodType.getter
+            ..body = Block((b) {
+              b.addExpression(literalList(declared.map(refer)).returned);
+            });
+        }),
+      );
 
       // Now, just add a constructor that initializes each builder.
       clazz.constructors.add(
@@ -967,6 +997,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element is EnumElement) {
               value = _deserializeEnumExpression(field, value);
+            } else if (isJsonModelField(ctx, field)) {
+              // Stored as its serializer's map, as a `Map` field is.
+              var parsed = refer('${modelClassNameOf(fType)}Serializer')
+                  .property('fromMap')
+                  .call([value.asA(refer('Map'))]);
+              value = fType.nullabilitySuffix == NullabilitySuffix.question
+                  ? value.equalTo(literalNull).conditional(literalNull, parsed)
+                  : parsed;
             } else if (const TypeChecker.typeNamed(List)
                 .isAssignableFromType(fType)) {
               value = refer('json')
@@ -1003,6 +1041,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element is EnumElement) {
               value = _serializeEnumExpression(field, value);
+            } else if (isJsonModelField(ctx, field)) {
+              // Its serializer's `toMap` throws for `null`.
+              var map = refer('${modelClassNameOf(fType)}Serializer')
+                  .property('toMap')
+                  .call([value]);
+              value = fType.nullabilitySuffix == NullabilitySuffix.question
+                  ? value.equalTo(literalNull).conditional(literalNull, map)
+                  : map;
             } else if (const TypeChecker.typeNamed(List)
                 .isAssignableFromType(fType)) {
               value = refer('json').property('encode').call([value]);
