@@ -81,6 +81,8 @@ A service mounted with `app.use` documents its operations, tagged with its path:
 | `PUT /todos/{id}` | `update` |
 | `DELETE /todos/{id}` | `remove` |
 
+Each operation also has a `400` response, of a body, query or id the service cannot take, and those of an item a `404`. The `{id}` is of the type of the service's ids: an `integer` of a `Service<int?, ...>`, as an `OrmService<int?, Todo, TodoQuery>`, a `number` of a `double` or `num`, and a `string` otherwise.
+
 The other routes of a service are left out: `POST /todos/{id}`, another way to `update`, and `DELETE /todos`, which removes every item, and most services refuse. Give the schema of its items, and a tag, with `describeService`:
 
 ```dart

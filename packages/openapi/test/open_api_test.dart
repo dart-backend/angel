@@ -27,6 +27,12 @@ final userSchema = {
   },
 };
 
+/// A service of integer ids, as an `OrmService<int?, ...>`.
+class CounterService extends Service<int?, Map<String, dynamic>> {}
+
+/// A service of `double` ids.
+class ReadingService extends Service<double, Map<String, dynamic>> {}
+
 /// An app of a few kinds of routes, and a service.
 Angel appOf(OpenApi openApi) {
   var app = Angel();
@@ -269,13 +275,17 @@ void main() {
         },
       });
       var read = (paths['/todos/{id}'] as Map)['get'] as Map;
-      expect((read['responses'] as Map).keys, ['200', '404']);
+      expect((read['responses'] as Map).keys, ['200', '400', '404']);
+      expect(
+        (((paths['/todos'] as Map)['get'] as Map)['responses'] as Map).keys,
+        ['200', '400'],
+      );
       expect((read['parameters'] as List).single['name'], 'id');
     });
 
     test('the create of a service is a 201, as the service responds', () async {
       var create = (paths['/todos'] as Map)['post'] as Map;
-      expect((create['responses'] as Map).keys, ['201']);
+      expect((create['responses'] as Map).keys, ['201', '400']);
       expect(((create['responses'] as Map)['201'] as Map)['content'], {
         'application/json': {
           'schema': {r'$ref': '#/components/schemas/Todo'},
@@ -288,6 +298,20 @@ void main() {
       await rq.close();
       await AngelHttp(appOf(openApi)).handleRequest(rq);
       expect(rq.response.statusCode, 201);
+    });
+
+    test('the id of a service is of the type of its ids', () {
+      var app = appOf(openApi)
+        ..use('/counters', CounterService())
+        ..use('/readings', ReadingService());
+      var paths = openApi.documentOf(app)['paths'] as Map;
+      Object? idType(String path) =>
+          (((((paths[path] as Map)['get'] as Map)['parameters'] as List).single
+                  as Map)['schema']
+              as Map)['type'];
+      expect(idType('/todos/{id}'), 'string');
+      expect(idType('/counters/{id}'), 'integer');
+      expect(idType('/readings/{id}'), 'number');
     });
 
     test('describe replaces the operation of a service', () {

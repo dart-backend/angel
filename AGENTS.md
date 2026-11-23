@@ -45,6 +45,7 @@ The framework is divided into several categories of packages:
    - `cache`, `redis`: Caching interfaces.
    - `hot`, `production`: Hot-reloading tooling and production load management.
    - `test`, `mock_request`: Testing utilities.
+   - `openapi`: OpenAPI 3.1 documents built from an app's routes, services and controllers, with the JSON Schemas `serialize_generator` generates of the models, and a Swagger UI page.
    - `shelf`, `proxy`, `static`, `file_service`, `paginate`, `validate`, `sync`, `user_agent`, `http_exception`: Supporting integrations and helpers.
 
 ## Technology Stack & Requirements

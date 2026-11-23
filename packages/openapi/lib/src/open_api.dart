@@ -243,8 +243,12 @@ class OpenApi {
     var name = base.split('/').last;
     var collection = '/$base';
     var item = '/$base/{id}';
-    var id = const PathParameter('id', {'type': 'string'});
-    var notFound = {404: const OpenApiResponse('Not found')};
+    var id = PathParameter('id', {'type': _idType(service)});
+    // A body, query or id the service cannot take, as a non-numeric id of a
+    // numeric key.
+    var badRequest = {400: const OpenApiResponse('Bad request')};
+    // Of an item, which may also not be found.
+    var itemErrors = {...badRequest, 404: const OpenApiResponse('Not found')};
     var list = schema == null ? null : {'type': 'array', 'items': schema};
 
     Map<String, dynamic> operation(
@@ -264,7 +268,10 @@ class OpenApi {
           summary: 'List the items of $name',
           operationId: '${name}Index',
           tags: tags,
-          responses: {200: OpenApiResponse('The items', schema: list)},
+          responses: {
+            200: OpenApiResponse('The items', schema: list),
+            ...badRequest,
+          },
         ),
         [],
       ),
@@ -281,7 +288,10 @@ class OpenApi {
           tags: tags,
           requestBody: schema,
           // As the service's POST route responds.
-          responses: {201: OpenApiResponse('The item created', schema: schema)},
+          responses: {
+            201: OpenApiResponse('The item created', schema: schema),
+            ...badRequest,
+          },
         ),
         [],
       ),
@@ -298,7 +308,7 @@ class OpenApi {
           tags: tags,
           responses: {
             200: OpenApiResponse('The item', schema: schema),
-            ...notFound,
+            ...itemErrors,
           },
         ),
         [id],
@@ -317,7 +327,7 @@ class OpenApi {
           requestBody: schema,
           responses: {
             200: OpenApiResponse('The item modified', schema: schema),
-            ...notFound,
+            ...itemErrors,
           },
         ),
         [id],
@@ -336,7 +346,7 @@ class OpenApi {
           requestBody: schema,
           responses: {
             200: OpenApiResponse('The item replaced', schema: schema),
-            ...notFound,
+            ...itemErrors,
           },
         ),
         [id],
@@ -354,12 +364,23 @@ class OpenApi {
           tags: tags,
           responses: {
             200: OpenApiResponse('The item removed', schema: schema),
-            ...notFound,
+            ...itemErrors,
           },
         ),
         [id],
       ),
     );
+  }
+
+  /// The JSON Schema type of the ids of [service], of its `Id`: `integer`
+  /// of an `int`, as an `OrmService<int?, ...>`, `number` of a `double` or
+  /// `num`, else `string`. `app.use` gives a [HookedService] whose `Id` is
+  /// `dynamic`, so it is that of the service it wraps.
+  static String _idType(Service service) {
+    var inner = service is HookedService ? service.inner : service;
+    if (inner is Service<int?, Object?>) return 'integer';
+    if (inner is Service<num?, Object?>) return 'number';
+    return 'string';
   }
 
   Map<String, dynamic> _operation(
