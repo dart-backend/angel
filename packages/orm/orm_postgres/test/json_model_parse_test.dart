@@ -5,10 +5,8 @@ import 'models/profile_user.dart';
 /// How a field of a `@serializable` class is read from a row, as each
 /// database gives JSON: PostgreSQL as a map, MySQL and SQLite as text.
 void main() {
-  List<Object?> row({
-    Object? profile,
-    Object? address = '{"city":"Lisbon"}',
-  }) => ['1', null, null, 'ana', profile, address];
+  List<Object?> row({Object? profile, Object? address = '{"city":"Lisbon"}'}) =>
+      ['1', null, null, 'ana', profile, address];
 
   test('of a map', () {
     var user = ProfileUserQuery()
