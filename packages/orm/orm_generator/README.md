@@ -85,7 +85,7 @@ abstract class UserEntity extends Model {
 >     .insert(executor);
 > ```
 >
-> An insert without an `id` fails, as the primary key has no default, and a database default, such as `@Column(defaultValue: RawSql('gen_random_uuid()'))`, is not supported.
+> An insert without an `id` fails, as the primary key has no default, and a database default, such as `@Column(defaultValue: RawSql('gen_random_uuid()'))`, is not supported: the generator refuses it with an error.
 
 * **Migration.** The column of `id` is of the type declared, and the foreign keys of other models that refer to it are of the same type and length, as `author_id` of a `@BelongsTo UserEntity author`.
 * **Queries.** `where.id` is a `StringSqlExpressionBuilder`, so `UserQuery()..where!.id.equals(uuid)` reads a user by its UUID, and `values.id` sets it. Pass the `id` itself, a `String`, not `idAsInt`, which is `-1` for every UUID: `where!.id.equals(user.id!)`.

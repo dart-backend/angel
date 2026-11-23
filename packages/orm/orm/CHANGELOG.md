@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.3.0
+
+### New in 10.3.0
+
+* **Migrations:** `ColumnType.uuid`, a UUID, which `angel3_migration_runner` declares as each database has it: `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, and `TEXT` on SQLite
+
 ## 10.2.0
 
 ### Breaking changes in 10.2.0
@@ -8,7 +14,6 @@
 
 ### New in 10.2.0
 
-* **Migrations:** `ColumnType.uuid`, a UUID, which `angel3_migration_runner` declares as each database has it: `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, and `TEXT` on SQLite
 * **Dialects:** `SqliteDialect`, for SQLite 3.35 or later, which `angel3_orm_sqlite` uses. Queries are written for it as for MySQL, without `FOR UPDATE`, as SQLite has none. `SqliteDialect.formatDateTime` gives a `DateTime` as SQLite stores it, UTC text that sorts in time order
 
 ## 10.1.0

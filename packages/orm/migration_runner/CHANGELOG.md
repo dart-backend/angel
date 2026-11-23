@@ -1,10 +1,15 @@
 # Change Log
 
+## 10.2.0
+
+### New in 10.2.0
+
+* **UUID columns:** A `ColumnType.uuid` column, of `angel3_orm` 10.3.0, which this version requires, is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type, and `TEXT` on SQLite, where its name was written as it is, which MySQL rejects
+
 ## 10.1.0
 
 ### New in 10.1.0
 
-* **UUID columns:** A `ColumnType.uuid` column, of `angel3_orm` 10.2.0, is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type, and `TEXT` on SQLite, where its name was written as it is, which MySQL rejects
 * **SQLite:** `SqliteMigrationRunner`, of `package:angel3_migration_runner/sqlite.dart`, runs migrations on SQLite 3.35 or later, with a database of the `sqlite3` package. Each migration runs and is recorded in one savepoint, so one that fails is neither applied nor recorded. A `DateTime` default and `currentTimestamp` are UTC text, as `angel3_orm_sqlite` stores a `DateTime`. `changeColumnType`, `setNotNull`, `dropNotNull` and the changes of a primary key throw an `UnsupportedError`, as SQLite makes them only by creating the table again
 
 ## 10.0.1

@@ -9,6 +9,7 @@ import 'package:sqlite_async/sqlite_async.dart';
 
 import 'models/car.dart';
 import 'models/leg.dart';
+import 'models/stamped.dart';
 import 'models/uuid_user.dart';
 
 /// A database of the tests, of one of [backends], and its executor.
@@ -68,6 +69,7 @@ Future<void> _setUp(Database raw, String? schema) async {
       UuidGroupMigration(),
       UuidUserTagMigration(),
       UuidUserGroupMigration(),
+      StampedMigration(),
     ],
   ).up();
 }

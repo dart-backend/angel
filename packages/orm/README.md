@@ -258,7 +258,7 @@ abstract class FooEntity extends Model {
 
 ### Default Values
 
-It is also possible to specify the default value of a field. **Note that this only works with primitive objects.**
+It is also possible to specify the default value of a field: a bool, a number, a `String`, a `List`, a `Map`, an enum value, or a `RawSql` of SQL. Another object is an error of the generator that names the field.
 
 If a default value is supplied, the generated migration includes it in the schema; queries do not need it. A `String` default is a literal, which is quoted and escaped; for SQL, such as the current time, give a `RawSql` (e.g. `currentTimestamp`).
 
@@ -268,5 +268,10 @@ If a default value is supplied, the generated migration includes it in the schem
 abstract class FooEntity extends Model {
   @Column(defaultValue: 'baz')
   String get bar;
+
+  @Column(defaultValue: currentTimestamp)
+  DateTime? get seenAt;
 }
 ```
+
+A primary key cannot have a `RawSql` default, as `RawSql('gen_random_uuid()')`: the generator refuses it, as MySQL and MariaDB give back no key the database generates that is not `AUTO_INCREMENT`, so the inserted row could not be read. Give its value on each insert (see "String primary keys" in the README of `angel3_orm_generator`).

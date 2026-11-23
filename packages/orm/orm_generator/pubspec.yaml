@@ -11,7 +11,7 @@ environment:
 dependencies:
   angel3_model: ^10.0.0
   angel3_serialize: ^10.0.0
-  angel3_orm: ^10.2.0
+  angel3_orm: ^10.3.0
   angel3_serialize_generator: ^10.1.0
   analyzer: ^14.0.0
   inflection3: ^0.5.3+2
@@ -30,5 +30,6 @@ dev_dependencies:
   angel3_framework: ^10.0.0
   angel3_migration: ^10.0.0
   build_runner: ^2.4.0
+  build_test: ^3.5.0
   test: ^1.24.0
   lints: ^6.0.0

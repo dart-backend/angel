@@ -248,16 +248,37 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
               var cascade = <Expression>[];
 
               var defaultValue = ctx.buildContext.defaults[name];
+              var isKey =
+                  col.indexType == IndexType.primaryKey ||
+                  (autoIdAndDateFields != false && name == 'id');
+              var fieldName = '${ctx.buildContext.originalClassName}.$name';
 
               // Handle 'defaultValue' on Column annotation
-              if (col.defaultValue != null) {
-                var defaultCode = dartObjectToString(
-                  col.defaultValue as DartObject,
-                );
-
-                if (defaultCode != null) {
-                  Expression defaultExpr = CodeExpression(Code(defaultCode));
-                  cascade.add(refer('defaultsTo').call([defaultExpr]));
+              if (col.defaultValue case DartObject value?) {
+                if (_rawSql(value) case var sql?) {
+                  _checkNotKey(isKey, fieldName, sql);
+                  cascade.add(
+                    refer('defaultsTo').call([
+                      refer('RawSql').constInstance([literalString(sql)]),
+                    ]),
+                  );
+                } else {
+                  String? defaultCode;
+                  try {
+                    defaultCode = dartObjectToString(value);
+                  } on ArgumentError {
+                    throw InvalidGenerationSourceError(
+                      'The defaultValue of the @Column of $fieldName is a '
+                      '${value.type}: give a bool, a number, a String, a '
+                      'List, a Map, an enum value or a RawSql of SQL.',
+                    );
+                  }
+                  if (defaultCode != null) {
+                    cascade.add(
+                      refer('defaultsTo')
+                          .call([CodeExpression(Code(defaultCode))]),
+                    );
+                  }
                 }
 
                 // Handle 'defaultValue' on SerializableField annotation
@@ -265,13 +286,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 var type = defaultValue.type;
                 Expression? defaultExpr;
 
-                if (const TypeChecker.typeNamed(RawSql)
-                    .isAssignableFromType(defaultValue.type!)) {
-                  var value = ConstantReader(defaultValue)
-                      .read('value')
-                      .stringValue;
+                if (_rawSql(defaultValue) case var sql?) {
+                  _checkNotKey(isKey, fieldName, sql);
                   defaultExpr = refer('RawSql')
-                      .constInstance([literalString(value)]);
+                      .constInstance([literalString(sql)]);
                 } else if (type is InterfaceType &&
                     type.element is EnumElement) {
                   // Default to enum index.
@@ -440,6 +458,31 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
         if (type.hasPrecision) 'hasPrecision': literal(true),
         if (type.hasScale) 'hasScale': literal(true),
       },
+    );
+  }
+
+  /// The SQL of [value], if it is a [RawSql], as `currentTimestamp`.
+  static String? _rawSql(DartObject value) {
+    var type = value.type;
+    if (type == null ||
+        !const TypeChecker.typeNamed(RawSql).isAssignableFromType(type)) {
+      return null;
+    }
+    return ConstantReader(value).read('value').stringValue;
+  }
+
+  /// Refuses the [RawSql] default [sql] of the primary key [field]: a key
+  /// the database generates is not supported, as MySQL and MariaDB do not
+  /// give back one that is not `AUTO_INCREMENT`, so the inserted row could
+  /// not be read. Its value is given on each insert, as a UUID of
+  /// `package:uuid`.
+  static void _checkNotKey(bool isKey, String field, String sql) {
+    if (!isKey) return;
+    throw InvalidGenerationSourceError(
+      'The primary key $field has a default of SQL, RawSql(\'$sql\'), '
+      'which is not supported: give its value on each insert, as '
+      '`values.id = Uuid().v4()`. See "String primary keys" in the README '
+      'of angel3_orm_generator.',
     );
   }
 
