@@ -280,7 +280,8 @@ class OpenApi {
           operationId: '${name}Create',
           tags: tags,
           requestBody: schema,
-          responses: {200: OpenApiResponse('The item created', schema: schema)},
+          // As the service's POST route responds.
+          responses: {201: OpenApiResponse('The item created', schema: schema)},
         ),
         [],
       ),

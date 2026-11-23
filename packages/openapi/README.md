@@ -75,7 +75,7 @@ A service mounted with `app.use` documents its operations, tagged with its path:
 | Operation | Service method |
 | --- | --- |
 | `GET /todos` | `index` |
-| `POST /todos` | `create` |
+| `POST /todos` | `create`, a `201` |
 | `GET /todos/{id}` | `read` |
 | `PATCH /todos/{id}` | `modify` |
 | `PUT /todos/{id}` | `update` |

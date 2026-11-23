@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show ContentType;
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -270,6 +271,23 @@ void main() {
       var read = (paths['/todos/{id}'] as Map)['get'] as Map;
       expect((read['responses'] as Map).keys, ['200', '404']);
       expect((read['parameters'] as List).single['name'], 'id');
+    });
+
+    test('the create of a service is a 201, as the service responds', () async {
+      var create = (paths['/todos'] as Map)['post'] as Map;
+      expect((create['responses'] as Map).keys, ['201']);
+      expect(((create['responses'] as Map)['201'] as Map)['content'], {
+        'application/json': {
+          'schema': {r'$ref': '#/components/schemas/Todo'},
+        },
+      });
+
+      var rq = MockHttpRequest('POST', Uri.parse('/todos'))
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'text': 'Clean'}));
+      await rq.close();
+      await AngelHttp(appOf(openApi)).handleRequest(rq);
+      expect(rq.response.statusCode, 201);
     });
 
     test('describe replaces the operation of a service', () {
