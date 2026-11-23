@@ -461,4 +461,59 @@ void main() {
       expect(identical(openApi.documentOf(app), first), isTrue);
     });
   });
+
+  group('a mounted app', () {
+    late OpenApi openApi;
+    late Map paths;
+
+    setUp(() {
+      var v2 = Angel()..use('/counters', CounterService());
+      var api = Angel()
+        ..use('/todos', MapService())
+        ..get('/health', (req, res) => 'ok')
+        ..mount('/v2', v2);
+      var org = Angel()..use('/members', MapService());
+      var app = Angel()
+        ..mount('/api', api)
+        ..mount('/orgs/:org', org);
+      openApi = OpenApi(title: 'T')..describeService('api/todos', tag: 'Todos');
+      paths = openApi.documentOf(app)['paths'] as Map;
+    });
+
+    test('documents its services as services, under its path', () {
+      expect((paths['/api/todos'] as Map).keys.toSet(), {'get', 'post'});
+      expect((paths['/api/todos/{id}'] as Map).keys.toSet(), {
+        'get',
+        'patch',
+        'put',
+        'delete',
+      });
+      var create = (paths['/api/todos'] as Map)['post'] as Map;
+      expect(create['operationId'], 'todosCreate');
+      expect(create['tags'], ['Todos']);
+      expect((create['responses'] as Map).keys, ['201', '400']);
+      var index = (paths['/api/todos'] as Map)['get'] as Map;
+      expect(
+        [for (var p in index['parameters'] as List) (p as Map)['name']],
+        [r'$sort', r'$limit'],
+      );
+    });
+
+    test('and those of an app mounted in it', () {
+      var read = (paths['/api/v2/counters/{id}'] as Map)['get'] as Map;
+      expect(read['tags'], ['api/v2/counters']);
+      var id = (read['parameters'] as List).single as Map;
+      expect((id['schema'] as Map)['type'], 'integer');
+    });
+
+    test('and its other routes as routes', () {
+      expect((paths['/api/health'] as Map).keys, ['get']);
+    });
+
+    test('of a path of a parameter, as plain routes', () {
+      var members = paths['/orgs/{org}/members'] as Map;
+      expect(members, contains('get'));
+      expect((members['get'] as Map)['operationId'], isNot('membersIndex'));
+    });
+  });
 }

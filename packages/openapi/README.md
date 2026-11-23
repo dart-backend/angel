@@ -13,6 +13,7 @@
   - [Services](#services)
 - [Describing operations](#describing-operations)
   - [Schemas](#schemas)
+  - [Security](#security)
   - [Anything else](#anything-else)
   - [Controllers](#controllers)
 - [Serving the document](#serving-the-document)
@@ -85,7 +86,7 @@ The `index` of a `QueryableService` of `angel3_framework` lists the query parame
 
 Each operation also has a `400` response, of a body, query or id the service cannot take, and those of an item a `404`. The `{id}` is of the type of the service's ids: an `integer` of a `Service<int?, ...>`, as an `OrmService<int?, Todo, TodoQuery>`, a `number` of a `double` or `num`, and a `string` otherwise.
 
-The other routes of a service are left out: `POST /todos/{id}`, another way to `update`, and `DELETE /todos`, which removes every item, and most services refuse. Give the schema of its items, and a tag, with `describeService`:
+The other routes of a service are left out: `POST /todos/{id}`, another way to `update`, and `DELETE /todos`, which removes every item, and most services refuse. The schema of its items is that of the name of its data type, if there is one: `Todo` of an `OrmService<int?, Todo, TodoQuery>`, the name `angel3_serialize_generator` gives the schema of the model (see [Schemas](#schemas)). Give another schema, or a tag, with `describeService`:
 
 ```dart
 openApi.describeService('todos', schema: OpenApi.ref('Todo'), tag: 'Todos');
@@ -124,6 +125,13 @@ var openApi = OpenApi(
   title: 'Todo API',
   schemas: OpenApi.schemasOf([TodoSerializer.addJsonSchemas]),
 );
+// Its items are of the schema Todo, of its data type.
+app.use('/todos', OrmService<int?, Todo, TodoQuery>(executor, () => TodoQuery()));
+```
+
+A service is matched by the name of its `Data` type (`Service.dataType`), without `?`. A service of a `Map`, as a `MapService`, or of a type that has no schema of its name, has none unless `describeService` gives it, as does one of a program compiled with `--obfuscate`, whose type names are not kept:
+
+```dart
 openApi.describeService('todos', schema: OpenApi.ref(TodoSerializer.schemaName));
 ```
 
@@ -143,9 +151,44 @@ var openApi = OpenApi(
 );
 ```
 
+### Security
+
+A route protected by the middleware of `angel3_auth` 10.1.0 documents its security, of the routes of a service or of a chained router too:
+
+```dart
+app.get('/me', chain([
+  requireAuthentication<User>(),
+  (req, res) => req.container!.makeAsync<User>(),
+]));
+app.chain([requireAuthentication<User>()]).mount('/api', api);
+```
+
+| Middleware | `security` | Response |
+| --- | --- | --- |
+| `requireAuthentication<User>()` | A `Bearer` JWT | `403` |
+| `forceBasicAuth<User>()` | A `Bearer` JWT, or Basic | `401` |
+
+Their schemes, `bearer` and `basic`, are in `components.securitySchemes`. `angel3_auth` also reads a JWT of the `token` cookie, and of the `token` query parameter if `allowTokenInQuery`: give those schemes in `extra` if clients use them. A middleware of your own documents its requirement when tagged with a `SecurityRequirement` of `angel3_framework`:
+
+```dart
+const apiKey = SecurityScheme('apiKey', {
+  'type': 'apiKey',
+  'in': 'header',
+  'name': 'X-API-Key',
+});
+
+RequestHandler requireApiKey(String key) =>
+    const SecurityRequirement([apiKey]).tag(
+      (RequestContext req, ResponseContext res) =>
+          req.headers?.value('x-api-key') == key,
+    );
+```
+
+A handler of several requirements needs each, of one of its schemes. The security of a service protected by its hooks, as `beforeAll`, cannot be seen: describe it with `describe`. An operation described with a `security` of its `extra` keeps it.
+
 ### Anything else
 
-`extra` adds to the document, or to an operation, what the rest does not give, as security schemes:
+`extra` adds to the document, or to an operation, what the rest does not give, as security schemes of your own:
 
 ```dart
 var openApi = OpenApi(
@@ -163,7 +206,7 @@ var openApi = OpenApi(
 );
 ```
 
-A `components` of `extra` replaces the one of `schemas`, so give both there if you give security schemes.
+The `components` of `extra` join those of `schemas` and of the handlers: its `securitySchemes` are added to those of the handlers, and any other of its keys, as `schemas`, replaces theirs.
 
 ### Controllers
 
@@ -200,4 +243,4 @@ Without `configureServer`, `openApi.documentOf(app)` gives the document, and `op
 
 - **Who may read it.** The document lists every route of the app. Configure it only where it should be public, or put a middleware before it that checks who asks.
 - **In production** (`ANGEL_ENV=production`), the document is built once, when first asked for, and again after `describe`.
-- **Mounted apps.** The services of `app.use` are documented as services; those of a mounted router or child app are documented as plain routes.
+- **Mounted apps.** The services of an app mounted with `app.mount('/api', api)`, and of one mounted in it, are documented as services, under the path of the mount: `GET /api/todos`, tagged `api/todos`, which `describeService('api/todos', ...)` describes. Those of a mount of a parameter, as `app.mount('/orgs/:org', org)`, are documented as plain routes.

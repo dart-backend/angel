@@ -10,6 +10,7 @@ import 'hooked_service.dart';
 import 'metadata.dart';
 import 'request_context.dart';
 import 'response_context.dart';
+import 'security.dart';
 import 'service.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
@@ -22,8 +23,11 @@ typedef RequestHandler = FutureOr<dynamic> Function(
 
 /// Sequentially runs a list of [handlers] of middleware, and returns early if any does not
 /// return `true`. Works well with [Router].chain.
+///
+/// The handler has the [SecurityRequirement]s of [handlers], so that
+/// documents of the API list them.
 RequestHandler chain(Iterable<RequestHandler> handlers) {
-  return (req, res) async {
+  Future<bool> chained(RequestContext req, ResponseContext res) async {
     // Like a route's own handlers: each must return `true` for the next to
     // run, and results other than `bool` are serialized.
     for (var handler in handlers) {
@@ -33,7 +37,17 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
       }
     }
     return true;
-  };
+  }
+
+  // One object, which the requirements are of, as an Expando is of
+  // identity.
+  RequestHandler result = chained;
+  for (var handler in handlers) {
+    for (var requirement in SecurityRequirement.of(handler)) {
+      requirement.tag(result);
+    }
+  }
+  return result;
 }
 
 /// A routable server that can handle dynamic requests.

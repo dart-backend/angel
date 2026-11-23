@@ -78,6 +78,14 @@ class Service<Id, Data> extends Routable {
     'token',
   ];
 
+  /// The type of the data of this service, its `Data`, as `Todo` of an
+  /// `OrmService<int?, Todo, TodoQuery>`, so that documents of its API, such
+  /// as the OpenAPI documents of `angel3_openapi`, can find its schema.
+  ///
+  /// That of a [HookedService] is that of the service it wraps, as the one
+  /// that `app.use` gives has a `dynamic` `Data`.
+  Type get dataType => Data;
+
   /// Handlers that must run to ensure this service's functionality.
   List<RequestHandler> get bootstrappers => [];
 

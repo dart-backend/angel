@@ -1,8 +1,12 @@
 # Change Log
 
-## 10.0.2
+## 10.1.0
 
-### Fixes in 10.0.2
+### New in 10.1.0
+
+* **Links:** `Router.links` gives the links to the routers mounted, grouped or chained in a router, with their paths, routers and middleware, as they were added, where `routes` joins their routes and `mounted` has no router of `chain`
+
+### Fixes in 10.1.0
 
 * **Names:** A route keeps its `name` in the routes of a group or a mounted router, and of `flatten`, so `navigate` finds a named route of a group, where the name was dropped
 * **Performance:** A route is matched against a path only if the path starts with the constant segments that begin the route, as `users/` of `/users/:id`, so resolving a path no longer parses every route. With 122 routes, resolving `/` takes 13 µs where it took 2.3 ms, which an app pays on every request outside production, where resolutions are not cached

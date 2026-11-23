@@ -7,18 +7,30 @@ import '../plugin.dart';
 /// Forces Basic authentication over the requested resource, with the given [realm] name, if no JWT is present.
 ///
 /// [realm] defaults to `'angel3_auth'`.
+///
+/// It is tagged with a [SecurityRequirement] of a `Bearer` JWT or Basic
+/// authentication, and a `401`, which documents of the API list.
 RequestHandler forceBasicAuth<User>({String? realm}) {
-  return (RequestContext req, ResponseContext res) async {
+  return _forceBasicAuth.tag((RequestContext req, ResponseContext res) async {
     if (await _hasUser<User>(req)) return true;
 
     res.headers['www-authenticate'] = 'Basic realm="${realm ?? 'angel3_auth'}"';
     throw AngelHttpException.notAuthenticated();
-  };
+  });
 }
 
+const _forceBasicAuth = SecurityRequirement([
+  SecurityScheme.bearer,
+  SecurityScheme.basic,
+], status: 401);
+
 /// Restricts access to a resource via authentication.
+///
+/// It is tagged with a [SecurityRequirement] of a `Bearer` JWT and a `403`,
+/// which documents of the API list. The JWT may also be sent in the `token`
+/// cookie or query parameter, as [AngelAuth.getJwt] reads it.
 RequestHandler requireAuthentication<User>() {
-  return (
+  return _requireAuthentication.tag((
     RequestContext req,
     ResponseContext res, {
     bool throwError = true,
@@ -34,8 +46,12 @@ RequestHandler requireAuthentication<User>() {
 
     if (req.method == 'OPTIONS' || await _hasUser<User>(req)) return true;
     return reject(res);
-  };
+  });
 }
+
+const _requireAuthentication = SecurityRequirement([
+  SecurityScheme.bearer,
+], status: 403);
 
 /// Whether [req] has a [User]: `false` if it sent no JWT. A JWT that is
 /// not valid, as one that has expired, throws its error, a 403.
