@@ -538,6 +538,7 @@ const Map<String, ColumnType> _knownColumnTypes = {
   'jsonb': ColumnType.jsonb,
   'sqlVariant': ColumnType.sqlVariant,
   'uniqueIdentifier': ColumnType.uniqueIdentifier,
+  'uuid': ColumnType.uuid,
   'xml': ColumnType.xml,
   'cursor': ColumnType.cursor,
   'table': ColumnType.table,

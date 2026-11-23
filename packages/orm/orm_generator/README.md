@@ -68,17 +68,28 @@ A model that extends `Model` has an `id` that is an integer key, `serial`, which
 @orm
 abstract class UserEntity extends Model {
   @override
-  @Column(type: ColumnType('uuid'), indexType: IndexType.primaryKey)
+  @Column(type: ColumnType.uuid, indexType: IndexType.primaryKey)
   String? get id;
 
   String? get name;
 }
 ```
 
+> [!IMPORTANT]
+> **The `id` must be passed in on every insert.** A `String` key is not generated, neither by the ORM nor by the database: there is no auto generation of a UUID. Generate it in Dart, as with `package:uuid`, and set it before inserting:
+>
+> ```dart
+> var user = await (UserQuery()
+>       ..values.id = Uuid().v4()
+>       ..values.name = 'Jane')
+>     .insert(executor);
+> ```
+>
+> An insert without an `id` fails, as the primary key has no default, and a database default, such as `@Column(defaultValue: RawSql('gen_random_uuid()'))`, is not supported.
+
 * **Migration.** The column of `id` is of the type declared, and the foreign keys of other models that refer to it are of the same type and length, as `author_id` of a `@BelongsTo UserEntity author`.
-* **Queries.** `where.id` is a `StringSqlExpressionBuilder`, so `UserQuery()..where!.id.equals(uuid)` reads a user by its UUID, and `values.id` sets it.
-* **Its value.** Give the `id` of each insert, as of `package:uuid`: `UserQuery()..values.id = Uuid().v4()`. A default of the database, as `gen_random_uuid()`, cannot be declared yet: `@Column(defaultValue: RawSql(...))` does not generate. On MySQL and MariaDB, the inserted row is found by the `id` given, so an `id` must be given there in any case.
-* **Types.** `uuid` is of PostgreSQL. MySQL and MariaDB have none: use `@Column(type: ColumnType.char, length: 36, ...)`, or `varChar`. SQLite takes `ColumnType.text`.
+* **Queries.** `where.id` is a `StringSqlExpressionBuilder`, so `UserQuery()..where!.id.equals(uuid)` reads a user by its UUID, and `values.id` sets it. Pass the `id` itself, a `String`, not `idAsInt`, which is `-1` for every UUID: `where!.id.equals(user.id!)`.
+* **Types.** `ColumnType.uuid` is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type (MariaDB has one only from 10.7), and `TEXT` on SQLite, so one model runs on each of them. PostgreSQL checks the value and gives it in lower case; the others store the text as it is given, and MySQL and MariaDB compare it without regard to case, so give UUIDs in lower case, as `Uuid().v4()` does. Another type, as `ColumnType.char` of `length: 36`, is a string key too.
 
 An `id` of no column type, or of an integer one, as `ColumnType.bigSerial`, is an integer key, as before.
 

@@ -262,6 +262,10 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     var values = query.values;
+    // The record is that of [id]: an id in [data], which `copyFrom` sets of
+    // a key the database does not generate (as a UUID), neither changes nor
+    // clears its key. A query callback may still set it.
+    if (values is MapQueryValues) values.values.remove(idField);
     if (partial && values is MapQueryValues) {
       var given = data is Object && _canRemember(data)
           ? _bodyFields[data]

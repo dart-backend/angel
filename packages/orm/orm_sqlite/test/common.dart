@@ -64,6 +64,10 @@ Future<void> _setUp(Database raw, String? schema) async {
       CarMigration(),
       UuidUserMigration(),
       UuidPostMigration(),
+      UuidTagMigration(),
+      UuidGroupMigration(),
+      UuidUserTagMigration(),
+      UuidUserGroupMigration(),
     ],
   ).up();
 }

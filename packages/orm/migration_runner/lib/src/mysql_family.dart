@@ -29,6 +29,9 @@ class MySqlFamilyGenerator {
     var integer = serialIntegers[column.type];
     if (integer != null) return integer.name;
 
+    // MySQL has no UUID type, nor MariaDB before 10.7: its text.
+    if (column.type == ColumnType.uuid) return 'char(36)';
+
     // Map timestamp time to datetime
     var str = column.type == ColumnType.timeStamp
         ? ColumnType.dateTime.name

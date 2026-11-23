@@ -1,5 +1,12 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **`update` and `modify`:** The record keeps the id it is updated by, of a key the database does not generate, as a UUID, which `copyFrom` sets: `update` of data without an `id` failed with a `NOT NULL` error, and an `id` in the data, as in the body of a request, changed the record's key. A query callback may still set it
+* **Tests:** Connect to the PostgreSQL server of `POSTGRES_HOST` (or `POSTGRES_HOSTNAME`) and `POSTGRES_PORT`, where the port was always 5432
+
 ## 10.0.0
 
 ### Fixes in 10.0.0

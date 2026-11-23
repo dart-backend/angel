@@ -183,6 +183,13 @@ class ColumnType {
   static const ColumnType json = ColumnType('json');
   static const ColumnType jsonb = ColumnType('jsonb');
 
+  // UUID.
+
+  /// A UUID, of a `String` such as `6f1c2a8e-3b4d-4e5f-8a9b-0c1d2e3f4a5b`:
+  /// `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, and `TEXT` on
+  /// SQLite.
+  static const ColumnType uuid = ColumnType('uuid');
+
   // Misc.
   static const ColumnType sqlVariant = ColumnType('sql_variant');
   static const ColumnType uniqueIdentifier = ColumnType('uniqueidentifier');

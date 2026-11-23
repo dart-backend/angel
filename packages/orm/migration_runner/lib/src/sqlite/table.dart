@@ -70,6 +70,7 @@ abstract class SqliteGenerator {
     ColumnType.json,
     ColumnType.jsonb,
     ColumnType.uniqueIdentifier,
+    ColumnType.uuid,
     ColumnType.xml,
   };
 

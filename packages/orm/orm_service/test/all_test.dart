@@ -8,9 +8,9 @@ import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:angel3_orm_service/angel3_orm_service.dart';
 import 'package:logging/logging.dart';
-import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'pokemon.dart';
 
 void main() {
@@ -19,16 +19,7 @@ void main() {
   late Service<int?, Pokemon> pokemonService;
 
   setUp(() async {
-    var conn = await Connection.open(
-      Endpoint(
-        host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
-        port: 5432,
-        database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
-        username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
-      ),
-      settings: ConnectionSettings(sslMode: SslMode.disable),
-    );
+    var conn = await openPgConnection();
 
     hierarchicalLoggingEnabled = true;
     logger = Logger.detached('orm_service');
