@@ -41,4 +41,16 @@ abstract class QueryExecutor {
   /// Whether nested transactions are supported depends on the
   /// underlying driver.
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f);
+
+  /// The kind of [error], an error of the database's driver that a query of
+  /// this executor failed with, as a `ServerException` of the `postgres`
+  /// package: `null` if it is of no [QueryErrorKind], or not of the
+  /// database.
+  ///
+  /// The error is thrown as the driver throws it; this tells what it is
+  /// without depending on the driver, so that a client of the error, as
+  /// `OrmService` of `angel3_orm_service`, can answer it as a request's error,
+  /// as a duplicate key with a `409`. An executor of a database classifies
+  /// the errors of its driver; by default, none is classified.
+  QueryError? classifyError(Object error) => null;
 }

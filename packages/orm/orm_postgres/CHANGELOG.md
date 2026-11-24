@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.2.0
+
+### New in 10.2.0
+
+* **Errors:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` classify a `ServerException` by its SQLSTATE code (`classifyError`, of `angel3_orm` 10.3.0, which this version requires): `23505` a unique violation, `23502` a `NOT NULL` one, `23503` a foreign key one, and class `22`, as `22P02` of a malformed UUID, an invalid value, with its column and constraint. `classifyPostgresError` is the function they use
+
 ## 10.1.0
 
 ### Breaking changes in 10.1.0

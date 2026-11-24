@@ -4,6 +4,8 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
+import 'errors.dart';
+
 import 'logging.dart';
 
 import 'parameters.dart';
@@ -70,6 +72,11 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// An optional [Logger] to print information to. A default logger will be used
   /// if not set
   late Logger logger;
+
+  /// Of a [ServerException], by its SQLSTATE code (see
+  /// [classifyPostgresError]).
+  @override
+  QueryError? classifyError(Object error) => classifyPostgresError(error);
 
   @override
   Dialect get dialect => _dialect;

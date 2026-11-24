@@ -5,6 +5,8 @@ import 'package:logging/logging.dart';
 import 'package:mysql_dart/mysql_dart.dart';
 import 'package:mysql_dart/mysql_protocol.dart' show MySQLColumnType;
 
+import 'errors.dart';
+
 part 'orm_mariadb.dart';
 
 /// The commands of a connection that have not completed, which
@@ -82,6 +84,11 @@ class MySqlExecutor extends QueryExecutor {
 
   @override
   Dialect get dialect => _dialect;
+
+  /// Of a `MySQLServerException`, by its error code (see
+  /// [classifyMySqlError]).
+  @override
+  QueryError? classifyError(Object error) => classifyMySqlError(error);
 
   /// Closes the connection once the commands given before have run.
   ///

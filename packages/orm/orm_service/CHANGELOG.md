@@ -8,6 +8,8 @@
 
 * **Ids:** `validateId`, of whether an id a client gives can be a record's, as of a UUID: one it refuses is a 404 of `read`, `update`, `modify` and `remove`, a 400 of a query's `id` and of `create`, and no record of `readMany`, before a query, where a malformed UUID was a 500 of PostgreSQL
 
+* **Errors:** An error of the database that is of the request, as the executor classifies it (`QueryExecutor.classifyError` of `angel3_orm` 10.3.0, which this version requires), is its HTTP error: a duplicate key, as an `id` or an email that exists, or a foreign key a `409 Conflict`, and a missing or invalid value, as a malformed UUID on PostgreSQL, a `400 Bad Request`, where each was a `500`. Its message names the column or constraint, not the value; the database's error is its `error`, for the server's logs. `OrmService.httpErrorOf` gives the HTTP error of a `QueryError`
+
 ### Fixes in 10.1.0
 
 * **`create`:** Of a model whose id is text, as a UUID, data without an `id` is a 400, where the insert failed with the database's `NOT NULL` error, a 500

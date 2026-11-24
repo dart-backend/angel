@@ -110,6 +110,20 @@ void main() {
     },
   );
 
+  test('create of an id that exists is a 409, of the key', () async {
+    expect(
+      () => service.create(UuidUser(id: ana, name: 'Ana again')),
+      throwsA(
+        isA<AngelHttpException>()
+            .having((e) => e.statusCode, 'statusCode', 409)
+            .having((e) => e.message, 'message', contains('uuid_users_pkey'))
+            // Not the value, which the database's error quotes.
+            .having((e) => e.message, 'message', isNot(contains(ana))),
+      ),
+    );
+    expect(await all(), {ana: 'Ana', bo: 'Bo'});
+  });
+
   group('validateId', () {
     late OrmService<String?, UuidUser, UuidUserQuery> checked;
 
@@ -156,10 +170,15 @@ void main() {
       expect(() => checked.read(cy), throwsHttp(404));
     });
 
-    test('without it, PostgreSQL refuses a malformed UUID itself', () async {
+    test('without it, a malformed UUID PostgreSQL refuses is a 400', () async {
       expect(
         () => service.read('not-a-uuid'),
-        throwsA(isNot(isA<AngelHttpException>())),
+        throwsA(
+          isA<AngelHttpException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              // The database's error, for the server's logs.
+              .having((e) => e.error, 'error', isNotNull),
+        ),
       );
     });
   });

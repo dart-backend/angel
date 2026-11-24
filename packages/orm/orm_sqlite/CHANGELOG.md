@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.1.0
+
+### New in 10.1.0
+
+* **Errors:** `SqliteExecutor` and `SqliteAsyncExecutor` classify a `SqliteException` by its extended result code (`classifyError`, of `angel3_orm` 10.3.0, which this version requires): `2067` and `1555` a duplicate key, `1299` a `NOT NULL` violation, `787` a foreign key one (with `PRAGMA foreign_keys = ON`), and `275` (`CHECK`) and `20` (a type mismatch) an invalid value, with the column of its message. `classifySqliteError` is the function they use
+
 ## 10.0.1
 
 ### Fixes in 10.0.1

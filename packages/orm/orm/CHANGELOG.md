@@ -4,6 +4,7 @@
 
 ### New in 10.3.0
 
+* **Errors:** `QueryExecutor.classifyError` tells the kind of an error of the database's driver that a query failed with, as a `QueryError` of a `QueryErrorKind` (a unique, `NOT NULL` or foreign key violation, or an invalid value) and its column or constraint, without its values, so that it can be answered without depending on the driver, as `angel3_orm_service` does. The error is still thrown as the driver throws it. An executor classifies none by default
 * **Migrations:** `ColumnType.uuid`, a UUID, which `angel3_migration_runner` declares as each database has it: `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, and `TEXT` on SQLite
 
 ## 10.2.0

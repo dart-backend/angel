@@ -275,3 +275,17 @@ abstract class FooEntity extends Model {
 ```
 
 A primary key cannot have a `RawSql` default, as `RawSql('gen_random_uuid()')`: the generator refuses it, as MySQL and MariaDB give back no key the database generates that is not `AUTO_INCREMENT`, so the inserted row could not be read. Give its value on each insert (see "String primary keys" in the README of `angel3_orm_generator`).
+
+## Errors
+
+A query that the database refuses throws the error of its driver, as a `ServerException` of the `postgres` package. `classifyError` of the executor tells what it is, without depending on the driver: a `QueryError` of a `QueryErrorKind`, `uniqueViolation`, `notNullViolation`, `foreignKeyViolation` or `invalidValue`, and its column or constraint, or `null` of another error. The executors of `angel3_orm_postgres`, `angel3_orm_mysql` and `angel3_orm_sqlite` classify those of their drivers, and `OrmService` of `angel3_orm_service` answers them with a `409` or a `400`.
+
+```dart
+try {
+  await (UserQuery()..values.email = email).insert(executor);
+} catch (e) {
+  if (executor.classifyError(e)?.kind != QueryErrorKind.uniqueViolation) rethrow;
+  // The email is taken.
+}
+```
+

@@ -120,6 +120,53 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
   }
 
+  /// The result of [run], a query of [executor]: an error of the database
+  /// that is of the request, as [QueryExecutor.classifyError] tells, is
+  /// thrown as its HTTP error, of [httpErrorOf], with the database's error
+  /// as its `error`; any other is thrown as it is.
+  Future<T> _run<T>(Future<T> Function() run) async {
+    try {
+      return await run();
+    } catch (error, stackTrace) {
+      var classified = executor.classifyError(error);
+      if (classified == null) rethrow;
+      Error.throwWithStackTrace(
+        httpErrorOf(classified)
+          ..error = error
+          ..stackTrace = stackTrace,
+        stackTrace,
+      );
+    }
+  }
+
+  /// The HTTP error of [error]: a `409 Conflict` of a duplicate key or of a
+  /// foreign key, as a record of the same email, or the remove of a record
+  /// others refer to, and a `400 Bad Request` of a missing or invalid value.
+  /// Its message names the column, or the constraint, not the value, which
+  /// the database's error may quote.
+  static AngelHttpException httpErrorOf(QueryError error) {
+    var name = error.column ?? error.constraint;
+    var of = name == null ? '' : ' "$name"';
+    return switch (error.kind) {
+      QueryErrorKind.uniqueViolation => AngelHttpException.conflict(
+        message: 'A record of the same$of exists.',
+      ),
+      QueryErrorKind.foreignKeyViolation => AngelHttpException.conflict(
+        message:
+            'The record refers to a record that does not exist, or records '
+            'refer to it${name == null ? '' : ' ($name)'}.',
+      ),
+      QueryErrorKind.notNullViolation => AngelHttpException.badRequest(
+        message: name == null
+            ? 'A required value is missing.'
+            : 'The value of$of is required.',
+      ),
+      QueryErrorKind.invalidValue => AngelHttpException.badRequest(
+        message: 'Invalid value${name == null ? '' : ' of$of'}.',
+      ),
+    };
+  }
+
   /// Whether [id] can be that of a record, of [validateId].
   bool _isValidId(Object? id) =>
       id == null || validateId == null || validateId!(id);
@@ -252,14 +299,14 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     await _applyQuery(query, params);
-    return await query.get(executor);
+    return await _run(() => query.get(executor));
   }
 
   @override
   Future<List<Data>> index([Map<String, dynamic>? params]) async {
     var query = await queryCreator();
     await _applyQuery(query, params);
-    return await query.get(executor);
+    return await _run(() => query.get(executor));
   }
 
   @override
@@ -267,7 +314,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     var query = await queryCreator();
     _applyId(query, id);
     await _applyQuery(query, params);
-    var result = await query.getOne(executor);
+    var result = await _run(() => query.getOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
@@ -279,7 +326,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
   ]) async {
     var query = await queryCreator();
     await _applyQuery(query, params);
-    var result = await query.getOne(executor);
+    var result = await _run(() => query.getOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: errorMessage);
   }
@@ -315,7 +362,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       );
     }
 
-    var result = await query.insert(executor);
+    var result = await _run(() => query.insert(executor));
     if (result.isPresent) return result.value;
     throw StateError(
       'The record was inserted into ${query.tableName}, but could not be '
@@ -378,7 +425,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     // One record, even if the query's conditions match more.
     query.limit(1);
 
-    var result = await query.updateOne(executor);
+    var result = await _run(() => query.updateOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
@@ -423,7 +470,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     // Also when removing "all": only the items that match the query.
     await _applyQuery(query, params);
 
-    var result = await query.deleteOne(executor);
+    var result = await _run(() => query.deleteOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }

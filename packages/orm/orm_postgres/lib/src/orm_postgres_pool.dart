@@ -19,6 +19,11 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
 
   final Dialect _dialect = const PostgreSQLDialect();
 
+  /// Of a [ServerException], by its SQLSTATE code (see
+  /// [classifyPostgresError]).
+  @override
+  QueryError? classifyError(Object error) => classifyPostgresError(error);
+
   @override
   Dialect get dialect => _dialect;
 
