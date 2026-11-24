@@ -146,7 +146,8 @@ void main() {
 
   group('indexQueryParameters', () {
     test(r'are $sort and $limit', () {
-      expect(MapService(), isA<QueryableService>());
+      expect(MapService(), isA<DocumentedService>());
+      expect(MapService().errorResponses, isEmpty);
       expect(MapService().indexQueryParameters.keys, [r'$sort', r'$limit']);
       expect(MapService().indexQueryParameters[r'$limit'], {
         'type': 'integer',

@@ -82,7 +82,9 @@ A service mounted with `app.use` documents its operations, tagged with its path:
 | `PUT /todos/{id}` | `update` |
 | `DELETE /todos/{id}` | `remove` |
 
-The `index` of a `QueryableService` of `angel3_framework` lists the query parameters it takes: `$sort` and `$limit` of a `MapService`, and `$sort` and one of each column of an `OrmService` of `angel3_orm_service` 10.1.0, as `GET /todos?is_complete=true`. A service of your own lists its own by implementing it.
+The `index` of a `DocumentedService` of `angel3_framework` lists the query parameters it takes: `$sort` and `$limit` of a `MapService`, and `$sort` and one of each column of an `OrmService` of `angel3_orm_service` 10.1.0, as `GET /todos?is_complete=true`. A service of your own lists its own by implementing it.
+
+A `DocumentedService` also tells of the errors its methods may give besides those below, which their operations list: a `409` of `create`, `modify`, `update` and `remove` of an `OrmService` of `angel3_orm_service`, of a duplicate key or a foreign key. A service of your own implements both `indexQueryParameters` and `errorResponses`.
 
 Each operation also has a `400` response, of a body, query or id the service cannot take, and those of an item a `404`. The `{id}` is of the type of the service's ids: an `integer` of a `Service<int?, ...>`, as an `OrmService<int?, Todo, TodoQuery>`, a `number` of a `double` or `num`, and a `string` otherwise.
 

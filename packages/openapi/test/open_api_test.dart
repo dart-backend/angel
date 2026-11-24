@@ -33,12 +33,18 @@ class CounterService extends Service<int?, Map<String, dynamic>> {}
 /// A service of `double` ids.
 class ReadingService extends Service<double, Map<String, dynamic>> {}
 
-/// A service of query parameters of its own.
+/// A service of query parameters, and errors, of its own.
 class SearchService extends Service<String?, Map<String, dynamic>>
-    implements QueryableService {
+    implements DocumentedService {
   @override
   Map<String, Map<String, dynamic>> get indexQueryParameters => {
     'q': {'type': 'string'},
+  };
+
+  @override
+  Map<String, Map<int, String>> get errorResponses => {
+    'create': {409: 'Taken'},
+    'remove': {423: 'Locked'},
   };
 }
 
@@ -323,6 +329,24 @@ void main() {
       expect(idType('/readings/{id}'), 'number');
     });
 
+    test('the operations of a service have the errors it tells of', () {
+      var app = appOf(openApi)..use('/search', SearchService());
+      var paths = openApi.documentOf(app)['paths'] as Map;
+      Map responsesOf(String path, String method) =>
+          ((paths[path] as Map)[method] as Map)['responses'] as Map;
+      expect(responsesOf('/search', 'post').keys, ['201', '400', '409']);
+      expect(responsesOf('/search', 'post')['409'], {'description': 'Taken'});
+      expect(responsesOf('/search/{id}', 'delete').keys, [
+        '200',
+        '400',
+        '404',
+        '423',
+      ]);
+      expect(responsesOf('/search/{id}', 'get').keys, ['200', '400', '404']);
+      // A MapService tells of none.
+      expect(responsesOf('/todos', 'post').keys, ['201', '400']);
+    });
+
     test('the index of a service has its query parameters', () {
       var app = appOf(openApi)
         ..use('/notes', MapService(allowQuery: false))
@@ -355,7 +379,7 @@ void main() {
           'schema': {'type': 'string'},
         },
       ]);
-      // Not a QueryableService.
+      // Not a DocumentedService.
       expect(parametersOf('/counters'), isNull);
     });
 

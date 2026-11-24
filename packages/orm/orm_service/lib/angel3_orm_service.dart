@@ -7,7 +7,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 /// via the Angel ORM.
 class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     extends Service<Id, Data>
-    implements QueryableService {
+    implements DocumentedService {
   /// The [QueryExecutor] used to communicate with a database.
   final QueryExecutor executor;
 
@@ -89,6 +89,21 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
         },
         _ => null,
       };
+
+  /// A `409 Conflict` of `create`, `modify` and `update`, of a duplicate key
+  /// or a foreign key that refers to no record, and of `remove`, of records
+  /// that refer to the record, as [httpErrorOf] gives them.
+  @override
+  Map<String, Map<int, String>> get errorResponses => const {
+    'create': {409: _conflict},
+    'modify': {409: _conflict},
+    'update': {409: _conflict},
+    'remove': {409: 'Records refer to the record'},
+  };
+
+  static const _conflict =
+      'A record of the same unique value exists, or the record refers to one '
+      'that does not';
 
   SqlExpressionBuilder _findBuilder(TQuery query, String name) {
     return query.where!.expressionBuilders.firstWhere(

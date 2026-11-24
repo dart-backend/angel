@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:angel3_framework/angel3_framework.dart' show DocumentedService;
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_service/angel3_orm_service.dart';
 import 'package:test/test.dart';
@@ -52,5 +53,22 @@ void main() {
       () => Future.value(PokemonQuery()),
     );
     expect(service.indexQueryParameters.keys, [r'$sort']);
+  });
+
+  test('a 409 of create, modify, update and remove', () {
+    var service = OrmService<int?, Pokemon, PokemonQuery>(
+      _NoExecutor(),
+      () => PokemonQuery(),
+    );
+    expect(service, isA<DocumentedService>());
+    expect(service.errorResponses.keys, [
+      'create',
+      'modify',
+      'update',
+      'remove',
+    ]);
+    for (var errors in service.errorResponses.values) {
+      expect(errors.keys, [409]);
+    }
   });
 }

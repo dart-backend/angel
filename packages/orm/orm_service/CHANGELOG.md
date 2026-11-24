@@ -4,7 +4,7 @@
 
 ### New in 10.1.0
 
-* **Query parameters:** `OrmService` is a `QueryableService` of `angel3_framework` 10.2.0, which this version requires: its `indexQueryParameters` are `$sort`, of the query's columns, and one of each column a query parameter can match, of a number, a string, a boolean or a date and time, so that `angel3_openapi` documents them. None if `allowQuery` is `false`
+* **Query parameters:** `OrmService` is a `DocumentedService` of `angel3_framework` 10.2.0, which this version requires: its `indexQueryParameters` are `$sort`, of the query's columns, and one of each column a query parameter can match, of a number, a string, a boolean or a date and time, so that `angel3_openapi` documents them. Its `errorResponses` are a `409` of `create`, `modify`, `update` and `remove`, as its errors of the database give. None if `allowQuery` is `false`
 
 * **Ids:** `validateId`, of whether an id a client gives can be a record's, as of a UUID: one it refuses is a 404 of `read`, `update`, `modify` and `remove`, a 400 of a query's `id` and of `create`, and no record of `readMany`, before a query, where a malformed UUID was a 500 of PostgreSQL
 

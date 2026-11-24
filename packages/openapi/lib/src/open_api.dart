@@ -345,6 +345,12 @@ class OpenApi {
     var badRequest = {400: const OpenApiResponse('Bad request')};
     // Of an item, which may also not be found.
     var itemErrors = {...badRequest, 404: const OpenApiResponse('Not found')};
+    // Those the service tells of, as a 409 of an OrmService.
+    var declared = _errorResponsesOf(service);
+    Map<int, OpenApiResponse> errors(String method) => {
+      for (var MapEntry(:key, :value) in (declared[method] ?? const {}).entries)
+        key: OpenApiResponse(value),
+    };
     var list = schema == null ? null : {'type': 'array', 'items': schema};
 
     Map<String, dynamic> operation(
@@ -368,6 +374,7 @@ class OpenApi {
           responses: {
             200: OpenApiResponse('The items', schema: list),
             ...badRequest,
+            ...errors('index'),
           },
         ),
         [],
@@ -388,6 +395,7 @@ class OpenApi {
           responses: {
             201: OpenApiResponse('The item created', schema: schema),
             ...badRequest,
+            ...errors('create'),
           },
         ),
         [],
@@ -406,6 +414,7 @@ class OpenApi {
           responses: {
             200: OpenApiResponse('The item', schema: schema),
             ...itemErrors,
+            ...errors('read'),
           },
         ),
         [id],
@@ -425,6 +434,7 @@ class OpenApi {
           responses: {
             200: OpenApiResponse('The item modified', schema: schema),
             ...itemErrors,
+            ...errors('modify'),
           },
         ),
         [id],
@@ -444,6 +454,7 @@ class OpenApi {
           responses: {
             200: OpenApiResponse('The item replaced', schema: schema),
             ...itemErrors,
+            ...errors('update'),
           },
         ),
         [id],
@@ -462,6 +473,7 @@ class OpenApi {
           responses: {
             200: OpenApiResponse('The item removed', schema: schema),
             ...itemErrors,
+            ...errors('remove'),
           },
         ),
         [id],
@@ -489,13 +501,21 @@ class OpenApi {
       service is HookedService ? service.inner : service;
 
   /// The query parameters of the `index` of [service], if it is a
-  /// [QueryableService], as a `MapService` or an `OrmService` is.
+  /// [DocumentedService], as a `MapService` or an `OrmService` is.
   static Map<String, Map<String, dynamic>> _queryParametersOf(
     Service service,
   ) => switch (_inner(service)) {
-    QueryableService queryable => queryable.indexQueryParameters,
+    DocumentedService documented => documented.indexQueryParameters,
     _ => const {},
   };
+
+  /// The errors the methods of [service] may give, by method, besides those
+  /// of every service, if it is a [DocumentedService].
+  static Map<String, Map<int, String>> _errorResponsesOf(Service service) =>
+      switch (_inner(service)) {
+        DocumentedService documented => documented.errorResponses,
+        _ => const {},
+      };
 
   /// The JSON Schema type of the ids of [service], of its `Id`: `integer`
   /// of an `int`, as an `OrmService<int?, ...>`, `number` of a `double` or

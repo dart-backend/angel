@@ -6,7 +6,7 @@ import 'service.dart';
 
 /// A basic service that manages an in-memory list of maps.
 class MapService extends Service<String?, Map<String, dynamic>>
-    implements QueryableService {
+    implements DocumentedService {
   /// If set to `true`, clients can remove all items by passing a `null` `id` to `remove`.
   ///
   /// `false` by default.
@@ -134,6 +134,10 @@ class MapService extends Service<String?, Map<String, dynamic>>
           },
         }
       : const {};
+
+  /// None besides those of every service.
+  @override
+  Map<String, Map<int, String>> get errorResponses => const {};
 
   /// Copies [record] one level deep: changing a field of a record handed
   /// out (or of the data passed in) does not change what is stored, but
