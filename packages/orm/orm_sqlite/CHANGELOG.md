@@ -4,7 +4,7 @@
 
 ### New in 10.1.0
 
-* **Errors:** `SqliteExecutor` and `SqliteAsyncExecutor` classify a `SqliteException` by its extended result code (`classifyError`, of `angel3_orm` 10.3.0, which this version requires): `2067` and `1555` a duplicate key, `1299` a `NOT NULL` violation, `787` a foreign key one (with `PRAGMA foreign_keys = ON`), and `275` (`CHECK`) and `20` (a type mismatch) an invalid value, with the column of its message. `classifySqliteError` is the function they use
+* **Errors:** `SqliteExecutor` and `SqliteAsyncExecutor` classify a `SqliteException` by its extended result code (`classifyError`, of `angel3_orm` 10.3.0, which this version requires): `2067`, `1555` and `2579` (a rowid) a duplicate key, `1299` a `NOT NULL` violation, `787` a foreign key one (with `PRAGMA foreign_keys = ON`), and `275` (`CHECK`), `3091` (a value of the wrong type in a `STRICT` table) and `20` (a type mismatch) an invalid value. The column of a duplicate key of one column, a `NOT NULL` violation and a value of the wrong type in a `STRICT` table is that of the message, read by the table of the query, so that the names of tables and columns may have dots and commas; a key of several columns, or the hidden `rowid`, names none. The constraint of a unique index on an expression is the name of the index, and that of a failed `CHECK` its name, if the table declares one by that name, which the executor reads from `sqlite_schema` after the error, rather than its expression. `classifySqliteError` is the function they use
 
 ## 10.0.1
 

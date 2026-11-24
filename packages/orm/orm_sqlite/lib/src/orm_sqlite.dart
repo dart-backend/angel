@@ -50,17 +50,22 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
       (scope) => _whenReady(
         scope,
         () => _run(scope, () {
-          if (!selectsInsertedRow(query, returningQuery)) {
-            return _select(query, substitutionValues);
+          try {
+            if (!selectsInsertedRow(query, returningQuery)) {
+              return _select(query, substitutionValues);
+            }
+            return _atomically(scope, () {
+              var ids = _select(returningId(query), substitutionValues);
+              if (ids.isEmpty) return <List>[];
+              return _select(
+                returningQuery,
+                withInsertId(substitutionValues, ids.first.first),
+              );
+            });
+          } on SqliteException catch (e) {
+            _recordSource(e, tableName);
+            rethrow;
           }
-          return _atomically(scope, () {
-            var ids = _select(returningId(query), substitutionValues);
-            if (ids.isEmpty) return <List>[];
-            return _select(
-              returningQuery,
-              withInsertId(substitutionValues, ids.first.first),
-            );
-          });
         }),
       ),
     );
@@ -100,6 +105,21 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
       }
       rethrow;
     }
+  }
+
+  /// Records [table], of the statement that failed with [error], for
+  /// [classifySqliteError], with the names of its `CHECK`s if it failed one.
+  void _recordSource(SqliteException error, String table) {
+    Set<String>? checks;
+    if (isCheckError(error)) {
+      try {
+        var rows = _database.select(tableSqlQuery, [table]);
+        checks = checkNames(rows.isEmpty ? null : rows.first['sql'] as String?);
+      } catch (_) {
+        // Its constraint is not named.
+      }
+    }
+    recordSqliteErrorSource(error, table, checks: checks);
   }
 
   /// The rows of [sql], with its `@name` placeholders bound to

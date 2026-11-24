@@ -5,7 +5,8 @@ import 'dart:async';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
-import 'package:sqlite3/common.dart' show CommonDatabase, ResultSet;
+import 'package:sqlite3/common.dart'
+    show CommonDatabase, ResultSet, SqliteException;
 import 'package:sqlite_async/sqlite_async.dart';
 
 import 'errors.dart';

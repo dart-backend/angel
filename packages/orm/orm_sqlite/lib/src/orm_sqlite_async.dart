@@ -75,7 +75,10 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
                     (tx) =>
                         _insert(tx, query, returningQuery, substitutionValues),
                   );
-          } catch (_) {
+          } catch (e) {
+            if (e is SqliteException) {
+              await _recordSource(e, tableName, context);
+            }
             if (scope != null && context != null) {
               await _checkRolledBack(scope, context);
             }
@@ -84,6 +87,28 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
         });
       }),
     );
+  }
+
+  /// Records [table], of the statement that failed with [error], for
+  /// [classifySqliteError], with the names of its `CHECK`s if it failed one:
+  /// read on [context], the transaction of the statement, or outside one, on
+  /// a connection that reads.
+  Future<void> _recordSource(
+    SqliteException error,
+    String table,
+    SqliteWriteContext? context,
+  ) async {
+    Set<String>? checks;
+    if (isCheckError(error)) {
+      try {
+        var reader = context ?? _database;
+        var rows = await reader.getAll(tableSqlQuery, [table]);
+        checks = checkNames(rows.isEmpty ? null : rows.first['sql'] as String?);
+      } catch (_) {
+        // Its constraint is not named.
+      }
+    }
+    recordSqliteErrorSource(error, table, checks: checks);
   }
 
   /// Marks the transaction of [scope] as rolled back if SQLite rolled it
