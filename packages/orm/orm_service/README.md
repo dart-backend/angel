@@ -49,4 +49,21 @@ On the server, `params['query']` can also be a callback that is given the query,
 
 ## Updates
 
-`modify` (`PATCH`) changes only the fields it is given, and `update` (`PUT`) replaces every field of the record. Both change one record, by its id.
+`modify` (`PATCH`) changes only the fields it is given, and `update` (`PUT`) replaces every field of the record. Both change one record, by its id, which an `id` in the data does not change.
+
+## Ids of text, as UUIDs
+
+A model whose `id` is text, as `@Column(type: ColumnType.uuid, indexType: IndexType.primaryKey)`, has its `id` given on each insert, as the database does not generate it: `create` of data without one is a `400 Bad Request`. Give it in a hook if clients do not:
+
+```dart
+var users = app.use('/users', OrmService<String?, User, UserQuery>(executor, () => UserQuery()));
+users.beforeCreated.listen((e) => e.data = (e.data as User).copyWith(id: Uuid().v4()));
+```
+
+`validateId` refuses an id that cannot be a record's before it is queried, as one that is not a UUID, which PostgreSQL would refuse with an error of its own (a `500`):
+
+```dart
+OrmService<String?, User, UserQuery>(executor, () => UserQuery(), validateId: isUuid);
+```
+
+An id it refuses is a `404 Not Found` of `read`, `update`, `modify` and `remove`, a `400 Bad Request` of `?id=` and of `create`, and no record of `readMany`. An `id` that exists already is still the database's error of a duplicate key.
