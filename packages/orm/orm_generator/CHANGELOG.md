@@ -9,6 +9,7 @@
 
 ### Fixes in 10.1.0
 
+* **Many-to-many:** Each side of a `@ManyToMany` is read by the column of the pivot's `@belongsTo` that refers to its table, as the pivot's migration names it of its field, as `owner_id` of `UserEntity get owner`, where the side of the model was the column of its class name, `user_id`, so that a field of another name failed with `no such column` when the relation was loaded. Of a pivot of a model and itself, its `foreignKey` tells its side, and the other is the other column, where both were the same. A pivot of no `@belongsTo` of a side, or of several without a `foreignKey`, and a `foreignKey` that is no column of the pivot, are errors of the generator. A pivot table of a migration written by hand whose columns are of the class names, not of the pivot's fields, needs its `foreignKey` given
 * **Defaults:** A `RawSql` default of a `@Column`, as `@Column(defaultValue: currentTimestamp)`, is SQL of the migration, as the README of `angel3_orm` says, where the build failed with `Invalid argument(s): RawSql` and generated no migration. Another object that is not a default is an error that names the field. A primary key's `RawSql` default, of `@Column` or `@SerializableField`, is refused with an error, as a key the database generates cannot be read back on MySQL and MariaDB: give it on each insert
 * **Queries:** The `expressionBuilders` of a query's `where` lists only the builders it has: a field of a type that has none, which is left out with a warning, made the generated code fail to compile, with "The getter ... isn't defined"
 

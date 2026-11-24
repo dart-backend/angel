@@ -224,6 +224,31 @@ TLDR:
 3. A should have a field: `@ManyToMany(CEntity) List<BEntity> get b;`
 4. B should have a field: `@ManyToMany(CEntity) List<AEntity> get a;`
 
+The columns of the pivot are those of its `@belongsTo` fields, of any name: `user_id` of `UserEntity get user`, or `owner_id` of `UserEntity get owner`. A many-to-many reads each side by the `@belongsTo` of the pivot that refers to its table.
+
+A pivot of a model and itself, as friendships of people, refers to the table by two columns: give the one of this side as the `foreignKey`, and the other is the other side:
+
+```dart
+@serializable
+@orm
+abstract class PersonEntity extends Model {
+  @ManyToMany(FriendshipEntity, foreignKey: 'person_id')
+  List<PersonEntity> get friends;
+}
+
+@serializable
+@orm
+abstract class FriendshipEntity {
+  @belongsTo
+  PersonEntity? get person;
+
+  @belongsTo
+  PersonEntity? get friend;
+}
+```
+
+The generator refuses a pivot that refers to a side by no `@belongsTo`, or by several without a `foreignKey`, and a `foreignKey` that is no column of the pivot, where the query failed when run.
+
 Test: <https://github.com/dart-backend/angel/blob/master/packages/orm/orm_postgres/test/many_to_many_test.dart>
 
 ## Columns
