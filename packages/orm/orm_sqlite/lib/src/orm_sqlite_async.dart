@@ -92,7 +92,8 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
   /// Records [table], of the statement that failed with [error], for
   /// [classifySqliteError], with the names of its `CHECK`s if it failed one:
   /// read on [context], the transaction of the statement, or outside one, on
-  /// a connection that reads.
+  /// the connection that writes, which ran it, as its `TEMP` tables and
+  /// attached databases are of it alone.
   Future<void> _recordSource(
     SqliteException error,
     String table,
@@ -101,14 +102,26 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
     Set<String>? checks;
     if (isCheckError(error)) {
       try {
-        var reader = context ?? _database;
-        var rows = await reader.getAll(tableSqlQuery, [table]);
-        checks = checkNames(rows.isEmpty ? null : rows.first['sql'] as String?);
+        checks = context != null
+            ? await _checksOf(context, table)
+            : await _database.writeLock((tx) => _checksOf(tx, table));
       } catch (_) {
         // Its constraint is not named.
       }
     }
     recordSqliteErrorSource(error, table, checks: checks);
+  }
+
+  /// The names of the `CHECK`s of [table], read on [reader].
+  Future<Set<String>?> _checksOf(SqliteReadContext reader, String table) async {
+    var schemas = [
+      for (var row in await reader.getAll(schemasQuery)) row['name'] as String,
+    ];
+    for (var (schema, name) in tableCandidates(schemas, table)) {
+      var rows = await reader.getAll(tableSqlQuery(schema), [name]);
+      if (rows.isNotEmpty) return checkNames(rows.first['sql'] as String?);
+    }
+    return null;
   }
 
   /// Marks the transaction of [scope] as rolled back if SQLite rolled it

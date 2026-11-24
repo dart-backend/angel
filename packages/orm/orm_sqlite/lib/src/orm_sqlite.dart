@@ -113,8 +113,15 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
     Set<String>? checks;
     if (isCheckError(error)) {
       try {
-        var rows = _database.select(tableSqlQuery, [table]);
-        checks = checkNames(rows.isEmpty ? null : rows.first['sql'] as String?);
+        var schemas = [
+          for (var row in _database.select(schemasQuery)) row['name'] as String,
+        ];
+        for (var (schema, name) in tableCandidates(schemas, table)) {
+          var rows = _database.select(tableSqlQuery(schema), [name]);
+          if (rows.isEmpty) continue;
+          checks = checkNames(rows.first['sql'] as String?);
+          break;
+        }
       } catch (_) {
         // Its constraint is not named.
       }

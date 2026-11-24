@@ -197,6 +197,69 @@ void main() {
         );
       });
 
+      test('a table given as another, or in another case', () async {
+        expect(
+          await errorOf("INSERT INTO owners (id, name) VALUES ('a', 'B')", ''),
+          const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
+        );
+        expect(
+          await errorOf("INSERT INTO owners (id, name) VALUES ('a', 'B')", 'x'),
+          const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
+        );
+        expect(
+          await errorOf(
+            "INSERT INTO owners (id, name) VALUES ('a', 'B')",
+            'OWNERS',
+          ),
+          const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
+        );
+        expect(
+          await errorOf('INSERT INTO keys (price) VALUES (-1)', 'KEYS'),
+          const QueryError(
+            QueryErrorKind.invalidValue,
+            constraint: 'positive_price',
+          ),
+        );
+      });
+
+      test('a TEMP table, and a table of an attached schema', () async {
+        await db.execute(
+          'CREATE TEMP TABLE scratch '
+          '(p REAL CONSTRAINT positive CHECK (p > 0))',
+        );
+        expect(
+          await errorOf('INSERT INTO scratch (p) VALUES (-1)', 'scratch'),
+          const QueryError(QueryErrorKind.invalidValue, constraint: 'positive'),
+        );
+        await db.execute("ATTACH DATABASE ':memory:' AS aux");
+        await db.execute(
+          'CREATE TABLE aux.users (email TEXT UNIQUE, '
+          'q REAL CONSTRAINT positive_q CHECK (q > 0))',
+        );
+        await db.execute("INSERT INTO aux.users (email) VALUES ('a@x')");
+        expect(
+          await errorOf(
+            "INSERT INTO aux.users (email) VALUES ('a@x')",
+            'aux.users',
+          ),
+          const QueryError(QueryErrorKind.uniqueViolation, column: 'email'),
+        );
+        expect(
+          await errorOf('INSERT INTO aux.users (q) VALUES (-1)', 'aux.users'),
+          const QueryError(
+            QueryErrorKind.invalidValue,
+            constraint: 'positive_q',
+          ),
+        );
+      });
+
+      test('a value too long', () async {
+        expect(
+          await errorOf('SELECT zeroblob(2000000000)', ''),
+          const QueryError(QueryErrorKind.invalidValue),
+        );
+      });
+
       test('in a transaction', () async {
         await db.executor.transaction((tx) async {
           try {
