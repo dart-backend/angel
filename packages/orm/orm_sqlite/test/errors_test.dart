@@ -188,39 +188,55 @@ void main() {
 
       test('a table whose name has a dot', () async {
         expect(
-          await errorOf('INSERT INTO "my.t" (a) VALUES (1)', 'my.t'),
+          await errorOf('INSERT INTO "my.t" (a) VALUES (1)', '"my.t"'),
           const QueryError(QueryErrorKind.uniqueViolation, column: 'a'),
         );
         expect(
-          await errorOf('INSERT INTO "my.s" (n) VALUES (\'abc\')', 'my.s'),
+          await errorOf('INSERT INTO "my.s" (n) VALUES (\'abc\')', '"my.s"'),
           const QueryError(QueryErrorKind.invalidValue, column: 'n'),
         );
       });
 
-      test('a table given as another, or in another case', () async {
-        expect(
-          await errorOf("INSERT INTO owners (id, name) VALUES ('a', 'B')", ''),
-          const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
-        );
-        expect(
-          await errorOf("INSERT INTO owners (id, name) VALUES ('a', 'B')", 'x'),
-          const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
-        );
-        expect(
-          await errorOf(
-            "INSERT INTO owners (id, name) VALUES ('a', 'B')",
-            'OWNERS',
-          ),
-          const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
-        );
-        expect(
-          await errorOf('INSERT INTO keys (price) VALUES (-1)', 'KEYS'),
-          const QueryError(
-            QueryErrorKind.invalidValue,
-            constraint: 'positive_price',
-          ),
-        );
-      });
+      test(
+        'a table given as none, as another, quoted or in another case',
+        () async {
+          expect(
+            await errorOf(
+              "INSERT INTO owners (id, name) VALUES ('a', 'B')",
+              '',
+            ),
+            const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
+          );
+          expect(
+            await errorOf(
+              "INSERT INTO owners (id, name) VALUES ('a', 'B')",
+              'x',
+            ),
+            const QueryError(QueryErrorKind.uniqueViolation),
+          );
+          expect(
+            await errorOf(
+              "INSERT INTO owners (id, name) VALUES ('a', 'B')",
+              '"owners"',
+            ),
+            const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
+          );
+          expect(
+            await errorOf(
+              "INSERT INTO owners (id, name) VALUES ('a', 'B')",
+              'OWNERS',
+            ),
+            const QueryError(QueryErrorKind.uniqueViolation, column: 'id'),
+          );
+          expect(
+            await errorOf('INSERT INTO keys (price) VALUES (-1)', 'KEYS'),
+            const QueryError(
+              QueryErrorKind.invalidValue,
+              constraint: 'positive_price',
+            ),
+          );
+        },
+      );
 
       test('a TEMP table, and a table of an attached schema', () async {
         await db.execute(
@@ -253,11 +269,65 @@ void main() {
         );
       });
 
-      test('a value too long', () async {
+      test('an error of a trigger, of another table', () async {
+        await db.execute('CREATE TABLE audit (id TEXT UNIQUE)');
+        await db.execute("INSERT INTO audit (id) VALUES ('b')");
+        await db.execute(
+          'CREATE TRIGGER audited AFTER INSERT ON owners '
+          'BEGIN INSERT INTO audit (id) VALUES (NEW.id); END',
+        );
         expect(
-          await errorOf('SELECT zeroblob(2000000000)', ''),
+          await errorOf("INSERT INTO owners (id, name) VALUES ('b', 'B')"),
+          const QueryError(QueryErrorKind.uniqueViolation),
+        );
+      });
+
+      test('names that differ in the case of a letter not of ASCII', () async {
+        await db.execute('CREATE TABLE "Ä" (a INTEGER UNIQUE)');
+        await db.execute('CREATE TABLE "ä" (a INTEGER UNIQUE)');
+        await db.execute('INSERT INTO "Ä" (a) VALUES (1)');
+        expect(
+          await errorOf('INSERT INTO "Ä" (a) VALUES (1)', 'ä'),
+          const QueryError(QueryErrorKind.uniqueViolation),
+        );
+        expect(
+          await errorOf('INSERT INTO "Ä" (a) VALUES (1)', 'Ä'),
+          const QueryError(QueryErrorKind.uniqueViolation, column: 'a'),
+        );
+      });
+
+      test('a table of an attached schema, and one of its name', () async {
+        await db.execute("ATTACH DATABASE ':memory:' AS aux");
+        await db.execute(
+          'CREATE TABLE "aux.users" (q REAL CONSTRAINT other CHECK (q > 0))',
+        );
+        await db.execute(
+          'CREATE TABLE aux.users (q REAL CONSTRAINT attached CHECK (q > 0))',
+        );
+        expect(
+          await errorOf('INSERT INTO aux.users (q) VALUES (-1)', 'aux.users'),
+          const QueryError(QueryErrorKind.invalidValue, constraint: 'attached'),
+        );
+        expect(
+          await errorOf(
+            'INSERT INTO "aux.users" (q) VALUES (-1)',
+            '"aux.users"',
+          ),
+          const QueryError(QueryErrorKind.invalidValue, constraint: 'other'),
+        );
+      });
+
+      // Longer than SQLite allows of any build, 2^31 - 1 bytes, which
+      // `zeroblob` checks before it allocates.
+      test('a value too long, of a write, and a result of a read', () async {
+        expect(
+          await errorOf(
+            'INSERT INTO plain (b) VALUES (zeroblob(3000000000))',
+            'plain',
+          ),
           const QueryError(QueryErrorKind.invalidValue),
         );
+        expect(await errorOf('SELECT zeroblob(3000000000)', ''), isNull);
       });
 
       test('in a transaction', () async {
@@ -301,6 +371,20 @@ void main() {
       expect(
         of(3091, 'cannot store TEXT value in INTEGER column s.n'),
         const QueryError(QueryErrorKind.invalidValue, column: 'n'),
+      );
+    });
+
+    test('of a value too long, by its statement', () {
+      expect(of(18, 'string or blob too big'), isNull);
+      expect(
+        classifySqliteError(
+          SqliteException(
+            extendedResultCode: 18,
+            message: 'string or blob too big',
+            causingStatement: 'INSERT INTO t (b) VALUES (?)',
+          ),
+        ),
+        const QueryError(QueryErrorKind.invalidValue),
       );
     });
 

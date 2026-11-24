@@ -63,7 +63,7 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
               );
             });
           } on SqliteException catch (e) {
-            _recordSource(e, tableName);
+            _recordSource(e, tableName, query);
             rethrow;
           }
         }),
@@ -107,9 +107,10 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
     }
   }
 
-  /// Records [table], of the statement that failed with [error], for
-  /// [classifySqliteError], with the names of its `CHECK`s if it failed one.
-  void _recordSource(SqliteException error, String table) {
+  /// Records [table] and [sql], of the query that failed with [error], for
+  /// [classifySqliteError], with the names of the `CHECK`s of [table] if it
+  /// failed one.
+  void _recordSource(SqliteException error, String table, String sql) {
     Set<String>? checks;
     if (isCheckError(error)) {
       try {
@@ -126,7 +127,7 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
         // Its constraint is not named.
       }
     }
-    recordSqliteErrorSource(error, table, checks: checks);
+    recordSqliteErrorSource(error, table, sql, checks: checks);
   }
 
   /// The rows of [sql], with its `@name` placeholders bound to
