@@ -89,7 +89,7 @@ abstract class UserEntity extends Model {
 
 * **Migration.** The column of `id` is of the type declared, and the foreign keys of other models that refer to it are of the same type and length, as `author_id` of a `@BelongsTo UserEntity author`.
 * **Queries.** `where.id` is a `StringSqlExpressionBuilder`, so `UserQuery()..where!.id.equals(uuid)` reads a user by its UUID, and `values.id` sets it. Pass the `id` itself, a `String`, not `idAsInt`, which is `-1` for every UUID: `where!.id.equals(user.id!)`.
-* **Types.** `ColumnType.uuid` is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type (MariaDB has one only from 10.7), and `TEXT` on SQLite, so one model runs on each of them. PostgreSQL checks the value and gives it in lower case; the others store the text as it is given, and MySQL and MariaDB compare it without regard to case, so give UUIDs in lower case, as `Uuid().v4()` does. Another type, as `ColumnType.char` of `length: 36`, is a string key too.
+* **Types.** `ColumnType.uuid` is `uuid` on PostgreSQL, `CHAR(36)` of ASCII and a binary collation (`ascii_bin`) on MySQL and MariaDB, which have no UUID type (MariaDB has one only from 10.7), and `TEXT` on SQLite, so one model runs on each of them. PostgreSQL checks the value, takes it of any case and gives it in lower case; the others store the text as it is given and compare it exactly, so `6F1C…` and `6f1c…` are two keys there, as in the loading of relations. Give UUIDs in lower case, as `Uuid().v4()` does. Another type, as `ColumnType.char` of `length: 36`, is a string key too.
 
 An `id` of no column type, or of an integer one, as `ColumnType.bigSerial`, is an integer key, as before.
 

@@ -4,7 +4,7 @@
 
 ### New in 10.2.0
 
-* **UUID columns:** A `ColumnType.uuid` column, of `angel3_orm` 10.3.0, which this version requires, is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type, and `TEXT` on SQLite, where its name was written as it is, which MySQL rejects
+* **UUID columns:** A `ColumnType.uuid` column, of `angel3_orm` 10.3.0, which this version requires, is `uuid` on PostgreSQL, `CHAR(36) CHARACTER SET ascii COLLATE ascii_bin` on MySQL and MariaDB, which have no UUID type, compared exactly, as on SQLite, where the default collation would match a UUID of another case in SQL but not when relations are loaded, and `TEXT` on SQLite, where its name was written as it is, which MySQL rejects
 
 ## 10.1.0
 

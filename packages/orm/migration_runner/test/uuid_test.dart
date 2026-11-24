@@ -20,20 +20,29 @@ void main() {
     expect(PostgresGenerator.compileColumn(key), 'uuid NOT NULL PRIMARY KEY');
   });
 
-  test('MySQL and MariaDB: char(36), not AUTO_INCREMENT', () {
-    for (var columnType in [
-      MySqlGenerator.columnType,
-      MariaDbGenerator.columnType,
-    ]) {
-      expect(columnType(foreign), 'char(36)');
-    }
-    for (var compileColumn in [
-      MySqlGenerator.compileColumn,
-      MariaDbGenerator.compileColumn,
-    ]) {
-      expect(compileColumn(key), 'char(36) NOT NULL PRIMARY KEY');
-    }
-  });
+  test(
+    'MySQL and MariaDB: char(36) of a binary collation, not AUTO_INCREMENT',
+    () {
+      for (var columnType in [
+        MySqlGenerator.columnType,
+        MariaDbGenerator.columnType,
+      ]) {
+        expect(
+          columnType(foreign),
+          'char(36) CHARACTER SET ascii COLLATE ascii_bin',
+        );
+      }
+      for (var compileColumn in [
+        MySqlGenerator.compileColumn,
+        MariaDbGenerator.compileColumn,
+      ]) {
+        expect(
+          compileColumn(key),
+          'char(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL PRIMARY KEY',
+        );
+      }
+    },
+  );
 
   test('SQLite: TEXT', () {
     expect(SqliteGenerator.columnType(foreign), 'TEXT');

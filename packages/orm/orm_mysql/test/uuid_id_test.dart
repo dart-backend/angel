@@ -71,6 +71,35 @@ void main() {
     );
   });
 
+  test('the UUID columns compare exactly, of a binary collation', () async {
+    var result = await conn.execute(
+      'SELECT TABLE_NAME, COLUMN_NAME, COLLATION_NAME '
+      'FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() '
+      "AND TABLE_NAME IN ('uuid_users', 'uuid_posts') "
+      "AND COLUMN_NAME IN ('id', 'author_id') AND DATA_TYPE = 'char' "
+      'ORDER BY 1, 2',
+    );
+    expect(
+      [for (var row in result.rows) row.colAt(2)?.toString().toLowerCase()],
+      ['ascii_bin', 'ascii_bin'],
+    );
+  });
+
+  test('a key of another case matches no record, in SQL as in Dart', () async {
+    await user(ana.toUpperCase(), 'Ana');
+    expect(
+      (await (UuidUserQuery()..where!.id.equals(ana)).getOne(executor))
+          .isPresent,
+      isFalse,
+    );
+    expect(
+      (await (UuidUserQuery()..where!.id.equals(ana.toUpperCase())).getOne(
+        executor,
+      )).value.name,
+      'Ana',
+    );
+  });
+
   test('an insert, a query by id, an update and a delete', () async {
     expect((await user(ana, 'Ana')).id, ana);
     await user(bo, 'Bo');
