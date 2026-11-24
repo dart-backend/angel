@@ -35,7 +35,7 @@ void main() {
     originalPerson = (await query.insert(executor)).value;
 
     var orderQuery = PersonOrderQuery()
-      ..values.personId = originalPerson!.idAsInt
+      ..values.personId = int.parse(originalPerson!.id!)
       ..values.name = 'Order1'
       ..values.price = 128
       ..values.deleted = false;
@@ -43,7 +43,7 @@ void main() {
     originalOrder1 = (await orderQuery.insert(executor)).value;
 
     orderQuery = PersonOrderQuery()
-      ..values.personId = originalPerson!.idAsInt
+      ..values.personId = int.parse(originalPerson!.id!)
       ..values.name = 'Order2'
       ..values.price = 256
       ..values.deleted = true;
@@ -115,6 +115,6 @@ void main() {
     query.orderBy(PersonOrderFields.id, descending: true);
     query.orderBy(PersonOrderFields.personId, descending: true);
     var orders = await query.get(executor);
-    expect(orders.first.idAsInt > orders.last.idAsInt, true);
+    expect(int.parse(orders.first.id!) > int.parse(orders.last.id!), true);
   });
 }

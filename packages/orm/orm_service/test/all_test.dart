@@ -353,8 +353,8 @@ void main() {
 
     group('read', () {
       test('default', () async {
-        expect(await pokemonService.read(pikachu.idAsInt), pikachu);
-        expect(await pokemonService.read(giratina.idAsInt), giratina);
+        expect(await pokemonService.read(int.parse(pikachu.id!)), pikachu);
+        expect(await pokemonService.read(int.parse(giratina.id!)), giratina);
       });
 
       test('nonexistent throws 404', () {
@@ -369,17 +369,25 @@ void main() {
       test('returns the records with the ids', () async {
         // In no particular order: the query has no ORDER BY.
         expect(
-          await pokemonService.readMany([giratina.idAsInt, pikachu.idAsInt]),
+          await pokemonService.readMany([
+            int.parse(giratina.id!),
+            int.parse(pikachu.id!),
+          ]),
           unorderedEquals([giratina, pikachu]),
         );
-        expect(await pokemonService.readMany([giratina.idAsInt]), [giratina]);
-        expect(await pokemonService.readMany([pikachu.idAsInt]), [pikachu]);
+        expect(await pokemonService.readMany([int.parse(giratina.id!)]), [
+          giratina,
+        ]);
+        expect(await pokemonService.readMany([int.parse(pikachu.id!)]), [
+          pikachu,
+        ]);
       });
 
       test('leaves out null ids and ids with no record', () async {
-        expect(await pokemonService.readMany([null, pikachu.idAsInt, 999]), [
-          pikachu,
-        ]);
+        expect(
+          await pokemonService.readMany([null, int.parse(pikachu.id!), 999]),
+          [pikachu],
+        );
         expect(await pokemonService.readMany([null]), isEmpty);
       });
 
@@ -392,7 +400,7 @@ void main() {
       test('default', () async {
         expect(
           await pokemonService.update(
-            giratina.idAsInt,
+            int.parse(giratina.id!),
             giratina.copyWith(name: 'Hello'),
           ),
           giratina.copyWith(name: 'Hello'),
@@ -421,9 +429,12 @@ void main() {
           OrmService(executor, () => PokemonQuery(), allowRemoveAll: true);
 
       test('removes and returns the record with the id', () async {
-        expect(await pokemonService.remove(pikachu.idAsInt), pikachu);
+        expect(await pokemonService.remove(int.parse(pikachu.id!)), pikachu);
         expect(await pokemonService.index(), [giratina]);
-        expect(() => pokemonService.read(pikachu.idAsInt), httpError(404));
+        expect(
+          () => pokemonService.read(int.parse(pikachu.id!)),
+          httpError(404),
+        );
       });
 
       test('a nonexistent id is a 404, and removes nothing', () async {

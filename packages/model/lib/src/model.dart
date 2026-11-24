@@ -16,6 +16,10 @@ class Model {
   ///
   /// For an integer key only: of an id that is not an integer, such as a
   /// UUID, it is `-1` for every record, so use [id] or [idAsString].
+  @Deprecated(
+    'Of a UUID or other text key it is -1 for every record. Use id, or '
+    'int.parse(id!) of an integer key. To be removed in 11.0.0.',
+  )
   int get idAsInt => int.tryParse(id ?? "") ?? -1;
 
   /// Returns the [id] or "" if null.
