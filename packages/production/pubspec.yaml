@@ -8,6 +8,9 @@ issue_tracker: https://github.com/dart-backend/angel/issues
 resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
+# Keys of self-signed certificates that only the mTLS tests use.
+false_secrets:
+  - /test/fixtures/mtls/*.key
 dependencies:
   angel3_container: ^10.0.0
   angel3_framework: ^10.2.0
