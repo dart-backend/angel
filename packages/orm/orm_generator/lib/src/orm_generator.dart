@@ -355,6 +355,22 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                             .conditional(literalNull, parsed)
                       : parsed;
                 } else if (ctx.columns[field.displayName]?.type ==
+                        ColumnType.jsonb &&
+                    (fType.isDartCoreMap || fType.isDartCoreList)) {
+                  // Generated Code: (row[i] is String ?
+                  //   json.decode(row[i] as String) : row[i]) as Map?, of the
+                  // JSON text that MySQL and SQLite give, or the map or list
+                  // of PostgreSQL.
+                  expr = expr
+                      .isA(refer('String'))
+                      .conditional(
+                        refer('json')
+                            .property('decode')
+                            .call([expr.asA(refer('String'))]),
+                        expr,
+                      )
+                      .asA(type);
+                } else if (ctx.columns[field.displayName]?.type ==
                     ColumnType.json) {
                   expr = refer('json')
                       .property('decode')

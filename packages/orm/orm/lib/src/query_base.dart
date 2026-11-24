@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 
 import 'logging.dart';
 
+import 'dialect/current.dart';
 import 'query_executor.dart';
 import 'union.dart';
 
@@ -65,7 +66,10 @@ abstract class QueryBase<T> {
     return result;
   }
 
-  Future<List<T>> get(QueryExecutor executor) async {
+  Future<List<T>> get(QueryExecutor executor) =>
+      inDialectOf(executor, () => _get(executor));
+
+  Future<List<T>> _get(QueryExecutor executor) async {
     var sql = compile({});
 
     _log.fine(() => 'sql = $sql');

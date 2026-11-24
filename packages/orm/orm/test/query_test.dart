@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_orm/src/dialect/current.dart';
 import 'package:test/test.dart';
 
 import '../example/main.dart';
@@ -283,6 +284,118 @@ void main() {
         where.compile(tableName: 't'),
         "t.data::jsonb->>'a' IS NOT NULL AND t.data::jsonb->>'b' IS NULL",
       );
+    });
+  });
+
+  group('JSON in the SQL of each dialect', () {
+    late _JsonWhere where;
+
+    setUp(() => where = _JsonWhere(query));
+
+    String compileFor(Dialect dialect) =>
+        inDialectOf(_RecordingExecutor(dialect), () => where.compile());
+
+    test('PostgreSQL is the dialect of a query compiled without one', () {
+      where.data['a'].asString!.equals('x');
+      expect(compileFor(const PostgreSQLDialect()), where.compile());
+    });
+
+    test('a property as text', () {
+      where.data['a'].asString!.equals('x');
+      expect(
+        compileFor(const SqliteDialect()),
+        matches(r'''^json_extract\(data, '\$\."a"'\) = @prop\w*$'''),
+      );
+      expect(
+        compileFor(const MySQLDialect()),
+        matches(
+          r'''^CASE WHEN JSON_TYPE\(JSON_EXTRACT\(data, '\$\."a"'\)\) = 'NULL' '''
+          r'''THEN NULL ELSE JSON_UNQUOTE\(JSON_EXTRACT\(data, '\$\."a"'\)\) END '''
+          r'= @prop\w*$',
+        ),
+      );
+    });
+
+    test('a property as a number', () {
+      where.data['n'].asInt!.equals(3);
+      expect(
+        compileFor(const SqliteDialect()),
+        "CASE WHEN json_type(data, '\$.\"n\"') IN ('integer', 'real') "
+        "THEN json_extract(data, '\$.\"n\"') END = 3",
+      );
+      expect(
+        compileFor(const MySQLDialect()),
+        contains(
+          "THEN JSON_UNQUOTE(JSON_EXTRACT(data, '\$.\"n\"')) + 0 END = 3",
+        ),
+      );
+    });
+
+    test('a property as a boolean is no text outside PostgreSQL', () {
+      where.data['ok'].asBool!.isTrue;
+      expect(
+        compileFor(const PostgreSQLDialect()),
+        contains('CAST (TRUE AS text)'),
+      );
+      expect(
+        compileFor(const SqliteDialect()),
+        "CASE json_type(data, '\$.\"ok\"') "
+        "WHEN 'true' THEN TRUE WHEN 'false' THEN FALSE END = TRUE",
+      );
+      expect(compileFor(const MySQLDialect()), endsWith("= 'true' END = TRUE"));
+    });
+
+    test('an index of a list, and a property of a property', () {
+      where.data['a'].asList![0].asString!.equals('x');
+      expect(
+        compileFor(const SqliteDialect()),
+        matches(
+          r"^json_extract\(NULLIF\(json_quote\(json_extract\(data, '"
+          r'''\$\."a"'\)\), 'null'\), '\$\[0\]'\) = @prop\w*$''',
+        ),
+      );
+    });
+
+    test('a key with a quote is escaped', () {
+      where.data["it's"].isNull;
+      expect(
+        compileFor(const SqliteDialect()),
+        "json_extract(data, '\$.\"it''s\"') IS NULL",
+      );
+    });
+
+    test('a key with a " or a backslash is refused outside PostgreSQL', () {
+      where.data['a"b'].isNull;
+      expect(() => compileFor(const SqliteDialect()), throwsArgumentError);
+      expect(() => compileFor(const MySQLDialect()), throwsArgumentError);
+      expect(compileFor(const PostgreSQLDialect()), isNotEmpty);
+    });
+
+    test('equals and contains of the column', () {
+      where.data.equals({'a': 1});
+      expect(
+        compileFor(const SqliteDialect()),
+        matches(r'^json\(data\) = json\(@\w+\)$'),
+      );
+      expect(
+        compileFor(const MySQLDialect()),
+        matches(
+          r'^\(JSON_CONTAINS\(data, @(\w+)\) AND JSON_CONTAINS\(@\1, data\)\)$',
+        ),
+      );
+      where.data.containsPair('a', 1);
+      expect(
+        compileFor(const MySQLDialect()),
+        matches(r'^JSON_CONTAINS\(data, @\w+\)$'),
+      );
+      expect(() => compileFor(const SqliteDialect()), throwsUnsupportedError);
+    });
+
+    test('a property as a date is PostgreSQL only', () {
+      where.data['d'].asDateTime!.equals(DateTime.utc(2024));
+      expect(compileFor(const PostgreSQLDialect()), contains('timestamptz'));
+      expect(() => compileFor(const SqliteDialect()), throwsUnsupportedError);
+      expect(() => compileFor(const MySQLDialect()), throwsUnsupportedError);
     });
   });
 

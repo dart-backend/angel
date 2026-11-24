@@ -115,7 +115,7 @@ abstract class ProfileEntity {
 ```
 
 * **Stored and read** with the class's serializer: `ProfileSerializer.toMap` when written, and `ProfileSerializer.fromMap` when read, of the map that PostgreSQL gives or the JSON text of MySQL, MariaDB and SQLite.
-* **Queried** as a map: `UserQuery()..where!.profile['first_name'].asString?.equals('Ana')`.
+* **Queried** as a map: `UserQuery()..where!.profile['first_name'].asString?.equals('Ana')`, on each database, in its own JSON functions. A property can be read `asString`, `asInt`, `asDouble`, `asBool`, `asMap` or `asList`, and is `NULL` where it is missing, a JSON `null`, or of another type. On SQLite, `equals` of the whole column compares the JSON as the serializer writes it, of the same keys in the same order, and `contains` is not supported; on MySQL and MariaDB, `equals` of arrays ignores their order. `asDateTime`, and keys with a `"` or a backslash, are PostgreSQL's only.
 * **Nullable or not.** A nullable one, as `ProfileEntity?`, is `NULL` when it is `null`. A non-nullable one needs `angel3_serialize_generator` 10.1.0 or later, and must be among the fields of a query that reads it.
 
 A field of a type that the generator cannot store, or query, is left out of the query's `where` with a warning, rather than generating code that does not compile.

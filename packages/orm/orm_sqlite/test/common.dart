@@ -8,7 +8,9 @@ import 'package:sqlite3/sqlite3.dart';
 import 'package:sqlite_async/sqlite_async.dart';
 
 import 'models/car.dart';
+import 'models/has_map.dart';
 import 'models/leg.dart';
+import 'models/profile_user.dart';
 import 'models/stamped.dart';
 import 'models/uuid_user.dart';
 
@@ -70,6 +72,8 @@ Future<void> _setUp(Database raw, String? schema) async {
       UuidUserTagMigration(),
       UuidUserGroupMigration(),
       StampedMigration(),
+      ProfileUserMigration(),
+      HasMapMigration(),
     ],
   ).up();
 }

@@ -34,6 +34,10 @@ class MySqlFamilyGenerator {
     // that a key matches in SQL only as it matches in Dart.
     if (column.type == ColumnType.uuid) return _uuid;
 
+    // MySQL and MariaDB have no jsonb, PostgreSQL's binary JSON: their JSON,
+    // which is MariaDB's LONGTEXT with a CHECK of json_valid.
+    if (column.type == ColumnType.jsonb) return ColumnType.json.name;
+
     // Map timestamp time to datetime
     var str = column.type == ColumnType.timeStamp
         ? ColumnType.dateTime.name
