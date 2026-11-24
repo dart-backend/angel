@@ -1,3 +1,4 @@
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:angel3_orm_service/angel3_orm_service.dart';
 import 'package:test/test.dart';
@@ -8,6 +9,19 @@ import 'uuid_user.dart';
 const ana = '6f1c2a8e-3b4d-4e5f-8a9b-0c1d2e3f4a5b';
 const bo = '7a2d3b9f-4c5e-4f6a-9b0c-1d2e3f4a5b6c';
 const cy = '8b3e4c0a-5d6f-4a7b-8c1d-2e3f4a5b6c7d';
+
+final _uuid = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+  caseSensitive: false,
+);
+
+/// Whether [id] is a UUID, as a `validateId` of an app.
+bool isUuid(Object id) => _uuid.hasMatch('$id');
+
+/// Throws an [AngelHttpException] of [status].
+Matcher throwsHttp(int status) => throwsA(
+  isA<AngelHttpException>().having((e) => e.statusCode, 'statusCode', status),
+);
 
 /// An [OrmService] of a `Model` whose `id` is a UUID, which `copyFrom` sets,
 /// as the database does not generate it.
@@ -86,5 +100,86 @@ void main() {
     var modified = await service.modify(ana, UuidUser(id: cy));
     expect(modified.id, ana);
     expect(await all(), {ana: 'Ana', bo: 'Bo'});
+  });
+
+  test(
+    'create without an id is a 400, as the database does not give one',
+    () async {
+      expect(() => service.create(UuidUser(name: 'Cy')), throwsHttp(400));
+      expect(await all(), {ana: 'Ana', bo: 'Bo'});
+    },
+  );
+
+  test('create of an id that exists is a 409, of the key', () async {
+    expect(
+      () => service.create(UuidUser(id: ana, name: 'Ana again')),
+      throwsA(
+        isA<AngelHttpException>()
+            .having((e) => e.statusCode, 'statusCode', 409)
+            .having((e) => e.message, 'message', contains('uuid_users_pkey'))
+            // Not the value, which the database's error quotes.
+            .having((e) => e.message, 'message', isNot(contains(ana))),
+      ),
+    );
+    expect(await all(), {ana: 'Ana', bo: 'Bo'});
+  });
+
+  group('validateId', () {
+    late OrmService<String?, UuidUser, UuidUserQuery> checked;
+
+    setUp(() {
+      checked = OrmService(executor, () => UuidUserQuery(), validateId: isUuid);
+    });
+
+    test('an id it refuses is a 404 of a lookup, not a query', () async {
+      expect(() => checked.read('not-a-uuid'), throwsHttp(404));
+      expect(
+        () => checked.update('not-a-uuid', UuidUser(name: 'X')),
+        throwsHttp(404),
+      );
+      expect(
+        () => checked.modify('not-a-uuid', UuidUser(name: 'X')),
+        throwsHttp(404),
+      );
+      expect(() => checked.remove('not-a-uuid'), throwsHttp(404));
+      expect(await all(), {ana: 'Ana', bo: 'Bo'});
+    });
+
+    test('readMany leaves it out', () async {
+      expect((await checked.readMany(['not-a-uuid', ana])).map((u) => u.id), [
+        ana,
+      ]);
+      expect(await checked.readMany(['not-a-uuid']), isEmpty);
+    });
+
+    test('of a query, or of create, is a 400', () async {
+      expect(
+        () => checked.index({
+          'query': {'id': 'not-a-uuid'},
+        }),
+        throwsHttp(400),
+      );
+      expect(
+        () => checked.create(UuidUser(id: 'not-a-uuid', name: 'X')),
+        throwsHttp(400),
+      );
+    });
+
+    test('an id it takes is queried', () async {
+      expect((await checked.read(ana)).name, 'Ana');
+      expect(() => checked.read(cy), throwsHttp(404));
+    });
+
+    test('without it, a malformed UUID PostgreSQL refuses is a 400', () async {
+      expect(
+        () => service.read('not-a-uuid'),
+        throwsA(
+          isA<AngelHttpException>()
+              .having((e) => e.statusCode, 'statusCode', 400)
+              // The database's error, for the server's logs.
+              .having((e) => e.error, 'error', isNotNull),
+        ),
+      );
+    });
   });
 }

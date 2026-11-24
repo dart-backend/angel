@@ -118,6 +118,7 @@ A handler gets the request's user with `req.container!.makeAsync<User>()`.
 - **`requireAuthentication<User>()`** refuses a request without a user with a 403. Called with `throwError: false`, it returns `false` instead.
 - **`forceBasicAuth<User>()`** answers a request with no JWT with a 401 and a `WWW-Authenticate: Basic` challenge, so a browser asks for a username and password. Its realm is `angel3_auth` by default; pass `realm` for another one.
 - **An invalid JWT**, such as one that has expired, gets a 403 from both.
+- **API documents.** Both are tagged with a `SecurityRequirement` of `angel3_framework`, so the OpenAPI documents of `angel3_openapi` list the security of the routes they protect, of `chain` too.
 
 ```dart
 app.get('/me', chain([

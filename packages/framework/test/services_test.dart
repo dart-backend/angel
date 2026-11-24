@@ -188,6 +188,18 @@ void main() {
     });
   });
 
+  group('dataType', () {
+    test('is the Data of the service', () {
+      expect(MapService().dataType, Map<String, dynamic>);
+      expect(AnonymousService<int, String>().dataType, String);
+    });
+
+    test('of a HookedService of app.use is that of the service it wraps', () {
+      var hooked = Angel().use('/strings', AnonymousService<int, String>());
+      expect(hooked.dataType, String);
+    });
+  });
+
   group('int ids', () {
     setUp(() {
       app.use(

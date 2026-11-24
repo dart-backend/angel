@@ -1,6 +1,3 @@
-@Skip("Jsonb data type is not supported")
-library;
-
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
@@ -80,7 +77,6 @@ void main() {
       initialValue = (await query.insert(executor)).value;
     });
 
-    /*
     test('get all', () async {
       var query = HasMapQuery();
       expect(await query.get(executor), [initialValue]);
@@ -95,7 +91,6 @@ void main() {
       query.where?.value.equals({'foo': 'baz'});
       expect(await query.get(executor), isEmpty);
     });
-    */
 
     test('list equals', () async {
       var query = HasMapQuery();
@@ -113,7 +108,6 @@ void main() {
       expect(result2, isEmpty);
     });
 
-    /*
     test('property equals', () async {
       var query = HasMapQuery()..where?.value['foo'].asString?.equals('bar');
       expect(await query.get(executor), [initialValue]);
@@ -129,6 +123,33 @@ void main() {
       query = HasMapQuery()..where?.list[1].asInt?.equals(3);
       expect(await query.get(executor), []);
     });
-    */
+
+    test('map contains', () async {
+      var query = HasMapQuery()..where!.value.containsPair('foo', 'bar');
+      expect(await query.get(executor), [initialValue]);
+
+      query = HasMapQuery()..where!.value.containsPair('foo', 'baz');
+      expect(await query.get(executor), isEmpty);
+    });
+
+    test('property as a number, a boolean, or NULL', () async {
+      await (HasMapQuery()
+            ..values.value = {'n': 3, 'ok': true, 'none': null}
+            ..values.list = [])
+          .insert(executor);
+
+      var query = HasMapQuery()..where!.value['n'].asInt?.greaterThan(2);
+      expect((await query.get(executor)).single.value?['n'], 3);
+
+      query = HasMapQuery()..where!.value['ok'].asBool?.isTrue;
+      expect((await query.get(executor)).single.value?['ok'], true);
+
+      // Missing, or a JSON null: both rows.
+      query = HasMapQuery()..where!.value['none'].isNull;
+      expect(await query.get(executor), hasLength(2));
+
+      query = HasMapQuery()..where!.value['foo'].isNotNull;
+      expect(await query.get(executor), [initialValue]);
+    });
   });
 }

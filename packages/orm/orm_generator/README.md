@@ -85,11 +85,11 @@ abstract class UserEntity extends Model {
 >     .insert(executor);
 > ```
 >
-> An insert without an `id` fails, as the primary key has no default, and a database default, such as `@Column(defaultValue: RawSql('gen_random_uuid()'))`, is not supported.
+> An insert without an `id` fails, as the primary key has no default, and a database default, such as `@Column(defaultValue: RawSql('gen_random_uuid()'))`, is not supported: the generator refuses it with an error. With `angel3_orm_service`, `create` without an `id` is a `400`, and `validateId` refuses an id that is not a UUID: see "Ids of text, as UUIDs" in its README.
 
 * **Migration.** The column of `id` is of the type declared, and the foreign keys of other models that refer to it are of the same type and length, as `author_id` of a `@BelongsTo UserEntity author`.
 * **Queries.** `where.id` is a `StringSqlExpressionBuilder`, so `UserQuery()..where!.id.equals(uuid)` reads a user by its UUID, and `values.id` sets it. Pass the `id` itself, a `String`, not `idAsInt`, which is `-1` for every UUID: `where!.id.equals(user.id!)`.
-* **Types.** `ColumnType.uuid` is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type (MariaDB has one only from 10.7), and `TEXT` on SQLite, so one model runs on each of them. PostgreSQL checks the value and gives it in lower case; the others store the text as it is given, and MySQL and MariaDB compare it without regard to case, so give UUIDs in lower case, as `Uuid().v4()` does. Another type, as `ColumnType.char` of `length: 36`, is a string key too.
+* **Types.** `ColumnType.uuid` is `uuid` on PostgreSQL, `CHAR(36)` of ASCII and a binary collation (`ascii_bin`) on MySQL and MariaDB, which have no UUID type (MariaDB has one only from 10.7), and `TEXT` on SQLite, so one model runs on each of them. PostgreSQL checks the value, takes it of any case and gives it in lower case; the others store the text as it is given and compare it exactly, so `6F1C…` and `6f1c…` are two keys there, as in the loading of relations. Give UUIDs in lower case, as `Uuid().v4()` does. Another type, as `ColumnType.char` of `length: 36`, is a string key too.
 
 An `id` of no column type, or of an integer one, as `ColumnType.bigSerial`, is an integer key, as before.
 
@@ -115,7 +115,7 @@ abstract class ProfileEntity {
 ```
 
 * **Stored and read** with the class's serializer: `ProfileSerializer.toMap` when written, and `ProfileSerializer.fromMap` when read, of the map that PostgreSQL gives or the JSON text of MySQL, MariaDB and SQLite.
-* **Queried** as a map: `UserQuery()..where!.profile['first_name'].asString?.equals('Ana')`.
+* **Queried** as a map: `UserQuery()..where!.profile['first_name'].asString?.equals('Ana')`, on each database, in its own JSON functions. A property can be read `asString`, `asInt`, `asDouble`, `asBool`, `asMap` or `asList`, and is `NULL` where it is missing, a JSON `null`, or of another type. On SQLite, `equals` of the whole column compares the JSON as the serializer writes it, of the same keys in the same order, and `contains` is not supported; on MySQL and MariaDB, `equals` of arrays ignores their order. `asDateTime`, and keys with a `"` or a backslash, are PostgreSQL's only.
 * **Nullable or not.** A nullable one, as `ProfileEntity?`, is `NULL` when it is `null`. A non-nullable one needs `angel3_serialize_generator` 10.1.0 or later, and must be among the fields of a query that reads it.
 
 A field of a type that the generator cannot store, or query, is left out of the query's `where` with a warning, rather than generating code that does not compile.

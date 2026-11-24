@@ -1,10 +1,19 @@
 # Change Log
 
+## 10.2.0
+
+### New in 10.2.0
+
+* **UUID columns:** A `ColumnType.uuid` column, of `angel3_orm` 10.3.0, which this version requires, is `uuid` on PostgreSQL, `CHAR(36) CHARACTER SET ascii COLLATE ascii_bin` on MySQL and MariaDB, which have no UUID type, compared exactly, as on SQLite, where the default collation would match a UUID of another case in SQL but not when relations are loaded, and `TEXT` on SQLite, where its name was written as it is, which MySQL rejects
+
+### Fixes in 10.2.0
+
+* **JSON columns:** A `ColumnType.jsonb` column is `json` on MySQL and MariaDB, which have no `jsonb`, where its name was written as it is, and a table of one, as of a `Map`, a `List` or a `@serializable` class that is not an ORM model, failed to be created
+
 ## 10.1.0
 
 ### New in 10.1.0
 
-* **UUID columns:** A `ColumnType.uuid` column, of `angel3_orm` 10.2.0, is `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, which have no UUID type, and `TEXT` on SQLite, where its name was written as it is, which MySQL rejects
 * **SQLite:** `SqliteMigrationRunner`, of `package:angel3_migration_runner/sqlite.dart`, runs migrations on SQLite 3.35 or later, with a database of the `sqlite3` package. Each migration runs and is recorded in one savepoint, so one that fails is neither applied nor recorded. A `DateTime` default and `currentTimestamp` are UTC text, as `angel3_orm_sqlite` stores a `DateTime`. `changeColumnType`, `setNotNull`, `dropNotNull` and the changes of a primary key throw an `UnsupportedError`, as SQLite makes them only by creating the table again
 
 ## 10.0.1
@@ -46,7 +55,6 @@
 * **Defaults:** Non-finite `double`s are `'NaN'`/`'Infinity'` on PostgreSQL and throw on MySQL and MariaDB; MySQL 8 expression defaults and `bit` defaults are kept
 * **`runMigrations`:** Closes the runner when a migration fails, and throws that migration's error
 * **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
-
 
 ## 9.1.0
 

@@ -42,11 +42,11 @@ void main() {
     expect(ferrari.id, isNotNull);
     expect(ferrari.make, 'Ferrari');
 
-    var read = CarQuery()..where!.id.equals(ferrari.idAsInt);
+    var read = CarQuery()..where!.id.equals(int.parse(ferrari.id!));
     expect((await read.getOne(executor)).value.make, 'Ferrari');
 
     var update = CarQuery()
-      ..where!.id.equals(ferrari.idAsInt)
+      ..where!.id.equals(int.parse(ferrari.id!))
       ..values.make = 'Mazda';
     expect((await update.update(executor)).single.make, 'Mazda');
   });
@@ -54,12 +54,12 @@ void main() {
   test('deletes', () async {
     var ferrari = await insertFerrari();
 
-    var delete = CarQuery()..where!.id.equals(ferrari.idAsInt);
+    var delete = CarQuery()..where!.id.equals(int.parse(ferrari.id!));
     expect((await delete.delete(executor)).single.make, 'Ferrari');
     expect(await CarQuery().get(executor), isEmpty);
 
     var deleteOne = CarQuery()
-      ..where!.id.equals((await insertFerrari()).idAsInt);
+      ..where!.id.equals(int.parse((await insertFerrari()).id!));
     expect((await deleteOne.deleteOne(executor)).value.make, 'Ferrari');
   });
 }

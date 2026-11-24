@@ -75,7 +75,10 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
                     (tx) =>
                         _insert(tx, query, returningQuery, substitutionValues),
                   );
-          } catch (_) {
+          } catch (e) {
+            if (e is SqliteException) {
+              await _recordSource(e, tableName, query, context);
+            }
             if (scope != null && context != null) {
               await _checkRolledBack(scope, context);
             }
@@ -84,6 +87,71 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
         });
       }),
     );
+  }
+
+  /// Records [table] and [sql], of the query that failed with [error], for
+  /// [classifySqliteError], with the names of the `CHECK`s of [table] if it
+  /// failed one.
+  ///
+  /// They are read on [context], the transaction of the query; or outside
+  /// one, on a connection that reads, and, if it has no such table, on the
+  /// one that writes, which ran the query, as `TEMP` tables and attached
+  /// databases are of it alone. It waits for the write lock for
+  /// [_checkLockTimeout] at most, as a transaction may hold it that waits for
+  /// the caller of the query, and the constraint is not named after it.
+  Future<void> _recordSource(
+    SqliteException error,
+    String table,
+    String sql,
+    SqliteWriteContext? context,
+  ) async {
+    Set<String>? checks;
+    if (isCheckError(error)) {
+      if (context != null) {
+        checks = await _tryChecksOf(context, table);
+      } else {
+        checks =
+            await _tryChecksOf(_database, table) ?? await _tryWriter(table);
+      }
+    }
+    recordSqliteErrorSource(error, table, sql, checks: checks);
+  }
+
+  static const Duration _checkLockTimeout = Duration(milliseconds: 500);
+
+  Future<Set<String>?> _tryWriter(String table) async {
+    try {
+      return await _database.writeLock(
+        (tx) => _checksOf(tx, table),
+        lockTimeout: _checkLockTimeout,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// [_checksOf], or `null` if it fails.
+  Future<Set<String>?> _tryChecksOf(
+    SqliteReadContext reader,
+    String table,
+  ) async {
+    try {
+      return await _checksOf(reader, table);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// The names of the `CHECK`s of [table], read on [reader].
+  Future<Set<String>?> _checksOf(SqliteReadContext reader, String table) async {
+    var schemas = [
+      for (var row in await reader.getAll(schemasQuery)) row['name'] as String,
+    ];
+    for (var (schema, name) in tableCandidates(schemas, table)) {
+      var rows = await reader.getAll(tableSqlQuery(schema), [name]);
+      if (rows.isNotEmpty) return checkNames(rows.first['sql'] as String?);
+    }
+    return null;
   }
 
   /// Marks the transaction of [scope] as rolled back if SQLite rolled it

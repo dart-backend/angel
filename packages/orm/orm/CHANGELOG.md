@@ -1,5 +1,17 @@
 # Change Log
 
+## 10.3.0
+
+### New in 10.3.0
+
+* **Errors:** `QueryExecutor.classifyError` tells the kind of an error of the database's driver that a query failed with, as a `QueryError` of a `QueryErrorKind` (a unique, `NOT NULL` or foreign key violation, or an invalid value) and its column or constraint, without its values, so that it can be answered without depending on the driver, as `angel3_orm_service` does. The error is still thrown as the driver throws it. An executor classifies none by default
+* **Migrations:** `ColumnType.uuid`, a UUID, which `angel3_migration_runner` declares as each database has it: `uuid` on PostgreSQL, `CHAR(36)` of a binary collation on MySQL and MariaDB, and `TEXT` on SQLite
+
+### Fixes in 10.3.0
+
+* **JSON queries:** The conditions of a JSON column, of `MapSqlExpressionBuilder` and `ListSqlExpressionBuilder`, and of its properties, as `where.profile['first_name'].asString?.equals('Ana')`, are written in the SQL of the database of the query's executor, where they were PostgreSQL's (`::jsonb`, `->>`), which MySQL, MariaDB and SQLite rejected. On MySQL and MariaDB, of `JSON_EXTRACT`, `JSON_CONTAINS` and `JSON_TYPE`: `equals` of a column is true of JSON that each contains, so of arrays of the same values in any order. On SQLite, of `json_extract` and `json_type`: `equals` compares the JSON minified, so of the same keys in the same order, as a serializer writes them, and `contains` and `containsPair` throw an `UnsupportedError`. A property read `asDateTime` is PostgreSQL's only, and a key with a `"` or a backslash is an `ArgumentError` elsewhere. A property is `NULL` where it is missing, a JSON `null`, or not of the type it is read as. A query compiled without an executor, as of `compile({})`, is written for PostgreSQL, as before
+* **JSON values:** A value cast to `json` or `jsonb`, as the generated `casts` of a `List` field are, is cast on PostgreSQL only, as MySQL and MariaDB have no `jsonb` type, and SQLite stored a list as `0`
+
 ## 10.2.0
 
 ### Breaking changes in 10.2.0
@@ -8,7 +20,6 @@
 
 ### New in 10.2.0
 
-* **Migrations:** `ColumnType.uuid`, a UUID, which `angel3_migration_runner` declares as each database has it: `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, and `TEXT` on SQLite
 * **Dialects:** `SqliteDialect`, for SQLite 3.35 or later, which `angel3_orm_sqlite` uses. Queries are written for it as for MySQL, without `FOR UPDATE`, as SQLite has none. `SqliteDialect.formatDateTime` gives a `DateTime` as SQLite stores it, UTC text that sorts in time order
 
 ## 10.1.0

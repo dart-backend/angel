@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.1.0
+
+### Deprecations in 10.1.0
+
+* **Deprecated:** `Model.idAsInt`, which is `-1` for every record of a UUID or other text key, so that a query of it matches nothing. Use `id`, or `int.parse(id!)` of an integer key. It is to be removed in 11.0.0
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

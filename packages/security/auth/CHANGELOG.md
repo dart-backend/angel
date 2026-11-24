@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.1.0
+
+### New in 10.1.0
+
+* **Documents:** `requireAuthentication` is tagged with a `SecurityRequirement` of `angel3_framework` 10.2.0, which this version requires, of a `Bearer` JWT and a 403, and `forceBasicAuth` with one of a `Bearer` JWT or Basic authentication and a 401, so that `angel3_openapi` documents the security of the routes they protect
+
 ## 10.0.2
 
 ### Fixes in 10.0.2

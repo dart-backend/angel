@@ -55,6 +55,26 @@ class Providers {
   }
 }
 
+/// A service that tells documents of its API, such as the OpenAPI documents
+/// of `angel3_openapi`, what its routes do not: the query parameters of its
+/// `index`, and the errors its methods may give.
+///
+/// [MapService] implements it, as does `OrmService` of `angel3_orm_service`.
+abstract interface class DocumentedService {
+  /// The query parameters that `index` takes from a client, as
+  /// `GET /todos?$sort=name`, by name, each of the JSON Schema of its value:
+  /// empty if it takes none.
+  Map<String, Map<String, dynamic>> get indexQueryParameters;
+
+  /// The errors its methods may give besides those of every service (a `400`
+  /// of a request it cannot take, and a `404` of an id of no record), by the
+  /// name of the method (`index`, `read`, `create`, `modify`, `update` or
+  /// `remove`), each by its status, of its description, as
+  /// `{'create': {409: 'A record of the same unique value exists'}}`: empty
+  /// if it gives none.
+  Map<String, Map<int, String>> get errorResponses;
+}
+
 /// A front-facing interface that can present data to and operate on data on behalf of the user.
 ///
 /// Heavily inspired by FeathersJS. <3
@@ -66,6 +86,14 @@ class Service<Id, Data> extends Routable {
     'page',
     'token',
   ];
+
+  /// The type of the data of this service, its `Data`, as `Todo` of an
+  /// `OrmService<int?, Todo, TodoQuery>`, so that documents of its API, such
+  /// as the OpenAPI documents of `angel3_openapi`, can find its schema.
+  ///
+  /// That of a [HookedService] is that of the service it wraps, as the one
+  /// that `app.use` gives has a `dynamic` `Data`.
+  Type get dataType => Data;
 
   /// Handlers that must run to ensure this service's functionality.
   List<RequestHandler> get bootstrappers => [];

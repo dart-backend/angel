@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.1.0
+
+### New in 10.1.0
+
+* **Errors:** `MySqlExecutor` and `MariaDbExecutor` classify a `MySQLServerException` by its error code (`classifyError`, of `angel3_orm` 10.3.0, which this version requires): `1062` and `1586` a duplicate key, `1048` and `1364` a missing value, `1216`, `1217`, `1451` and `1452` a foreign key, and `1264`, `1265`, `1292`, `1366`, `1406` and `3140` an invalid value, with the column or key that its message names. `classifyMySqlError` is the function they use
+
 ## 10.0.1
 
 ### Breaking changes in 10.0.1

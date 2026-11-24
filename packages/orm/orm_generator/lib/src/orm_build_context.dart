@@ -228,6 +228,7 @@ Future<OrmBuildContext?> buildOrmContext(
       var type = cr.read('type').intValue;
       var localKey = cr.peek('localKey')?.stringValue;
       var foreignKey = cr.peek('foreignKey')?.stringValue;
+      var foreignKeyGiven = foreignKey != null;
       var foreignTable = cr.peek('foreignTable')?.stringValue;
       var cascadeOnDelete = cr.peek('cascadeOnDelete')?.boolValue == true;
       var through = cr.peek('through')?.typeValue;
@@ -366,6 +367,7 @@ Future<OrmBuildContext?> buildOrmContext(
         type,
         localKey: localKey,
         foreignKey: foreignKey,
+        foreignKeyGiven: foreignKeyGiven,
         foreignTable: foreignTable,
         cascadeOnDelete: cascadeOnDelete,
         through: through,

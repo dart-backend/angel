@@ -10,5 +10,6 @@ export 'metadata.dart';
 export 'request_context.dart';
 export 'response_context.dart';
 export 'routable.dart';
+export 'security.dart';
 export 'server.dart';
 export 'service.dart';

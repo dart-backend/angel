@@ -186,8 +186,8 @@ class ColumnType {
   // UUID.
 
   /// A UUID, of a `String` such as `6f1c2a8e-3b4d-4e5f-8a9b-0c1d2e3f4a5b`:
-  /// `uuid` on PostgreSQL, `CHAR(36)` on MySQL and MariaDB, and `TEXT` on
-  /// SQLite.
+  /// `uuid` on PostgreSQL, `CHAR(36)` of a binary collation on MySQL and
+  /// MariaDB, and `TEXT` on SQLite.
   static const ColumnType uuid = ColumnType('uuid');
 
   // Misc.

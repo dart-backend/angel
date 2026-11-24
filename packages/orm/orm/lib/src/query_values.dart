@@ -1,3 +1,5 @@
+import 'dialect/current.dart';
+import 'dialect/dialect.dart';
 import 'identifier.dart';
 import 'query.dart';
 
@@ -26,14 +28,22 @@ abstract class QueryValues {
 
   Map<String, dynamic> toMap();
 
+  /// [sub], the placeholder of [name], cast to its type of [casts].
+  ///
+  /// A cast to `json` or `jsonb` is PostgreSQL's only: elsewhere, the value
+  /// is JSON text, which a JSON column of MySQL or MariaDB takes as it is,
+  /// and SQLite stores as text, where it has no type to cast to.
   String applyCast(String name, String sub) {
-    if (casts.containsKey(name)) {
-      var type = casts[name];
-      return 'CAST ($sub as $type)';
-    } else {
+    var type = casts[name];
+    if (type == null) return sub;
+    if (_jsonTypes.contains(type.toLowerCase()) &&
+        currentDialect is! PostgreSQLDialect) {
       return sub;
     }
+    return 'CAST ($sub as $type)';
   }
+
+  static const _jsonTypes = {'json', 'jsonb'};
 
   /// Check if a field is in the query
   bool hasField(String fieldName) {

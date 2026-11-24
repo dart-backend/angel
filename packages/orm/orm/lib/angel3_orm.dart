@@ -7,6 +7,7 @@ export 'src/map_query_values.dart';
 export 'src/migration.dart';
 export 'src/order_by.dart';
 export 'src/query_base.dart';
+export 'src/query_error.dart';
 export 'src/query_executor.dart';
 export 'src/query_values.dart';
 export 'src/query_where.dart';

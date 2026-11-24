@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.1.0
+
+### New in 10.1.0
+
+* **Errors:** `SqliteExecutor` and `SqliteAsyncExecutor` classify a `SqliteException` by its extended result code (`classifyError`, of `angel3_orm` 10.3.0, which this version requires): `2067`, `1555` and `2579` (a rowid) a duplicate key, `1299` a `NOT NULL` violation, `787` a foreign key one (with `PRAGMA foreign_keys = ON`), and `275` (`CHECK`), `3091` (a value of the wrong type in a `STRICT` table) and `20` (a type mismatch) an invalid value, as is `18` (a text or blob too long) of a statement that writes, but not of a query that only reads, whose result is too long. The column of a duplicate key of one column, a `NOT NULL` violation and a value of the wrong type in a `STRICT` table is that of the message, read by the table of the query as SQL reads it (`aux.users` is `users` of the schema `aux`, `"my.t"` a table of that name), in any case of ASCII letters, so that the names of tables and columns may have dots and commas. A message of another table, as of a trigger, names no column; one of a query given the table `''` is read up to its first dot. A key of several columns, or the hidden `rowid`, names none. The constraint of a unique index on an expression is the name of the index, and that of a failed `CHECK` its name, if the table declares one by that name, which the executor reads after the error from the schema of the table, as SQLite finds it, rather than its expression. `SqliteAsyncExecutor` reads it on a connection that reads, and, for a `TEMP` table or one of an attached database, on the one that writes, waiting for it half a second at most. `classifySqliteError` is the function they use
+
 ## 10.0.1
 
 ### Fixes in 10.0.1

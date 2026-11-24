@@ -49,7 +49,7 @@ void main() {
     var abcQuery = AlphabetQuery();
     abcQuery.values
       ..value = 'abc'
-      ..numbersId = numbersModel.idAsInt
+      ..numbersId = int.parse(numbersModel.id!)
       ..createdAt = numbersModel.createdAt
       ..updatedAt = numbersModel.updatedAt;
     var abcOpt = await (abcQuery.insert(executor));

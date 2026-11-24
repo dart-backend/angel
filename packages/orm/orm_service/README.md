@@ -49,4 +49,44 @@ On the server, `params['query']` can also be a callback that is given the query,
 
 ## Updates
 
-`modify` (`PATCH`) changes only the fields it is given, and `update` (`PUT`) replaces every field of the record. Both change one record, by its id.
+`modify` (`PATCH`) changes only the fields it is given, and `update` (`PUT`) replaces every field of the record. Both change one record, by its id, which an `id` in the data does not change.
+
+## Ids of text, as UUIDs
+
+A model whose `id` is text, as `@Column(type: ColumnType.uuid, indexType: IndexType.primaryKey)`, has its `id` given on each insert, as the database does not generate it: `create` of data without one is a `400 Bad Request`. Give it in a hook if clients do not:
+
+```dart
+var users = app.use('/users', OrmService<String?, User, UserQuery>(executor, () => UserQuery()));
+users.beforeCreated.listen((e) => e.data = (e.data as User).copyWith(id: Uuid().v4()));
+```
+
+`validateId` refuses an id that cannot be a record's before it is queried, as one that is not a UUID, which PostgreSQL would refuse with an error of its own (a `400`, see [Errors](#errors)):
+
+```dart
+OrmService<String?, User, UserQuery>(executor, () => UserQuery(), validateId: isUuid);
+```
+
+An id it refuses is a `404 Not Found` of `read`, `update`, `modify` and `remove`, a `400 Bad Request` of `?id=` and of `create`, and no record of `readMany`.
+
+## Errors
+
+An error of the database that is of the request, as its executor of `angel3_orm_postgres`, `angel3_orm_mysql` or `angel3_orm_sqlite` classifies it, is answered with an HTTP error:
+
+| Error of the database | Response |
+| --- | --- |
+| A duplicate key, as an `id` or an email that exists | `409 Conflict` |
+| A foreign key: a record that refers to none, or the remove of one that others refer to | `409 Conflict` |
+| A missing value of a column that requires one | `400 Bad Request` |
+| An invalid value, as a malformed UUID on PostgreSQL or text too long | `400 Bad Request` |
+
+Its message names the column or the constraint, as `A record of the same "uuid_users_pkey" exists.`, not the value, which the error of the database may quote. That error is the `error` of the `AngelHttpException`, for the server's logs. Any other error is thrown as it is, a `500`. `OrmService.httpErrorOf` gives the HTTP error of a `QueryError`, for queries of your own:
+
+```dart
+try {
+  await query.insert(executor);
+} catch (e) {
+  var error = executor.classifyError(e);
+  if (error == null) rethrow;
+  throw OrmService.httpErrorOf(error);
+}
+```

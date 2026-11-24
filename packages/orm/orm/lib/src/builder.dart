@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart' show DateFormat;
 
+import 'dialect/current.dart';
+import 'dialect/dialect.dart';
 import 'query.dart';
 
 final DateFormat dateYmd = DateFormat('yyyy-MM-dd');
@@ -604,7 +606,8 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   @override
   String compileFor(String column) => [
     if (_raw != null) '$column $_raw',
-    if (_value != null) '$column::jsonb $_op @$substitution::jsonb',
+    if (_value != null)
+      _JsonSql.of(currentDialect).compare(column, _op!, '@$substitution'),
     for (var p in _properties) ...p._predicates(column),
   ].join(' AND ');
 
@@ -663,28 +666,35 @@ class JsonSqlExpressionBuilderProperty {
 
   String? compile() => _typed?.compile();
 
-  /// This property's predicates, on the JSON in [column].
+  /// This property's predicates, on the JSON in [column], in the SQL of the
+  /// dialect of the query being run.
   Iterable<String> _predicates(String column) sync* {
-    var name = nameFor(column);
+    var sql = _JsonSql.of(currentDialect);
+    var name = sql.text(column, this);
     if (_nullCheck case var check?) yield '$name $check';
     var typed = _typed;
     if (typed == null || !typed.hasValue) return;
     typed._nullColumn = name;
-    var predicate = typed.compileFor(switch (typed) {
-      // `->>` gives text: a number is compared as one, and a property that is
-      // no number, which cannot be cast, is `NULL`, as in no comparison.
-      NumericSqlExpressionBuilder() =>
-        "CASE WHEN jsonb_typeof($column::jsonb->$_key) = 'number' "
-            'THEN ($name)::numeric END',
-      // Nor is one that is no date, which cannot be cast either.
-      DateTimeSqlExpressionBuilder() =>
-        "CASE WHEN pg_input_is_valid($name, 'timestamptz') "
-            'THEN ($name)::timestamptz END',
-      // As JSON, not as text to cast, which may be no JSON. A JSON `null` is
-      // `NULL`, as it is of `->>`.
-      JsonSqlExpressionBuilder() => "NULLIF($column::jsonb->$_key, 'null')",
-      _ => name,
-    });
+    String expression;
+    switch (typed) {
+      // A property that is no number is `NULL`, as in no comparison.
+      case NumericSqlExpressionBuilder():
+        expression = sql.number(column, this);
+      case DateTimeSqlExpressionBuilder():
+        expression = sql.dateTime(column, this);
+      // As JSON, not as text, which may be no JSON. A JSON `null` is `NULL`.
+      case JsonSqlExpressionBuilder():
+        expression = sql.json(column, this);
+      // Compared as text on PostgreSQL, of `CAST (TRUE AS text)`; as a
+      // boolean elsewhere, of which a property that is none is `NULL`.
+      case BooleanSqlExpressionBuilder():
+        var boolean = sql.boolean(column, this);
+        typed._cast = boolean == null ? 'text' : null;
+        expression = boolean ?? name;
+      default:
+        expression = name;
+    }
+    var predicate = typed.compileFor(expression);
     if (predicate != null) yield predicate;
   }
 
@@ -707,11 +717,11 @@ class JsonSqlExpressionBuilderProperty {
 
   String get nameString => nameFor(builder.columnName);
 
-  /// The index or the key of this property, as SQL: a `'` in a key is
-  /// escaped, as a key may come from a request. A key with a backslash is an
-  /// escape string, of which every reader of the SQL knows where it ends,
-  /// whether or not it takes a backslash as an escape.
-  String get _key {
+  /// The index or the key of this property, as PostgreSQL's SQL: a `'` in a
+  /// key is escaped, as a key may come from a request. A key with a
+  /// backslash is an escape string, of which every reader of the SQL knows
+  /// where it ends, whether or not it takes a backslash as an escape.
+  String get _pgKey {
     if (isInt) return name;
     var quoted = name.replaceAll("'", "''");
     return name.contains(r'\')
@@ -719,8 +729,29 @@ class JsonSqlExpressionBuilderProperty {
         : "'$quoted'";
   }
 
-  /// This property of the JSON in [column].
-  String nameFor(String column) => '$column::jsonb->>$_key';
+  /// The JSON path of this property, as a string literal of SQLite's or
+  /// MySQL's SQL, such as `'$."first_name"'` or `'$[0]'`.
+  ///
+  /// Throws an [ArgumentError] for a key with a `"` or a backslash, which
+  /// a path of SQLite cannot quote, and MySQL's quotes otherwise.
+  String get _path {
+    if (isInt) return "'\$[$name]'";
+    if (name.contains('"') || name.contains(r'\')) {
+      throw ArgumentError.value(
+        name,
+        'name',
+        'A key of a JSON property with a `"` or a backslash can only be '
+            'queried on PostgreSQL',
+      );
+    }
+    return "'\$.\"${name.replaceAll("'", "''")}\"'";
+  }
+
+  /// This property of the JSON in [column], as text, in the SQL of the
+  /// dialect of the query being run: `NULL` of a property that is missing,
+  /// or a JSON `null`.
+  String nameFor(String column) =>
+      _JsonSql.of(currentDialect).text(column, this);
 
   void get isNotNull {
     _nullCheck = 'IS NOT NULL';
@@ -761,4 +792,165 @@ class JsonSqlExpressionBuilderProperty {
   ListSqlExpressionBuilder? get asList {
     return _set(() => ListSqlExpressionBuilder(builder.query, nameString));
   }
+}
+
+/// The SQL of JSON columns and properties of a [Dialect].
+///
+/// A property is `NULL` where it is missing, or a JSON `null`, and where it
+/// is not of the type it is read as, so that it matches no comparison.
+sealed class _JsonSql {
+  const _JsonSql();
+
+  static _JsonSql of(Dialect dialect) => switch (dialect) {
+    MySQLDialect() => const _MySqlJson(),
+    SqliteDialect() => const _SqliteJson(),
+    _ => const _PostgresJson(),
+  };
+
+  /// Whether the JSON of [column] is [op] (`=` or `@>`, contains) that of
+  /// the placeholder [parameter], bound to a `Map` or a `List`.
+  String compare(String column, String op, String parameter);
+
+  /// The property [p] of [column], as text.
+  String text(String column, JsonSqlExpressionBuilderProperty p);
+
+  /// The property [p] of [column], as JSON.
+  String json(String column, JsonSqlExpressionBuilderProperty p);
+
+  /// The property [p] of [column], as a number.
+  String number(String column, JsonSqlExpressionBuilderProperty p);
+
+  /// The property [p] of [column], as a boolean, or `null` where it is
+  /// compared as text.
+  String? boolean(String column, JsonSqlExpressionBuilderProperty p);
+
+  /// The property [p] of [column], as a timestamp.
+  String dateTime(String column, JsonSqlExpressionBuilderProperty p);
+}
+
+/// `jsonb`, of its operators.
+final class _PostgresJson extends _JsonSql {
+  const _PostgresJson();
+
+  @override
+  String compare(String column, String op, String parameter) =>
+      '$column::jsonb $op $parameter::jsonb';
+
+  @override
+  String text(String column, JsonSqlExpressionBuilderProperty p) =>
+      '$column::jsonb->>${p._pgKey}';
+
+  // A JSON `null` is `NULL`, as it is of `->>`.
+  @override
+  String json(String column, JsonSqlExpressionBuilderProperty p) =>
+      "NULLIF($column::jsonb->${p._pgKey}, 'null')";
+
+  // `->>` gives text, which is cast where it is a number.
+  @override
+  String number(String column, JsonSqlExpressionBuilderProperty p) =>
+      "CASE WHEN jsonb_typeof($column::jsonb->${p._pgKey}) = 'number' "
+      'THEN (${text(column, p)})::numeric END';
+
+  @override
+  String? boolean(String column, JsonSqlExpressionBuilderProperty p) => null;
+
+  // Cast where it is a date, which a cast of another text would fail at.
+  @override
+  String dateTime(String column, JsonSqlExpressionBuilderProperty p) {
+    var name = text(column, p);
+    return "CASE WHEN pg_input_is_valid($name, 'timestamptz') "
+        'THEN ($name)::timestamptz END';
+  }
+}
+
+/// SQLite's JSON functions, of JSON text.
+final class _SqliteJson extends _JsonSql {
+  const _SqliteJson();
+
+  // `json()` minifies both, so that they are equal of the same keys, values
+  // and order, as the serializer of a model writes them.
+  @override
+  String compare(String column, String op, String parameter) => op == '='
+      ? 'json($column) = json($parameter)'
+      : throw UnsupportedError(
+          'SQLite cannot tell if JSON contains other JSON: query a property '
+          'of it instead, as `where.column[key]`.',
+        );
+
+  // A string as text, a number as a number, and an object or an array as
+  // JSON text.
+  @override
+  String text(String column, JsonSqlExpressionBuilderProperty p) =>
+      'json_extract($column, ${p._path})';
+
+  // `json_quote` leaves JSON as it is, and quotes a string.
+  @override
+  String json(String column, JsonSqlExpressionBuilderProperty p) =>
+      "NULLIF(json_quote(json_extract($column, ${p._path})), 'null')";
+
+  @override
+  String number(String column, JsonSqlExpressionBuilderProperty p) =>
+      "CASE WHEN json_type($column, ${p._path}) IN ('integer', 'real') "
+      'THEN json_extract($column, ${p._path}) END';
+
+  @override
+  String boolean(String column, JsonSqlExpressionBuilderProperty p) =>
+      'CASE json_type($column, ${p._path}) '
+      "WHEN 'true' THEN TRUE WHEN 'false' THEN FALSE END";
+
+  @override
+  String dateTime(String column, JsonSqlExpressionBuilderProperty p) =>
+      throw UnsupportedError(
+        'A JSON property can be queried as a date on PostgreSQL only.',
+      );
+}
+
+/// MySQL's and MariaDB's JSON functions.
+final class _MySqlJson extends _JsonSql {
+  const _MySqlJson();
+
+  // Each contains the other: of arrays, those of the same values in any
+  // order, as `JSON_CONTAINS` tells.
+  @override
+  String compare(String column, String op, String parameter) => op == '='
+      ? '(JSON_CONTAINS($column, $parameter) '
+            'AND JSON_CONTAINS($parameter, $column))'
+      : 'JSON_CONTAINS($column, $parameter)';
+
+  String _extract(String column, JsonSqlExpressionBuilderProperty p) =>
+      'JSON_EXTRACT($column, ${p._path})';
+
+  // A JSON `null` is JSON, not `NULL`, of `JSON_EXTRACT`.
+  @override
+  String text(String column, JsonSqlExpressionBuilderProperty p) {
+    var x = _extract(column, p);
+    return "CASE WHEN JSON_TYPE($x) = 'NULL' THEN NULL ELSE JSON_UNQUOTE($x) END";
+  }
+
+  @override
+  String json(String column, JsonSqlExpressionBuilderProperty p) {
+    var x = _extract(column, p);
+    return "CASE WHEN JSON_TYPE($x) = 'NULL' THEN NULL ELSE $x END";
+  }
+
+  @override
+  String number(String column, JsonSqlExpressionBuilderProperty p) {
+    var x = _extract(column, p);
+    return 'CASE WHEN JSON_TYPE($x) IN '
+        "('INTEGER', 'UNSIGNED INTEGER', 'DOUBLE', 'DECIMAL') "
+        'THEN JSON_UNQUOTE($x) + 0 END';
+  }
+
+  @override
+  String boolean(String column, JsonSqlExpressionBuilderProperty p) {
+    var x = _extract(column, p);
+    return "CASE WHEN JSON_TYPE($x) = 'BOOLEAN' "
+        "THEN JSON_UNQUOTE($x) = 'true' END";
+  }
+
+  @override
+  String dateTime(String column, JsonSqlExpressionBuilderProperty p) =>
+      throw UnsupportedError(
+        'A JSON property can be queried as a date on PostgreSQL only.',
+      );
 }

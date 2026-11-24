@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../angel3_orm.dart';
+import 'dialect/current.dart';
 import 'identifier.dart';
 
 import 'package:logging/logging.dart';
@@ -230,6 +231,13 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// [Model], a `String`, matches that of the column, an `int`: for a
   /// relation of records being loaded ([loadRelations]).
   Future<Map<String, List<T>>> getByKeys(
+    QueryExecutor executor,
+    String column,
+    Iterable<Object?> keys,
+    Set<String> loading,
+  ) => inDialectOf(executor, () => _getByKeys(executor, column, keys, loading));
+
+  Future<Map<String, List<T>>> _getByKeys(
     QueryExecutor executor,
     String column,
     Iterable<Object?> keys,
@@ -806,7 +814,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// The matching records, with their relations ([loadRelations]).
   @override
-  Future<List<T>> get(QueryExecutor executor) async {
+  Future<List<T>> get(QueryExecutor executor) =>
+      inDialectOf(executor, () => _get(executor));
+
+  Future<List<T>> _get(QueryExecutor executor) async {
     var sql = compile({});
     _log.fine(() => 'sql = $sql');
     logValues(_log, substitutionValues);
@@ -839,7 +850,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// where it cannot tell the rows it selected, as the query selects no id:
   /// for a [limit] or an [offset] on MySQL or MariaDB, or on PostgreSQL with
   /// a join or a relation, and for a join that can leave a row out.
-  Future<List<T>> delete(QueryExecutor executor) async {
+  Future<List<T>> delete(QueryExecutor executor) =>
+      inDialectOf(executor, () => _delete(executor));
+
+  Future<List<T>> _delete(QueryExecutor executor) async {
     if (_groupBy != null) {
       throw StateError('A delete cannot have a GROUP BY.');
     }
@@ -1002,7 +1016,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     };
   }
 
-  Future<Optional<T>> insert(QueryExecutor executor) {
+  Future<Optional<T>> insert(QueryExecutor executor) =>
+      inDialectOf(executor, () => _insert(executor));
+
+  Future<Optional<T>> _insert(QueryExecutor executor) {
     if (_groupBy != null) {
       throw StateError('An insert cannot have a GROUP BY.');
     }
@@ -1075,7 +1092,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// Throws a [StateError] for a [limit], an [offset] or such a join on MySQL
   /// or MariaDB of a query that selects no id, as it could not tell the rows
   /// it selected.
-  Future<List<T>> update(QueryExecutor executor) async {
+  Future<List<T>> update(QueryExecutor executor) =>
+      inDialectOf(executor, () => _update(executor));
+
+  Future<List<T>> _update(QueryExecutor executor) async {
     if (_groupBy != null) {
       throw StateError('An update cannot have a GROUP BY.');
     }

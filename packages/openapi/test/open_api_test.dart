@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io' show ContentType;
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -25,6 +26,27 @@ final userSchema = {
     'name': {'type': 'string'},
   },
 };
+
+/// A service of integer ids, as an `OrmService<int?, ...>`.
+class CounterService extends Service<int?, Map<String, dynamic>> {}
+
+/// A service of `double` ids.
+class ReadingService extends Service<double, Map<String, dynamic>> {}
+
+/// A service of query parameters, and errors, of its own.
+class SearchService extends Service<String?, Map<String, dynamic>>
+    implements DocumentedService {
+  @override
+  Map<String, Map<String, dynamic>> get indexQueryParameters => {
+    'q': {'type': 'string'},
+  };
+
+  @override
+  Map<String, Map<int, String>> get errorResponses => {
+    'create': {409: 'Taken'},
+    'remove': {423: 'Locked'},
+  };
+}
 
 /// An app of a few kinds of routes, and a service.
 Angel appOf(OpenApi openApi) {
@@ -268,8 +290,97 @@ void main() {
         },
       });
       var read = (paths['/todos/{id}'] as Map)['get'] as Map;
-      expect((read['responses'] as Map).keys, ['200', '404']);
+      expect((read['responses'] as Map).keys, ['200', '400', '404']);
+      expect(
+        (((paths['/todos'] as Map)['get'] as Map)['responses'] as Map).keys,
+        ['200', '400'],
+      );
       expect((read['parameters'] as List).single['name'], 'id');
+    });
+
+    test('the create of a service is a 201, as the service responds', () async {
+      var create = (paths['/todos'] as Map)['post'] as Map;
+      expect((create['responses'] as Map).keys, ['201', '400']);
+      expect(((create['responses'] as Map)['201'] as Map)['content'], {
+        'application/json': {
+          'schema': {r'$ref': '#/components/schemas/Todo'},
+        },
+      });
+
+      var rq = MockHttpRequest('POST', Uri.parse('/todos'))
+        ..headers.contentType = ContentType.json
+        ..write(jsonEncode({'text': 'Clean'}));
+      await rq.close();
+      await AngelHttp(appOf(openApi)).handleRequest(rq);
+      expect(rq.response.statusCode, 201);
+    });
+
+    test('the id of a service is of the type of its ids', () {
+      var app = appOf(openApi)
+        ..use('/counters', CounterService())
+        ..use('/readings', ReadingService());
+      var paths = openApi.documentOf(app)['paths'] as Map;
+      Object? idType(String path) =>
+          (((((paths[path] as Map)['get'] as Map)['parameters'] as List).single
+                  as Map)['schema']
+              as Map)['type'];
+      expect(idType('/todos/{id}'), 'string');
+      expect(idType('/counters/{id}'), 'integer');
+      expect(idType('/readings/{id}'), 'number');
+    });
+
+    test('the operations of a service have the errors it tells of', () {
+      var app = appOf(openApi)..use('/search', SearchService());
+      var paths = openApi.documentOf(app)['paths'] as Map;
+      Map responsesOf(String path, String method) =>
+          ((paths[path] as Map)[method] as Map)['responses'] as Map;
+      expect(responsesOf('/search', 'post').keys, ['201', '400', '409']);
+      expect(responsesOf('/search', 'post')['409'], {'description': 'Taken'});
+      expect(responsesOf('/search/{id}', 'delete').keys, [
+        '200',
+        '400',
+        '404',
+        '423',
+      ]);
+      expect(responsesOf('/search/{id}', 'get').keys, ['200', '400', '404']);
+      // A MapService tells of none.
+      expect(responsesOf('/todos', 'post').keys, ['201', '400']);
+    });
+
+    test('the index of a service has its query parameters', () {
+      var app = appOf(openApi)
+        ..use('/notes', MapService(allowQuery: false))
+        ..use('/search', SearchService())
+        ..use('/counters', CounterService());
+      var paths = openApi.documentOf(app)['paths'] as Map;
+      Object? parametersOf(String path) =>
+          ((paths[path] as Map)['get'] as Map)['parameters'];
+      expect(parametersOf('/todos'), [
+        {
+          'name': r'$sort',
+          'in': 'query',
+          'schema': {'type': 'string', 'description': 'The field to sort by'},
+        },
+        {
+          'name': r'$limit',
+          'in': 'query',
+          'schema': {
+            'type': 'integer',
+            'minimum': 0,
+            'description': 'The most items to give',
+          },
+        },
+      ]);
+      expect(parametersOf('/notes'), isNull);
+      expect(parametersOf('/search'), [
+        {
+          'name': 'q',
+          'in': 'query',
+          'schema': {'type': 'string'},
+        },
+      ]);
+      // Not a DocumentedService.
+      expect(parametersOf('/counters'), isNull);
     });
 
     test('describe replaces the operation of a service', () {
@@ -372,6 +483,61 @@ void main() {
       var first = openApi.documentOf(app);
       app.get('/b', (req, res) => 'b');
       expect(identical(openApi.documentOf(app), first), isTrue);
+    });
+  });
+
+  group('a mounted app', () {
+    late OpenApi openApi;
+    late Map paths;
+
+    setUp(() {
+      var v2 = Angel()..use('/counters', CounterService());
+      var api = Angel()
+        ..use('/todos', MapService())
+        ..get('/health', (req, res) => 'ok')
+        ..mount('/v2', v2);
+      var org = Angel()..use('/members', MapService());
+      var app = Angel()
+        ..mount('/api', api)
+        ..mount('/orgs/:org', org);
+      openApi = OpenApi(title: 'T')..describeService('api/todos', tag: 'Todos');
+      paths = openApi.documentOf(app)['paths'] as Map;
+    });
+
+    test('documents its services as services, under its path', () {
+      expect((paths['/api/todos'] as Map).keys.toSet(), {'get', 'post'});
+      expect((paths['/api/todos/{id}'] as Map).keys.toSet(), {
+        'get',
+        'patch',
+        'put',
+        'delete',
+      });
+      var create = (paths['/api/todos'] as Map)['post'] as Map;
+      expect(create['operationId'], 'todosCreate');
+      expect(create['tags'], ['Todos']);
+      expect((create['responses'] as Map).keys, ['201', '400']);
+      var index = (paths['/api/todos'] as Map)['get'] as Map;
+      expect(
+        [for (var p in index['parameters'] as List) (p as Map)['name']],
+        [r'$sort', r'$limit'],
+      );
+    });
+
+    test('and those of an app mounted in it', () {
+      var read = (paths['/api/v2/counters/{id}'] as Map)['get'] as Map;
+      expect(read['tags'], ['api/v2/counters']);
+      var id = (read['parameters'] as List).single as Map;
+      expect((id['schema'] as Map)['type'], 'integer');
+    });
+
+    test('and its other routes as routes', () {
+      expect((paths['/api/health'] as Map).keys, ['get']);
+    });
+
+    test('of a path of a parameter, as plain routes', () {
+      var members = paths['/orgs/{org}/members'] as Map;
+      expect(members, contains('get'));
+      expect((members['get'] as Map)['operationId'], isNot('membersIndex'));
     });
   });
 }

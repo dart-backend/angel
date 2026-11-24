@@ -30,6 +30,11 @@ class RelationshipReader {
   final int type;
   final String? localKey;
   final String? foreignKey;
+
+  /// Whether [foreignKey] is that of the annotation, not a default: the
+  /// column of the pivot of a many-to-many that refers to its model is the
+  /// pivot's, without it.
+  final bool foreignKeyGiven;
   final String? foreignTable;
   final bool cascadeOnDelete;
   final DartType? through;
@@ -41,6 +46,7 @@ class RelationshipReader {
     this.type, {
     this.localKey,
     this.foreignKey,
+    this.foreignKeyGiven = true,
     this.foreignTable,
     this.cascadeOnDelete = false,
     this.through,

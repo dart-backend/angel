@@ -18,6 +18,11 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   /// Tbe service that is proxied by this hooked one.
   final T inner;
 
+  /// That of [inner], whose type arguments are known where this one's may be
+  /// `dynamic`.
+  @override
+  Type get dataType => inner.dataType;
+
   final HookedServiceEventDispatcher<Id, Data, T> beforeIndexed =
       HookedServiceEventDispatcher<Id, Data, T>();
   final HookedServiceEventDispatcher<Id, Data, T> beforeRead =

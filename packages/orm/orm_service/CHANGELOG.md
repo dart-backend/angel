@@ -1,9 +1,18 @@
 # Change Log
 
-## 10.0.1
+## 10.1.0
 
-### Fixes in 10.0.1
+### New in 10.1.0
 
+* **Query parameters:** `OrmService` is a `DocumentedService` of `angel3_framework` 10.2.0, which this version requires: its `indexQueryParameters` are `$sort`, of the query's columns, and one of each column a query parameter can match, of a number, a string, a boolean or a date and time, so that `angel3_openapi` documents them. Its `errorResponses` are a `409` of `create`, `modify`, `update` and `remove`, as its errors of the database give. None if `allowQuery` is `false`
+
+* **Ids:** `validateId`, of whether an id a client gives can be a record's, as of a UUID: one it refuses is a 404 of `read`, `update`, `modify` and `remove`, a 400 of a query's `id` and of `create`, and no record of `readMany`, before a query, where a malformed UUID was a 500 of PostgreSQL
+
+* **Errors:** An error of the database that is of the request, as the executor classifies it (`QueryExecutor.classifyError` of `angel3_orm` 10.3.0, which this version requires), is its HTTP error: a duplicate key, as an `id` or an email that exists, or a foreign key a `409 Conflict`, and a missing or invalid value, as a malformed UUID on PostgreSQL, a `400 Bad Request`, where each was a `500`. Its message names the column or constraint, not the value; the database's error is its `error`, for the server's logs. `OrmService.httpErrorOf` gives the HTTP error of a `QueryError`
+
+### Fixes in 10.1.0
+
+* **`create`:** Of a model whose id is text, as a UUID, data without an `id` is a 400, where the insert failed with the database's `NOT NULL` error, a 500
 * **`update` and `modify`:** The record keeps the id it is updated by, of a key the database does not generate, as a UUID, which `copyFrom` sets: `update` of data without an `id` failed with a `NOT NULL` error, and an `id` in the data, as in the body of a request, changed the record's key. A query callback may still set it
 * **Tests:** Connect to the PostgreSQL server of `POSTGRES_HOST` (or `POSTGRES_HOSTNAME`) and `POSTGRES_PORT`, where the port was always 5432
 

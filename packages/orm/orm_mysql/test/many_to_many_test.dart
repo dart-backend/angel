@@ -90,7 +90,7 @@ void main() {
     // await dumpQuery('select * from users;');
     // await dumpQuery('select * from roles;');
     // await dumpQuery('select * from role_users;');
-    // var query = RoleQuery()..where.id.equals(canPub.idAsInt);
+    // var query = RoleQuery()..where.id.equals(int.parse(canPub.id!));
     // await dumpQuery(query.compile(Set()));
 
     print('\n');
@@ -128,7 +128,7 @@ void main() {
 
   test('fetch users for role', () async {
     for (var role in [canPub, canSub]) {
-      var query = RoleQuery()..where!.id.equals(role!.idAsInt);
+      var query = RoleQuery()..where!.id.equals(int.parse(role!.id!));
       var rOpt = await query.getOne(executor);
       expect(rOpt.isPresent, true);
       rOpt.ifPresent((r) async {
@@ -152,7 +152,7 @@ void main() {
       expect(user.roles, isEmpty);
 
       // Fetch again, just to be doubly sure.
-      var query = UserQuery()..where!.id.equals(user.idAsInt);
+      var query = UserQuery()..where!.id.equals(int.parse(user.id!));
       var fetchedOpt = await query.getOne(executor);
       expect(fetchedOpt.isPresent, true);
       fetchedOpt.ifPresent((fetched) {

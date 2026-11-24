@@ -41,8 +41,8 @@ void main() {
     // And a book
     var bookQuery = BookQuery();
     bookQuery.values
-      ..authorId = jkRowling?.idAsInt ?? 0
-      ..partnerAuthorId = jameson?.idAsInt ?? 0
+      ..authorId = int.tryParse(jkRowling?.id ?? '') ?? 0
+      ..partnerAuthorId = int.tryParse(jameson?.id ?? '') ?? 0
       ..name = 'Deathly Hallows';
 
     deathlyHallows = (await bookQuery.insert(executor)).value;

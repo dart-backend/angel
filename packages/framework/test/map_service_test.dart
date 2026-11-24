@@ -144,6 +144,23 @@ void main() {
     });
   });
 
+  group('indexQueryParameters', () {
+    test(r'are $sort and $limit', () {
+      expect(MapService(), isA<DocumentedService>());
+      expect(MapService().errorResponses, isEmpty);
+      expect(MapService().indexQueryParameters.keys, [r'$sort', r'$limit']);
+      expect(MapService().indexQueryParameters[r'$limit'], {
+        'type': 'integer',
+        'minimum': 0,
+        'description': 'The most items to give',
+      });
+    });
+
+    test('are none if allowQuery is false', () {
+      expect(MapService(allowQuery: false).indexQueryParameters, isEmpty);
+    });
+  });
+
   group('nested values', () {
     test('keep their types', () async {
       var created = await service.create({

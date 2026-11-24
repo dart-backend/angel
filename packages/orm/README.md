@@ -224,6 +224,31 @@ TLDR:
 3. A should have a field: `@ManyToMany(CEntity) List<BEntity> get b;`
 4. B should have a field: `@ManyToMany(CEntity) List<AEntity> get a;`
 
+The columns of the pivot are those of its `@belongsTo` fields, of any name: `user_id` of `UserEntity get user`, or `owner_id` of `UserEntity get owner`. A many-to-many reads each side by the `@belongsTo` of the pivot that refers to its table.
+
+A pivot of a model and itself, as friendships of people, refers to the table by two columns: give the one of this side as the `foreignKey`, and the other is the other side:
+
+```dart
+@serializable
+@orm
+abstract class PersonEntity extends Model {
+  @ManyToMany(FriendshipEntity, foreignKey: 'person_id')
+  List<PersonEntity> get friends;
+}
+
+@serializable
+@orm
+abstract class FriendshipEntity {
+  @belongsTo
+  PersonEntity? get person;
+
+  @belongsTo
+  PersonEntity? get friend;
+}
+```
+
+The generator refuses a pivot that refers to a side by no `@belongsTo`, or by several without a `foreignKey`, and a `foreignKey` that is no column of the pivot, where the query failed when run.
+
 Test: <https://github.com/dart-backend/angel/blob/master/packages/orm/orm_postgres/test/many_to_many_test.dart>
 
 ## Columns
@@ -258,7 +283,7 @@ abstract class FooEntity extends Model {
 
 ### Default Values
 
-It is also possible to specify the default value of a field. **Note that this only works with primitive objects.**
+It is also possible to specify the default value of a field: a bool, a number, a `String`, a `List`, a `Map`, an enum value, or a `RawSql` of SQL. Another object is an error of the generator that names the field.
 
 If a default value is supplied, the generated migration includes it in the schema; queries do not need it. A `String` default is a literal, which is quoted and escaped; for SQL, such as the current time, give a `RawSql` (e.g. `currentTimestamp`).
 
@@ -268,5 +293,24 @@ If a default value is supplied, the generated migration includes it in the schem
 abstract class FooEntity extends Model {
   @Column(defaultValue: 'baz')
   String get bar;
+
+  @Column(defaultValue: currentTimestamp)
+  DateTime? get seenAt;
 }
 ```
+
+A primary key cannot have a `RawSql` default, as `RawSql('gen_random_uuid()')`: the generator refuses it, as MySQL and MariaDB give back no key the database generates that is not `AUTO_INCREMENT`, so the inserted row could not be read. Give its value on each insert (see "String primary keys" in the README of `angel3_orm_generator`).
+
+## Errors
+
+A query that the database refuses throws the error of its driver, as a `ServerException` of the `postgres` package. `classifyError` of the executor tells what it is, without depending on the driver: a `QueryError` of a `QueryErrorKind`, `uniqueViolation`, `notNullViolation`, `foreignKeyViolation` or `invalidValue`, and its column or constraint, or `null` of another error. The executors of `angel3_orm_postgres`, `angel3_orm_mysql` and `angel3_orm_sqlite` classify those of their drivers, and `OrmService` of `angel3_orm_service` answers them with a `409` or a `400`.
+
+```dart
+try {
+  await (UserQuery()..values.email = email).insert(executor);
+} catch (e) {
+  if (executor.classifyError(e)?.kind != QueryErrorKind.uniqueViolation) rethrow;
+  // The email is taken.
+}
+```
+

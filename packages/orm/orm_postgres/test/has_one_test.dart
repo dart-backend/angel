@@ -130,8 +130,8 @@ void main() {
 
   test('sets null on false subquery', () async {
     var legQuery = LegQuery()
-      ..where!.id.equals(originalLeg!.idAsInt)
-      ..foot.where!.legId.equals(originalLeg!.idAsInt + 1024);
+      ..where!.id.equals(int.parse(originalLeg!.id!))
+      ..foot.where!.legId.equals(int.parse(originalLeg!.id!) + 1024);
     var legOpt = await (legQuery.getOne(executor));
     expect(legOpt.isPresent, true);
     legOpt.ifPresent((leg) {

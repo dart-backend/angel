@@ -29,8 +29,14 @@ class MySqlFamilyGenerator {
     var integer = serialIntegers[column.type];
     if (integer != null) return integer.name;
 
-    // MySQL has no UUID type, nor MariaDB before 10.7: its text.
-    if (column.type == ColumnType.uuid) return 'char(36)';
+    // MySQL has no UUID type, nor MariaDB before 10.7: its text, compared
+    // exactly, as SQLite does, where the default collation ignores case, so
+    // that a key matches in SQL only as it matches in Dart.
+    if (column.type == ColumnType.uuid) return _uuid;
+
+    // MySQL and MariaDB have no jsonb, PostgreSQL's binary JSON: their JSON,
+    // which is MariaDB's LONGTEXT with a CHECK of json_valid.
+    if (column.type == ColumnType.jsonb) return ColumnType.json.name;
 
     // Map timestamp time to datetime
     var str = column.type == ColumnType.timeStamp
@@ -47,6 +53,10 @@ class MySqlFamilyGenerator {
     if (column.type.hasLength) return '$str(${column.length})';
     return str;
   }
+
+  /// The type of a `ColumnType.uuid` column: text of 36 ASCII characters,
+  /// of a binary collation.
+  static const _uuid = 'char(36) CHARACTER SET ascii COLLATE ascii_bin';
 
   String compileColumn(MigrationColumn column) {
     var buf = StringBuffer(columnType(column));

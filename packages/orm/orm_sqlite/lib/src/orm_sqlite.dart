@@ -50,17 +50,22 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
       (scope) => _whenReady(
         scope,
         () => _run(scope, () {
-          if (!selectsInsertedRow(query, returningQuery)) {
-            return _select(query, substitutionValues);
+          try {
+            if (!selectsInsertedRow(query, returningQuery)) {
+              return _select(query, substitutionValues);
+            }
+            return _atomically(scope, () {
+              var ids = _select(returningId(query), substitutionValues);
+              if (ids.isEmpty) return <List>[];
+              return _select(
+                returningQuery,
+                withInsertId(substitutionValues, ids.first.first),
+              );
+            });
+          } on SqliteException catch (e) {
+            _recordSource(e, tableName, query);
+            rethrow;
           }
-          return _atomically(scope, () {
-            var ids = _select(returningId(query), substitutionValues);
-            if (ids.isEmpty) return <List>[];
-            return _select(
-              returningQuery,
-              withInsertId(substitutionValues, ids.first.first),
-            );
-          });
         }),
       ),
     );
@@ -100,6 +105,29 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
       }
       rethrow;
     }
+  }
+
+  /// Records [table] and [sql], of the query that failed with [error], for
+  /// [classifySqliteError], with the names of the `CHECK`s of [table] if it
+  /// failed one.
+  void _recordSource(SqliteException error, String table, String sql) {
+    Set<String>? checks;
+    if (isCheckError(error)) {
+      try {
+        var schemas = [
+          for (var row in _database.select(schemasQuery)) row['name'] as String,
+        ];
+        for (var (schema, name) in tableCandidates(schemas, table)) {
+          var rows = _database.select(tableSqlQuery(schema), [name]);
+          if (rows.isEmpty) continue;
+          checks = checkNames(rows.first['sql'] as String?);
+          break;
+        }
+      } catch (_) {
+        // Its constraint is not named.
+      }
+    }
+    recordSqliteErrorSource(error, table, sql, checks: checks);
   }
 
   /// The rows of [sql], with its `@name` placeholders bound to

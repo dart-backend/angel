@@ -5,9 +5,11 @@ import 'dart:async';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
-import 'package:sqlite3/common.dart' show CommonDatabase, ResultSet;
+import 'package:sqlite3/common.dart'
+    show CommonDatabase, ResultSet, SqliteException;
 import 'package:sqlite_async/sqlite_async.dart';
 
+import 'errors.dart';
 import 'values.dart';
 
 part 'orm_sqlite.dart';
@@ -43,6 +45,11 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
 
   @override
   Dialect get dialect => const SqliteDialect();
+
+  /// Of a `SqliteException`, by its extended result code (see
+  /// [classifySqliteError]).
+  @override
+  QueryError? classifyError(Object error) => classifySqliteError(error);
 
   /// The scope that a statement given now runs in.
   _Scope? get _scope => _scopes.current(_bound);

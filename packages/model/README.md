@@ -48,7 +48,7 @@ class Todo extends Model {
 
 void main() {
   var todo = Todo(id: '34');
-  print(todo.idAsInt == 34); // true
+  print(int.parse(todo.id!) == 34); // true
 }
 ```
 

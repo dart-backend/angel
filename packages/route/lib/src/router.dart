@@ -76,6 +76,14 @@ class Router<T> {
     return _expanded!;
   }
 
+  /// The links to the routers mounted, grouped or chained in this one, in
+  /// the order they were added: each with its path, its router and the
+  /// middleware of the link, which [routes] joins to their routes. Unlike
+  /// [mounted], it has the routers of [chain], which are linked at `/` but
+  /// not mounted.
+  List<SymlinkRoute<T>> get links =>
+      List.unmodifiable(_routes.whereType<SymlinkRoute<T>>());
+
   List<Route<T>> _expand() {
     return _routes.fold<List<Route<T>>>([], (out, route) {
       if (route is SymlinkRoute<T>) {

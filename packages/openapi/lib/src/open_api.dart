@@ -145,20 +145,19 @@ class OpenApi {
 
     // The services first: their routes are documented as theirs.
     var servicePaths = <String>{};
-    for (var MapEntry(:key, :value) in app.services.entries) {
-      if (key is! String) continue;
-      var base = _strip(key);
+    for (var (base, service) in _servicesOf(app)) {
       servicePaths
         ..add(base)
         ..add(_strip('$base/:id'));
-      for (var (method, path, operation) in _serviceOperations(base, value)) {
+      for (var (method, path, operation) in _serviceOperations(base, service)) {
         add(method, path, operation);
       }
     }
 
     var annotated = _controllerOperations(app);
     var own = {_strip(documentPath), if (uiPath != null) _strip(uiPath!)};
-    for (var route in flatten<RequestHandler>(app).routes) {
+    var routes = flatten<RequestHandler>(app).routes;
+    for (var route in routes) {
       var method = route.method.toUpperCase();
       var path = _strip(route.path);
       if (!_methods.contains(method)) continue;
@@ -176,6 +175,36 @@ class OpenApi {
       }
     }
 
+    // The security of each operation, of the handlers of its route, as the
+    // middleware of angel3_auth: of a service's routes too.
+    var securitySchemes = <String, Map<String, dynamic>>{};
+    for (var route in routes) {
+      var method = route.method.toUpperCase();
+      if (!_methods.contains(method)) continue;
+      var requirements = {
+        for (var handler in route.handlers) ...SecurityRequirement.of(handler),
+      };
+      if (requirements.isEmpty) continue;
+      for (var p in openApiPathsOf(_strip(route.path))) {
+        var operation = paths[p.path]?[method.toLowerCase()];
+        if (operation is Map<String, dynamic>) {
+          _secure(operation, requirements, securitySchemes);
+        }
+      }
+    }
+
+    // Those of extra join those of the schemas and the handlers.
+    var extraComponents = extra['components'];
+    var components = <String, dynamic>{
+      if (schemas.isNotEmpty) 'schemas': schemas,
+      if (securitySchemes.isNotEmpty) 'securitySchemes': securitySchemes,
+      if (extraComponents is Map)
+        for (var MapEntry(:key, :value) in extraComponents.entries)
+          '$key': key == 'securitySchemes' && value is Map
+              ? {...securitySchemes, ...value}
+              : value,
+    };
+
     return {
       'openapi': '3.1.0',
       'info': {
@@ -188,9 +217,75 @@ class OpenApi {
           for (var url in servers) {'url': url},
         ],
       'paths': paths,
-      if (schemas.isNotEmpty) 'components': {'schemas': schemas},
-      ...extra,
+      if (components.isNotEmpty) 'components': components,
+      for (var MapEntry(:key, :value) in extra.entries)
+        if (key != 'components') key: value,
     };
+  }
+
+  /// The services of [router], and of the apps and routers mounted or
+  /// chained in it,
+  /// by their paths joined to those of the mounts, as `api/todos` of a
+  /// service at `todos` of an app mounted at `api`. One of a path of a
+  /// parameter, as of an app mounted at `orgs/:org`, or of a pattern that is
+  /// not a string, is left out: its routes are documented as plain routes.
+  static Iterable<(String, Service)> _servicesOf(
+    Router router, [
+    String prefix = '',
+  ]) sync* {
+    String join(String path) => _strip('$prefix/${_strip(path)}');
+    if (router is Routable) {
+      for (var MapEntry(:key, :value) in router.services.entries) {
+        if (key is! String) continue;
+        var base = join(key);
+        if (base.contains(':') || base.contains('*')) continue;
+        yield (base, value);
+      }
+    }
+    // Of mount and group, and of chain, which links its router but does not
+    // mount it. A service is a router too, of the services of its parent.
+    for (var link in router.links) {
+      if (link.router is! Service) {
+        yield* _servicesOf(link.router, join(link.path));
+      }
+    }
+  }
+
+  /// Adds to [operation] the security of [requirements], each of which a
+  /// request must meet, of any one of its schemes, unless the operation
+  /// gives its own (as of `extra`), and the response of each to a request
+  /// that is not authenticated. The schemes are added to [schemes].
+  static void _secure(
+    Map<String, dynamic> operation,
+    Set<SecurityRequirement> requirements,
+    Map<String, Map<String, dynamic>> schemes,
+  ) {
+    for (var requirement in requirements) {
+      for (var scheme in requirement.schemes) {
+        schemes[scheme.name] ??= scheme.definition;
+      }
+    }
+    operation.putIfAbsent('security', () {
+      // Of each requirement one scheme: every combination.
+      var alternatives = [<String, List<String>>{}];
+      for (var requirement in requirements) {
+        alternatives = [
+          for (var chosen in alternatives)
+            for (var scheme in requirement.schemes)
+              {...chosen, scheme.name: <String>[]},
+        ];
+      }
+      return alternatives;
+    });
+    var responses = operation['responses'];
+    if (responses is Map) {
+      for (var requirement in requirements) {
+        responses.putIfAbsent(
+          '${requirement.status}',
+          () => <String, String>{'description': 'Not authenticated'},
+        );
+      }
+    }
   }
 
   /// The `@OpenApiOperation` annotations of the methods of the app's
@@ -238,13 +333,24 @@ class OpenApi {
     String base,
     Service service,
   ) sync* {
-    var (schema, tag) = _services[base] ?? (null, null);
+    var (given, tag) = _services[base] ?? (null, null);
+    var schema = given ?? _schemaOfData(service);
     var tags = [tag ?? base];
     var name = base.split('/').last;
     var collection = '/$base';
     var item = '/$base/{id}';
-    var id = const PathParameter('id', {'type': 'string'});
-    var notFound = {404: const OpenApiResponse('Not found')};
+    var id = PathParameter('id', {'type': _idType(service)});
+    // A body, query or id the service cannot take, as a non-numeric id of a
+    // numeric key.
+    var badRequest = {400: const OpenApiResponse('Bad request')};
+    // Of an item, which may also not be found.
+    var itemErrors = {...badRequest, 404: const OpenApiResponse('Not found')};
+    // Those the service tells of, as a 409 of an OrmService.
+    var declared = _errorResponsesOf(service);
+    Map<int, OpenApiResponse> errors(String method) => {
+      for (var MapEntry(:key, :value) in (declared[method] ?? const {}).entries)
+        key: OpenApiResponse(value),
+    };
     var list = schema == null ? null : {'type': 'array', 'items': schema};
 
     Map<String, dynamic> operation(
@@ -264,7 +370,12 @@ class OpenApi {
           summary: 'List the items of $name',
           operationId: '${name}Index',
           tags: tags,
-          responses: {200: OpenApiResponse('The items', schema: list)},
+          queryParameters: _queryParametersOf(service),
+          responses: {
+            200: OpenApiResponse('The items', schema: list),
+            ...badRequest,
+            ...errors('index'),
+          },
         ),
         [],
       ),
@@ -280,7 +391,12 @@ class OpenApi {
           operationId: '${name}Create',
           tags: tags,
           requestBody: schema,
-          responses: {200: OpenApiResponse('The item created', schema: schema)},
+          // As the service's POST route responds.
+          responses: {
+            201: OpenApiResponse('The item created', schema: schema),
+            ...badRequest,
+            ...errors('create'),
+          },
         ),
         [],
       ),
@@ -297,7 +413,8 @@ class OpenApi {
           tags: tags,
           responses: {
             200: OpenApiResponse('The item', schema: schema),
-            ...notFound,
+            ...itemErrors,
+            ...errors('read'),
           },
         ),
         [id],
@@ -316,7 +433,8 @@ class OpenApi {
           requestBody: schema,
           responses: {
             200: OpenApiResponse('The item modified', schema: schema),
-            ...notFound,
+            ...itemErrors,
+            ...errors('modify'),
           },
         ),
         [id],
@@ -335,7 +453,8 @@ class OpenApi {
           requestBody: schema,
           responses: {
             200: OpenApiResponse('The item replaced', schema: schema),
-            ...notFound,
+            ...itemErrors,
+            ...errors('update'),
           },
         ),
         [id],
@@ -353,12 +472,60 @@ class OpenApi {
           tags: tags,
           responses: {
             200: OpenApiResponse('The item removed', schema: schema),
-            ...notFound,
+            ...itemErrors,
+            ...errors('remove'),
           },
         ),
         [id],
       ),
     );
+  }
+
+  /// A reference to the schema of the name of the `dataType` of [service],
+  /// as `Todo` of an `OrmService<int?, Todo, TodoQuery>`, if [schemas], or
+  /// the `components` of [extra], have one: the name that
+  /// `angel3_serialize_generator` gives the schema of a model.
+  Map<String, dynamic>? _schemaOfData(Service service) {
+    var name = '${service.dataType}';
+    if (name.endsWith('?')) name = name.substring(0, name.length - 1);
+    var components = extra['components'];
+    var own = components is Map ? components['schemas'] : null;
+    var known =
+        schemas.containsKey(name) || (own is Map && own.containsKey(name));
+    return known ? ref(name) : null;
+  }
+
+  /// The service that [service] wraps, if it is the [HookedService] that
+  /// `app.use` gives, whose type arguments are `dynamic`.
+  static Service _inner(Service service) =>
+      service is HookedService ? service.inner : service;
+
+  /// The query parameters of the `index` of [service], if it is a
+  /// [DocumentedService], as a `MapService` or an `OrmService` is.
+  static Map<String, Map<String, dynamic>> _queryParametersOf(
+    Service service,
+  ) => switch (_inner(service)) {
+    DocumentedService documented => documented.indexQueryParameters,
+    _ => const {},
+  };
+
+  /// The errors the methods of [service] may give, by method, besides those
+  /// of every service, if it is a [DocumentedService].
+  static Map<String, Map<int, String>> _errorResponsesOf(Service service) =>
+      switch (_inner(service)) {
+        DocumentedService documented => documented.errorResponses,
+        _ => const {},
+      };
+
+  /// The JSON Schema type of the ids of [service], of its `Id`: `integer`
+  /// of an `int`, as an `OrmService<int?, ...>`, `number` of a `double` or
+  /// `num`, else `string`. `app.use` gives a [HookedService] whose `Id` is
+  /// `dynamic`, so it is that of the service it wraps.
+  static String _idType(Service service) {
+    var inner = _inner(service);
+    if (inner is Service<int?, Object?>) return 'integer';
+    if (inner is Service<num?, Object?>) return 'number';
+    return 'string';
   }
 
   Map<String, dynamic> _operation(

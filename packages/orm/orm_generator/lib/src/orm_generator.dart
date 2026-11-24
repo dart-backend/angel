@@ -355,6 +355,22 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                             .conditional(literalNull, parsed)
                       : parsed;
                 } else if (ctx.columns[field.displayName]?.type ==
+                        ColumnType.jsonb &&
+                    (fType.isDartCoreMap || fType.isDartCoreList)) {
+                  // Generated Code: (row[i] is String ?
+                  //   json.decode(row[i] as String) : row[i]) as Map?, of the
+                  // JSON text that MySQL and SQLite give, or the map or list
+                  // of PostgreSQL.
+                  expr = expr
+                      .isA(refer('String'))
+                      .conditional(
+                        refer('json')
+                            .property('decode')
+                            .call([expr.asA(refer('String'))]),
+                        expr,
+                      )
+                      .asA(type);
+                } else if (ctx.columns[field.displayName]?.type ==
                     ColumnType.json) {
                   expr = refer('json')
                       .property('decode')
@@ -1240,20 +1256,96 @@ bool _loadsRelations(OrmBuildContext ctx, [Set<String>? seen]) {
 
 /// The relation of the "through" model of a many-to-many [relation] of
 /// [ctx] that points to its other model.
+/// The column of the pivot of the many-to-many [relation] of [ctx], of its
+/// field [name], that refers to the model of [ctx] (see [_pivotKeyOf]).
+String _pivotKey(
+  OrmBuildContext ctx,
+  RelationshipReader relation,
+  String name,
+) => _pivotKeyOf(
+  relation.throughContext!,
+  ctx.tableName,
+  relation.foreignKeyGiven ? relation.foreignKey : null,
+  '${ctx.buildContext.originalClassName}.$name',
+);
+
+/// The column of the pivot [through] of a many-to-many of the model of
+/// [table], [relation], that refers to that model: [given], the `foreignKey`
+/// of its `@ManyToMany`, if it is one of the pivot's columns, or else that of
+/// the one `@BelongsTo` of the pivot that refers to [table], as the pivot's
+/// migration names it.
+///
+/// Throws an [InvalidGenerationSourceError] of a key that is not one of the
+/// pivot's columns, or, without one, of a pivot that refers to [table] by no
+/// `@BelongsTo`, or by several, as a pivot of a model and itself
+/// (`friendships` of a `user` and a `friend`), which the `foreignKey` tells.
+String _pivotKeyOf(
+  OrmBuildContext through,
+  String table,
+  String? given,
+  String relation,
+) {
+  var pivot = through.buildContext.originalClassName;
+  var keys = [
+    for (var r in through.relations.values)
+      if (r.type == RelationshipType.belongsTo && r.foreignTable == table)
+        r.localKey!,
+  ];
+  if (given != null) {
+    var columns = {
+      for (var r in through.relations.values) ?r.localKey,
+      for (var name in through.columns.keys)
+        ?through.buildContext.resolveFieldName(name),
+    };
+    if (columns.contains(given)) return given;
+    throw InvalidGenerationSourceError(
+      'The foreignKey "$given" of the @ManyToMany of $relation is no column '
+      'of its pivot $pivot, whose columns are ${columns.join(', ')}.',
+    );
+  }
+  if (keys.length == 1) return keys.single;
+  throw InvalidGenerationSourceError(
+    keys.isEmpty
+        ? 'The pivot $pivot of the @ManyToMany of $relation has no @BelongsTo '
+              'of the table $table: add one, as the column that refers to it.'
+        : 'The pivot $pivot of the @ManyToMany of $relation refers to the '
+              'table $table by several columns, ${keys.join(', ')}: give the '
+              'one of this side as its foreignKey, as '
+              '@ManyToMany($pivot, foreignKey: \'${keys.first}\').',
+  );
+}
+
+/// The relation of the pivot of the many-to-many [relation] of [ctx], of
+/// its field [name], that refers to the other side.
 RelationshipReader _throughRelation(
   OrmBuildContext ctx,
   RelationshipReader relation,
+  String name,
 ) {
   var through = relation.throughContext!;
   var foreign = relation.foreign!;
-  return through.relations.values.firstWhere(
-    (e) => e.foreignTable == foreign.tableName,
-    orElse: () =>
-        throw '${ctx.buildContext.modelClassName} has a many-to-many '
-            'relationship to ${foreign.buildContext.modelClassName} through '
-            '${through.buildContext.modelClassName}, but '
-            '${through.buildContext.modelClassName} has no relation pointing '
-            'to ${foreign.buildContext.modelClassName}.',
+  var ownKey = _pivotKey(ctx, relation, name);
+  // The other side: not the column of this one, which is the same table's
+  // of a pivot of a model and itself.
+  var others = [
+    for (var e in through.relations.values)
+      if (e.foreignTable == foreign.tableName && e.localKey != ownKey) e,
+  ];
+  if (others.length == 1) return others.single;
+  throw InvalidGenerationSourceError(
+    others.isEmpty
+        ? '${ctx.buildContext.modelClassName} has a many-to-many '
+              'relationship to ${foreign.buildContext.modelClassName} through '
+              '${through.buildContext.modelClassName}, but '
+              '${through.buildContext.modelClassName} has no relation pointing '
+              'to ${foreign.buildContext.modelClassName} besides its '
+              '"$ownKey".'
+        : '${ctx.buildContext.modelClassName} has a many-to-many '
+              'relationship to ${foreign.buildContext.modelClassName} through '
+              '${through.buildContext.modelClassName}, which refers to it by '
+              'several columns, '
+              '${others.map((e) => e.localKey).join(', ')}, besides '
+              '"$ownKey" of this side.',
   );
 }
 
@@ -1282,7 +1374,8 @@ String? _loadRelationsBody(OrmBuildContext ctx) {
       var keys = "[for (var row in rows) valueOf('$localKey', row)]";
       var keyOfRow = "'\${valueOf('$localKey', rows[i])}'";
       if (relation.isManyToMany) {
-        var through = _throughRelation(ctx, relation);
+        var through = _throughRelation(ctx, relation, name);
+        var ownKey = _pivotKey(ctx, relation, name);
         b.writeln('''
           // The other ends of the many-to-many, then their records.
           var ${name}Pivot = loading.contains('$table')
@@ -1290,7 +1383,7 @@ String? _loadRelationsBody(OrmBuildContext ctx) {
               : await Query.pivotKeys(
                   executor,
                   '${relation.throughContext!.tableName}',
-                  '${relation.foreignKey}',
+                  '$ownKey',
                   '${through.localKey}',
                   $keys,
                 );
