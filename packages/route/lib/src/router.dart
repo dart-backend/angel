@@ -382,7 +382,7 @@ class Router<T> {
 
         if (route is SymlinkRoute<T>) {
           if (route.parser != null) {
-            if (_tryParse(route.parser, scanner)?.successful == true) {
+            if (route._parseAt(scanner)?.successful == true) {
               var s = crawl(route.router);
               if (s) success = true;
             }
@@ -390,7 +390,7 @@ class Router<T> {
 
           scanner.position = pos;
         } else if (route.method == '*' || route.method == method) {
-          var parseResult = _tryParse(route.parser, scanner);
+          var parseResult = route._parseAt(scanner);
           if (parseResult != null) {
             if (parseResult.successful && scanner.isDone) {
               var tailResult = parseResult.value?.tail ?? '';

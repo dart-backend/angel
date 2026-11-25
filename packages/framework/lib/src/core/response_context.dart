@@ -306,12 +306,37 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Gets or sets the content type to send back to a client.
+  ///
+  /// It is the `content-type` header, parsed; `text/plain` if there is none,
+  /// or it does not parse.
   MediaType get contentType {
+    var header = headers['content-type'];
+    if (header == null) return _textPlain;
+    return _parsedContentTypes[header] ?? _parseContentType(header);
+  }
+
+  /// The fallback [contentType].
+  static final MediaType _textPlain = MediaType('text', 'plain');
+
+  /// [contentType]s already parsed, by header. Parsing is regex-based and
+  /// runs for every response (headers are sent from [contentType]), and an
+  /// app sends few distinct content types, so they are kept; [MediaType] is
+  /// immutable, so they can be shared. Cleared when [_maxParsedContentTypes]
+  /// is reached, so headers that vary without end cannot grow it.
+  static final Map<String, MediaType> _parsedContentTypes = {};
+  static const int _maxParsedContentTypes = 256;
+
+  static MediaType _parseContentType(String header) {
+    MediaType parsed;
     try {
-      return MediaType.parse(headers['content-type']!);
-    } catch (_) {
-      return MediaType('text', 'plain');
+      parsed = MediaType.parse(header);
+    } on FormatException {
+      parsed = _textPlain;
     }
+    if (_parsedContentTypes.length >= _maxParsedContentTypes) {
+      _parsedContentTypes.clear();
+    }
+    return _parsedContentTypes[header] = parsed;
   }
 
   /// Gets or sets the content type to send back to a client.
