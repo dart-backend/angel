@@ -120,7 +120,7 @@ class Angel extends Routable {
   /// Holds at most [maxHandlerCacheSize] entries, evicting the least
   /// recently used, so requests for many distinct paths cannot grow it
   /// without bound.
-  final Map<
+  final LruMap<
     String,
     Tuple4<
       List,
@@ -129,10 +129,14 @@ class Angel extends Routable {
       MiddlewarePipeline
     >
   >
-  handlerCache = {};
+  handlerCache = LruMap(1024);
 
   /// The maximum number of entries in [handlerCache]; `0` disables caching.
-  int maxHandlerCacheSize = 1024;
+  ///
+  /// Setting a smaller size evicts the least recently used entries at once.
+  int get maxHandlerCacheSize => handlerCache.maxSize;
+
+  set maxHandlerCacheSize(int value) => handlerCache.maxSize = value;
 
   /// The default for [maxBodySize]: 10 MB.
   static const int defaultMaxBodySize = 10 * 1024 * 1024;

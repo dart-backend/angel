@@ -73,7 +73,7 @@ The machine was busy during the throughput runs (load average about 7), so the a
 
 The `POST /user` gain is within the noise of these runs. A same-time run of Angel3 and Shelf ([results/run-2-content-type.txt](results/run-2-content-type.txt)) had Angel3 at 100% of Shelf on `GET /`, up from 80%, but the noise makes that ratio rough.
 
-## After fix 2: routes matched with a RegExp (angel3_route 10.1.1)
+## After fix 2: routes matched with a RegExp (angel3_route 10.2.0)
 
 Each route is now compiled once to a single `RegExp`. Each segment of it is an atomic group (`(?=(?<g>…))\k<g>`), so that it matches exactly as the parser did, which never backtracks into an earlier segment. The few routes that cannot be written this way still use the parser. `test/regexp_match_test.dart` of `angel3_route` checks both on 35 route patterns and 55 paths.
 
@@ -97,9 +97,40 @@ Over HTTP, with the old and new builds and Shelf alternated three times per rout
 
 The new build was faster in every round (+18% to +39%), and Angel3 went from 66% to 92% of Shelf on this route. Fixed paths are answered from the route caches, so this fix does not change them; their figures varied by ±25% between rounds of the same build.
 
+## After fix 3: header validation (10.2.1)
+
+Headers set with `[]=` were checked when set, then all checked again, with a `RegExp` per name, before they were sent. Now the second check runs only if a map method that bypasses `[]=` was used, names are checked with a lookup table, and the two default headers of each response are not checked at all.
+
+In the `GET /` profile ([results/profile-angel-get-root-headers.txt](results/profile-angel-get-root-headers.txt)), `validateHeaders`, `isValidHeaderName` and `RegExp.hasMatch` no longer appear (4.9%, 5.7% and 5.7% inclusive before), and building a response fell from 4.3% to 1.4%. Regex self time on `GET /` is now 3.1% of CPU, from 16.1% before the three fixes.
+
+Over HTTP ([results/run-5-headers-ab.txt](results/run-5-headers-ab.txt), alternated three times per route, load average 3 rising to 8), against the build with fix 1 only:
+
+| Route | Fix 1 | Fixes 1–3 | Shelf |
+| --- | ---: | ---: | ---: |
+| `GET /` | 13,827 | 15,023 | 13,246 |
+| `GET /user/42` | 10,982 | 10,353 | 9,059 |
+| `GET /user/*` | 6,715 | 9,151 | 9,801 |
+| `POST /user` | 12,456 | 13,577 | 12,464 |
+
+`GET /` and `POST /user` gained about 9%. The `GET /user/42` difference is within the noise of this run (the old build ranged from 9,878 to 12,656 between rounds). `GET /user/*` includes fix 2.
+
+## After fix 4: route caches (angel3_route 10.2.0, framework 10.2.1)
+
+Both route caches evicted with `cache.remove(cache.keys.first)` on a `LinkedHashMap`, and moved a hit to the end by removing it and adding it again. Removed entries stay in a `LinkedHashMap` as tombstones until it is compacted, and `keys.first` steps over those at its start, so once a cache was full of distinct paths, each eviction stepped over hundreds. Timed alone, 1,024 entries and a new key each time took 1,906 ns a lookup, against 170 ns for a hash map with a linked list; repeated keys took 237 ns against 103 ns.
+
+Both caches are now an `LruMap` of `angel3_route`, which does every operation in constant time. The driver also resolves a miss without the router's cache: in production that cache is behind the driver's, with the same keys, so it could only miss as well.
+
+In the `GET /user/*` profile ([results/profile-angel-get-user-varying-cache.txt](results/profile-angel-get-user-varying-cache.txt)), `Router.resolveAll` (the router cache, 1.8%) and `Iterable.first` (1.3%) no longer appear, and `LruMap` costs 0.7%. Over HTTP ([results/run-6-route-cache-ab.txt](results/run-6-route-cache-ab.txt), against the build with fixes 1–3, alternated three times per route):
+
+| Route | Fixes 1–3 | Fixes 1–4 | Shelf |
+| --- | ---: | ---: | ---: |
+| `GET /user/*` | 8,788 | 9,230 | 9,506 |
+
+The new build was faster in every round, and Angel3 reached 97% of Shelf on this route. In that run `GET /` looked 6% slower, but `ab.sh` always ran the old build first; with the new build first and five rounds ([results/run-6b-route-cache-get-root.txt](results/run-6b-route-cache-get-root.txt)), the two were level (17,522 and 17,581).
+
 ## Suggested fixes, by measured payoff
 
 1. ~~Keep the content type as a `MediaType` field and give the header string only when needed, or cache the parse keyed by the header string. This is worth about 12% on the cheapest routes.~~ Done in 10.2.1, see above.
-2. ~~Stop route parsing on cache misses: precompile each route to a `RegExp` (as Shelf does), or key the cache by the matched route rather than the request path. This is worth about 15–18% on parameterized routes and should close most of the 37% gap.~~ Done in `angel3_route` 10.1.1, see above. What is left is the two route caches (the driver's and the flattened router's), which cost a lookup, an insertion and an eviction for every new path; about 6% of CPU on `GET /user/*`.
-3. Validate only headers that were set or changed, with a code-unit check instead of a regex, and build the default headers without `CaseInsensitiveMap.from`. This is worth about 5–8%.
+2. ~~Stop route parsing on cache misses: precompile each route to a `RegExp` (as Shelf does), or key the cache by the matched route rather than the request path. This is worth about 15–18% on parameterized routes and should close most of the 37% gap.~~ Done in `angel3_route` 10.2.0, see above. The route caches that were left were fixed next, see "After fix 4".
+3. ~~Validate only headers that were set or changed, with a code-unit check instead of a regex, and build the default headers without `CaseInsensitiveMap.from`. This is worth about 5–8%.~~ Done in 10.2.1, see above.
 4. Trim the future chain in `handleRawRequest` and `sendResponse`: a synchronous path when a handler returns a value, and no `Future.forEach` when there are no shutdown hooks. This should be measured after fixes 1–3.

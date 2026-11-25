@@ -1,10 +1,15 @@
 # Change Log
 
-## 10.1.1
+## 10.2.0
 
-### Fixes in 10.1.1
+### New in 10.2.0
+
+* **Caching:** `LruMap`, a `Map` of at most `maxSize` entries that evicts the least recently used one, in constant time. Reading an entry with `[]` or setting it makes it the most recently used, and its keys are listed least recently used first
+
+### Fixes in 10.2.0
 
 * **Matching:** A route is matched with a single `RegExp`, compiled once, instead of its parser, so a path that is not in the router's cache, such as one with a new parameter value, resolves 2 to 6 times faster. It matches exactly as the parser does: each segment takes the first match of its pattern, without backtracking into an earlier one. A route whose inline pattern has a backreference or a named group, or whose wildcard has a group, escape or `|` beside it, is still matched with its parser
+* **Caching:** The cache of `enableCache` is an `LruMap`. Evicting from it took time that grew with the paths evicted before (about 1.9 µs a resolution, once it was full of distinct paths), and now takes constant time; a cached path is also found faster, as it is no longer removed and added again
 
 ## 10.1.0
 

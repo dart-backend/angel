@@ -3,6 +3,7 @@
 # that a busy machine affects them alike, and prints the mean req/s of each.
 #
 #   ./ab.sh build/angel-old/bundle/bin/angel build/angel/bundle/bin/angel
+#   TARGETS='GET /' ROUNDS=5 ./ab.sh ...
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -15,7 +16,8 @@ WARMUP=${WARMUP:-3}
 ROUNDS=${ROUNDS:-3}
 PORT=${PORT:-3000}
 LOAD=build/load/bundle/bin/load
-targets=('GET /' 'GET /user/42' 'GET /user/*' 'POST /user')
+# TARGETS, separated by commas, picks the routes, e.g. TARGETS='GET /,POST /user'.
+IFS=',' read -r -a targets <<< "${TARGETS:-GET /,GET /user/42,GET /user/*,POST /user}"
 
 echo "# $(date -Iseconds) load average $(cut -d' ' -f1-3 /proc/loadavg)"
 results=$(mktemp)

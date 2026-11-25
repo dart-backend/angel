@@ -5,6 +5,8 @@
 ### Fixes in 10.2.1
 
 * **Responses:** `ResponseContext.contentType` no longer parses the `content-type` header again on every read. A parsed header is reused, for this response and later ones, which removes a regex parse from every response sent (about 12% of the CPU time of a minimal request). It still follows the header however that is set, changed or removed
+* **Responses:** Response headers are no longer all checked again before they are sent. A header set with `[]=` is checked when it is set, as before, so they are checked again only if a map method that bypasses `[]=` (`putIfAbsent`, `update`, `updateAll`, `addEntries` or `cast`) was used, and an invalid one still fails the response with a `500`. `ResponseContext.isValidHeaderName` checks a name without a `RegExp`, and a response's default headers are not checked, which together take about 10% of the CPU time of a minimal request off
+* **Routing:** `Angel.handlerCache` is an `angel3_route` `LruMap`, and `maxHandlerCacheSize` sets its `maxSize`, so evicting a path from it takes constant time; it took time that grew with the paths evicted before. A request that misses it is resolved without the router's own cache, which is behind it with the same keys and could only miss too. A new path costs about 3.5 µs less to resolve, and a cached one is found faster
 
 ## 10.2.0
 
