@@ -1,0 +1,34 @@
+name: issue_2_bench
+description: Compares Angel3, Shelf, Relic and plain dart:io on the apps of issue 2.
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  angel3_mock_request: ^10.0.0
+  angel3_route: ^10.2.0
+  angel3_framework:
+    path: ../..
+  logging: ^1.3.0
+  relic: ^2.0.0
+  relic_native: ^2.0.0
+  shelf: ">=1.4.1 <1.5.0"
+  shelf_router: ^1.1.4
+  vm_service: ^15.0.0
+
+dev_dependencies:
+  lints: ^6.0.0
+
+# Measure the workspace's packages, not those on pub.dev.
+dependency_overrides:
+  angel3_container:
+    path: ../../../container/container
+  angel3_http_exception:
+    path: ../../../http_exception
+  angel3_mock_request:
+    path: ../../../mock_request
+  angel3_model:
+    path: ../../../model
+  angel3_route:
+    path: ../../../route

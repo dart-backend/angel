@@ -1,0 +1,51 @@
+# 2026-11-26T00:34:29+08:00 load average 3.97 3.89 3.22
+build/angel-prev/bundle/bin/angel  GET /  req/s=13905  avg=4.60ms  p50=4.27ms  p99=10.62ms  requests=111239  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=12546  avg=5.10ms  p50=4.77ms  p99=11.52ms  requests=100366  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /  req/s=12470  avg=5.13ms  p50=4.62ms  p99=13.11ms  requests=99756  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /  req/s=14049  avg=4.55ms  p50=4.25ms  p99=9.92ms  requests=112393  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=13225  avg=4.84ms  p50=4.50ms  p99=10.75ms  requests=105801  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /  req/s=11551  avg=5.54ms  p50=4.93ms  p99=14.37ms  requests=92407  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /  req/s=14166  avg=4.52ms  p50=4.17ms  p99=9.79ms  requests=113330  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=13609  avg=4.70ms  p50=4.31ms  p99=10.77ms  requests=108874  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /  req/s=11187  avg=5.71ms  p50=5.18ms  p99=13.26ms  requests=89498  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /user/42  req/s=10817  avg=5.91ms  p50=5.51ms  p99=13.37ms  requests=86534  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=9619  avg=6.65ms  p50=6.21ms  p99=14.57ms  requests=76951  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /user/42  req/s=8946  avg=7.15ms  p50=6.55ms  p99=19.45ms  requests=71566  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /user/42  req/s=9536  avg=6.71ms  p50=6.10ms  p99=17.05ms  requests=76288  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=10476  avg=6.10ms  p50=5.74ms  p99=13.82ms  requests=83811  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /user/42  req/s=9571  avg=6.68ms  p50=6.48ms  p99=16.15ms  requests=76566  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /user/42  req/s=10329  avg=6.19ms  p50=5.80ms  p99=13.16ms  requests=82634  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=10438  avg=6.13ms  p50=5.77ms  p99=13.60ms  requests=83502  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /user/42  req/s=9496  avg=6.74ms  p50=6.47ms  p99=15.07ms  requests=75964  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /user/*  req/s=8343  avg=7.67ms  p50=8.11ms  p99=23.81ms  requests=66742  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=9033  avg=7.08ms  p50=6.56ms  p99=16.40ms  requests=72260  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /user/*  req/s=9391  avg=6.81ms  p50=6.48ms  p99=13.75ms  requests=75128  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /user/*  req/s=8824  avg=7.25ms  p50=6.78ms  p99=16.15ms  requests=70594  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=9018  avg=7.09ms  p50=6.59ms  p99=15.79ms  requests=72147  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /user/*  req/s=9185  avg=6.96ms  p50=6.55ms  p99=16.56ms  requests=73478  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  GET /user/*  req/s=9198  avg=6.96ms  p50=6.46ms  p99=15.86ms  requests=73581  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=9640  avg=6.64ms  p50=6.14ms  p99=14.55ms  requests=77116  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  GET /user/*  req/s=9942  avg=6.43ms  p50=6.00ms  p99=14.20ms  requests=79539  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  POST /user  req/s=13330  avg=4.80ms  p50=5.35ms  p99=11.84ms  requests=106637  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=13728  avg=4.66ms  p50=4.30ms  p99=10.31ms  requests=109825  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  POST /user  req/s=12522  avg=5.11ms  p50=4.67ms  p99=12.47ms  requests=100178  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  POST /user  req/s=13828  avg=4.63ms  p50=4.27ms  p99=10.00ms  requests=110621  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=13013  avg=4.91ms  p50=4.51ms  p99=10.71ms  requests=104100  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  POST /user  req/s=11970  avg=5.34ms  p50=5.03ms  p99=12.67ms  requests=95756  errors=0  non2xx=0
+build/angel-prev/bundle/bin/angel  POST /user  req/s=12786  avg=5.00ms  p50=4.61ms  p99=11.18ms  requests=102287  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=12355  avg=5.18ms  p50=4.76ms  p99=11.94ms  requests=98840  errors=0  non2xx=0
+build/shelf/bundle/bin/shelf  POST /user  req/s=11533  avg=5.55ms  p50=6.45ms  p99=13.36ms  requests=92266  errors=0  non2xx=0
+# load average 8.15 7.17 5.04
+# mean req/s
+GET /	build/angel/bundle/bin/angel	13127
+GET /	build/angel-prev/bundle/bin/angel	14040
+GET /	build/shelf/bundle/bin/shelf	11736
+GET /user/42	build/angel/bundle/bin/angel	10178
+GET /user/42	build/angel-prev/bundle/bin/angel	10227
+GET /user/42	build/shelf/bundle/bin/shelf	9338
+GET /user/*	build/angel/bundle/bin/angel	9230
+GET /user/*	build/angel-prev/bundle/bin/angel	8788
+GET /user/*	build/shelf/bundle/bin/shelf	9506
+POST /user	build/angel/bundle/bin/angel	13032
+POST /user	build/angel-prev/bundle/bin/angel	13315
+POST /user	build/shelf/bundle/bin/shelf	12008
