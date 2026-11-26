@@ -17,6 +17,7 @@ import 'controller.dart';
 import 'request_context.dart';
 import 'server.dart' show Angel;
 import 'quality_list.dart';
+import '../util.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
@@ -435,7 +436,7 @@ abstract class ResponseContext<RawResponse>
     }
 
     _completeDone();
-    return Future.value();
+    return completed();
   }
 
   /// Serializes JSON to the response.

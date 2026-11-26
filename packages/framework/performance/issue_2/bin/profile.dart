@@ -8,7 +8,8 @@
 /// ```
 ///
 /// Self time counts the frame on top of each sample, inclusive time every
-/// frame on its stack (once per sample).
+/// frame on its stack (once per sample). Time spent in `dart:async` is also
+/// charged to the first caller outside it, to show what the futures are of.
 library;
 
 import 'dart:io';
@@ -38,6 +39,9 @@ Future<void> main(List<String> args) async {
   var self = <String, int>{};
   var inclusive = <String, int>{};
   var byLibrary = <String, int>{};
+  // Time in dart:async, charged to the first caller outside it.
+  var asyncByCaller = <String, int>{};
+  var asyncTotal = 0;
   var total = 0;
   for (var id in isolates) {
     var samples = await service.getCpuSamples(id, start, end - start);
@@ -50,6 +54,20 @@ Future<void> main(List<String> args) async {
       total++;
       self.update(names[stack.first], (n) => n + 1, ifAbsent: () => 1);
       byLibrary.update(libraries[stack.first], (n) => n + 1, ifAbsent: () => 1);
+      if (_isAsync(functions[stack.first])) {
+        asyncTotal++;
+        ProfileFunction? caller;
+        for (var i in stack) {
+          if (!_isAsync(functions[i])) {
+            caller = functions[i];
+            break;
+          }
+        }
+        var name = caller == null || _isScheduler(caller)
+            ? '(a microtask or event, no caller)'
+            : _name(caller);
+        asyncByCaller.update(name, (n) => n + 1, ifAbsent: () => 1);
+      }
       for (var name in {for (var i in stack) names[i]}) {
         inclusive.update(name, (n) => n + 1, ifAbsent: () => 1);
       }
@@ -71,6 +89,8 @@ Future<void> main(List<String> args) async {
   table('Self time by library', byLibrary, 20);
   table('Self time by function', self, top);
   table('Inclusive time by function', inclusive, top);
+  print('\n# dart:async self time: ${pct(asyncTotal).trim()}% of all samples');
+  table('dart:async self time by first caller outside it', asyncByCaller, 30);
   exit(0);
 }
 
@@ -87,6 +107,14 @@ String _name(ProfileFunction f) {
   };
   return '$name  (${_library(f)})';
 }
+
+/// Whether [f] is of `dart:async`, where futures, streams and zones are.
+bool _isAsync(ProfileFunction f) =>
+    (f.resolvedUrl ?? '').contains('/sdk/lib/async/');
+
+/// Whether [f] runs microtasks or events, so has no caller of its own.
+bool _isScheduler(ProfileFunction f) =>
+    (f.resolvedUrl ?? '').contains('isolate_patch.dart');
 
 String _library(ProfileFunction f) {
   var uri = f.resolvedUrl ?? '';

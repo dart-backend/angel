@@ -1,8 +1,15 @@
+import 'dart:async';
+
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:logging/logging.dart';
 
 final RegExp straySlashes = RegExp(r'(^/+)|(/+$)');
+
+/// A [Future] that is complete already, unlike one of `Future.value()`,
+/// which completes in a microtask of its own. A callback of `then` that
+/// returns it costs no more microtasks.
+Future<void> completed() => (Completer<void>.sync()..complete()).future;
 
 T? matchingAnnotation<T>(List<ReflectedInstance> metadata) {
   for (var metaDatum in metadata) {

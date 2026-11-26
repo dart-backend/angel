@@ -124,7 +124,7 @@ void main() {
 
   String viaRouter(String pattern, String path) {
     var router = Router<int>()..get(pattern, 0);
-    // As the framework does: stripStraySlashes cannot strip '' or '/'.
+    // As the framework does, which strips the path before resolving it.
     var results = router.resolveAbsolute(strip(path), strip: false);
     if (results.isEmpty) return 'no match';
     var result = results.first;

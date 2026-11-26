@@ -7,7 +7,8 @@ Compares the Angel3, Shelf and Relic apps of [issue 2](../../../../doc/issues/is
 - `bin/angel.dart`, `bin/shelf.dart`, `bin/relic.dart`: the apps of the issue, unchanged except that `ISOLATES` and `PORT` can be set from the environment.
 - `bin/raw.dart`: the same three routes on plain `dart:io`.
 - `bin/load.dart`: an HTTP/1.1 load generator over keep-alive connections, used because `wrk` is not available here. A `*` in the path is replaced by a value that differs on every request.
-- `bin/profile.dart`: samples the CPU of a server started with `--observe` and prints self and inclusive time per function.
+- `bin/profile.dart`: samples the CPU of a server started with `--observe` and prints self and inclusive time per function, and the time in `dart:async` by the first caller outside it.
+- `bin/microtasks.dart`: counts the microtasks each request schedules, and times requests, through `AngelHttp` with mock requests, so without sockets.
 - `bin/route_bench.dart`: times `Router.resolveAbsolute` without its cache, single-threaded, which a busy machine disturbs less than the HTTP benchmarks.
 - `run.sh`: builds everything AOT with `dart build cli` and benchmarks every server on every route.
 - `ab.sh`: compares builds of servers given as paths, alternating them several times per route so that load on the machine affects them alike.
@@ -128,9 +129,64 @@ In the `GET /user/*` profile ([results/profile-angel-get-user-varying-cache.txt]
 
 The new build was faster in every round, and Angel3 reached 97% of Shelf on this route. In that run `GET /` looked 6% slower, but `ab.sh` always ran the old build first; with the new build first and five rounds ([results/run-6b-route-cache-get-root.txt](results/run-6b-route-cache-get-root.txt)), the two were level (17,522 and 17,581).
 
+## Profile after fixes 1–4
+
+Profiled on 2026-11-26 on a quiet machine (load average 0.8), as above ([results/profile-angel-get-root-fixes-1-4.txt](results/profile-angel-get-root-fixes-1-4.txt), [results/profile-angel-get-user-varying-fixes-1-4.txt](results/profile-angel-get-user-varying-fixes-1-4.txt)). Self time by library, against the first profiles:
+
+| Library | `GET /` before | `GET /` after | `GET /user/*` before | `GET /user/*` after |
+| --- | ---: | ---: | ---: | ---: |
+| Socket I/O (`socket_patch.dart`) | 27.8% | 34.4% | 25.0% | 33.8% |
+| Futures (`future_impl.dart`) | 7.9% | 10.4% | 7.0% | 9.1% |
+| `RegExp` | 16.1% | 3.1% | 11.1% | 6.6% |
+| `belatuk_combinator` | | | 2.8% | |
+
+Socket I/O, which plain `dart:io` pays as well, is now the largest share. Futures have grown because the rest has shrunk. What is left that Angel3 can change:
+
+- **The request path is stripped with a `RegExp`.** `AngelHttp.createRequestContext` removes the leading and trailing slashes of every path with `replaceAll(RegExp(r'(^/+)|(/+$)'), '')`, which costs 3.5% of CPU on `GET /` and 5.0% on `GET /user/*`. It is the largest remaining regex use. On `GET /user/*` the rest is route matching (`_RouteRegExp.parse`, 3.6% inclusive).
+- **The future chain** is about 9–10% self time, spread over `then`, `_propagateToListeners` and zone callbacks, with no single hotspot.
+- **Writing the body.** On `GET /user/*`, `HttpResponseContext.add` costs 27.6% inclusive, most of it `dart:io` writing to the socket.
+
+## After fix 5: request path stripping (angel3_route 10.2.0, framework 10.2.1)
+
+`AngelHttp` and `AngelHttp2` now strip the slashes of each request path with `stripStraySlashes` of `angel3_route`, which scans code units, instead of `replaceAll(RegExp(r'(^/+)|(/+$)'), '')`. That function threw on an empty string, which is fixed as well. Timed alone, it takes 17 ns on `/` and 40 ns on `/user/123456`, against 595 ns and 1,605 ns with the `RegExp`.
+
+In the `GET /user/*` profile ([results/profile-angel-get-user-varying-path-strip.txt](results/profile-angel-get-user-varying-path-strip.txt)), `String.replaceAll` no longer appears, `AngelHttp.createRequestContext` fell from 7.0% to 2.1% inclusive, and regex self time from 6.6% to 2.8%, all of it route matching. Over HTTP ([results/run-7-path-strip-ab.txt](results/run-7-path-strip-ab.txt), alternated three times per route, load average 2.4 rising to 7.8):
+
+| Route | Fixes 1–4 | Fixes 1–5 | Shelf |
+| --- | ---: | ---: | ---: |
+| `GET /` | 14,004 | 14,289 | 13,533 |
+| `GET /user/42` | 10,803 | 11,085 | 9,812 |
+| `GET /user/*` | 9,263 | 9,784 | 9,906 |
+| `POST /user` | 13,241 | 13,297 | 12,431 |
+
+The new build was faster in 10 of 12 rounds and in every round of `GET /user/*`, where it reached 99% of Shelf. The gains of 0.4–5.6% are near the noise of a run on a machine this busy, but they agree with the 3.5–5% the profile gave the `RegExp`.
+
+## Fix 6: the future chain (framework 10.2.1)
+
+`bin/profile.dart` now also charges the time in `dart:async` to the first caller outside it. On `GET /` after fix 5 ([results/profile-angel-get-root-async-callers.txt](results/profile-angel-get-root-async-callers.txt)), it showed that of the 20% of `GET /` in `dart:async`, the framework's own calls start about 2.4%. 8% is running microtasks and events, shared by the framework and `dart:io`, and the rest is `dart:io`: the HTTP parser, the socket streams and the sink. A request through the mock schedules 7 microtasks, 8 in a zone, of which 4 are the framework's.
+
+Two changes were tried:
+
+1. **Running the pipeline without futures** while handlers give their results at once, and sending the response at once after them. This saved a microtask and about 1 µs a request, but it cannot be kept. The pipeline took one microtask after each handler, and code relies on it: a handler that calls `res.json(value)` without waiting for it and returns `false`, as `angel3_openapi` does, has its body written in that microtask (`serialize` awaits the serializer), and without it the response was sent empty. The pipeline runs as before, and `test/async_chain_test.dart` checks that such a handler, and such middleware, still work.
+2. **Closing without needless futures.** `RequestContext.close` no longer runs `Future.forEach` when it has no shutdown hooks, `HttpResponseContext.close` is no longer `async`, and both give a `Future` that is complete already. A request schedules a microtask fewer.
+
+With the second only, through the mock ([`bin/microtasks.dart`](bin/microtasks.dart), the builds alternated three times):
+
+| Request | Microtasks before | after | ns before | ns after |
+| --- | ---: | ---: | ---: | ---: |
+| `GET /` | 7 | 6 | 16,391 | 14,329 |
+| `GET /user/*` | 7 | 6 | 23,204 | 21,949 |
+| `POST /user` | 7 | 6 | 14,859 | 13,826 |
+| `GET /` in a zone | 8 | 7 | 15,486 | 14,555 |
+
+A real request costs about 140 µs of CPU, so the 1–2 µs saved is about 1%, below the noise over HTTP ([results/run-8-async-chain-ab.txt](results/run-8-async-chain-ab.txt): the new build was faster in 6 rounds of 12). The future chain that is left belongs to `dart:io`, or to the framework's API: `createRequestContext` and `createResponseContext` return futures, which the driver must wait for.
+
+The first change also showed that `angel3_shelf` hijacked a request in time only because the framework took a microtask or two before it sent the response: `shelf.Request.hijack` runs the hijack in a microtask. `embedShelf` now waits for the hijack, whatever the framework's timing.
+
 ## Suggested fixes, by measured payoff
 
 1. ~~Keep the content type as a `MediaType` field and give the header string only when needed, or cache the parse keyed by the header string. This is worth about 12% on the cheapest routes.~~ Done in 10.2.1, see above.
 2. ~~Stop route parsing on cache misses: precompile each route to a `RegExp` (as Shelf does), or key the cache by the matched route rather than the request path. This is worth about 15–18% on parameterized routes and should close most of the 37% gap.~~ Done in `angel3_route` 10.2.0, see above. The route caches that were left were fixed next, see "After fix 4".
 3. ~~Validate only headers that were set or changed, with a code-unit check instead of a regex, and build the default headers without `CaseInsensitiveMap.from`. This is worth about 5–8%.~~ Done in 10.2.1, see above.
-4. Trim the future chain in `handleRawRequest` and `sendResponse`: a synchronous path when a handler returns a value, and no `Future.forEach` when there are no shutdown hooks. This should be measured after fixes 1–3.
+4. ~~Trim the future chain in `handleRawRequest` and `sendResponse`: a synchronous path when a handler returns a value, and no `Future.forEach` when there are no shutdown hooks.~~ Tried in 10.2.1, see "Fix 6": the synchronous path breaks handlers that do not wait for what they write, and the rest is worth about 1%.
+5. ~~Strip the slashes of the request path in `AngelHttp.createRequestContext` with a code-unit scan instead of a `RegExp`. This is worth about 3.5–5%.~~ Done in 10.2.1, see "After fix 5".

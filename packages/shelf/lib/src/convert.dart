@@ -6,6 +6,8 @@ import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:stream_channel/stream_channel.dart';
 
+import 'hijack.dart';
+
 /// Creates a [shelf.Request]  analogous to the input [req].
 ///
 /// The request's `context` will contain [req.container] as `angel3_shelf.container`, as well as
@@ -37,6 +39,7 @@ Future<shelf.Request> convertRequest(
   requestedUri = Uri.parse('http://${req.hostname}');
   requestedUri = requestedUri.replace(path: req.uri!.path);
 
+  var hijacked = Completer<void>();
   onHijack = (void Function(StreamChannel<List<int>> channel) hijack) async {
     try {
       var raw = await res.detach();
@@ -68,6 +71,8 @@ Future<shelf.Request> convertRequest(
         e,
         st,
       );
+    } finally {
+      hijacked.complete();
     }
   };
 
@@ -77,7 +82,7 @@ Future<shelf.Request> convertRequest(
     url = url.replace(path: url.path.substring(1));
   }
 
-  return shelf.Request(
+  var request = shelf.Request(
     req.method,
     requestedUri,
     protocolVersion: protocolVersion,
@@ -90,6 +95,8 @@ Future<shelf.Request> convertRequest(
       ..addAll(context ?? {}),
     onHijack: onHijack,
   );
+  setHijack(request, hijacked.future);
+  return request;
 }
 
 /// Applies the state of the [shelfResponse] into the [angelResponse].

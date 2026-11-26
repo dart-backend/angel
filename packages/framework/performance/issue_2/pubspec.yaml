@@ -6,6 +6,7 @@ environment:
   sdk: ^3.13.0
 
 dependencies:
+  angel3_mock_request: ^10.0.0
   angel3_route: ^10.2.0
   angel3_framework:
     path: ../..

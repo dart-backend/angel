@@ -1,0 +1,35 @@
+# 2026-11-26T06:59:16+08:00 load average 4.08 3.85 4.15
+build/angel-fix5/bundle/bin/angel  GET /  req/s=12975  avg=4.93ms  p50=4.47ms  p99=12.53ms  requests=103803  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=13291  avg=4.81ms  p50=4.43ms  p99=11.05ms  requests=106327  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /  req/s=13985  avg=4.57ms  p50=4.21ms  p99=10.64ms  requests=111876  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=13646  avg=4.69ms  p50=4.29ms  p99=11.12ms  requests=109169  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /  req/s=11846  avg=5.40ms  p50=4.98ms  p99=13.49ms  requests=94767  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=12269  avg=5.21ms  p50=4.83ms  p99=14.28ms  requests=98155  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /user/42  req/s=8305  avg=7.71ms  p50=6.72ms  p99=24.98ms  requests=66438  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=10091  avg=6.34ms  p50=6.33ms  p99=16.18ms  requests=80727  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /user/42  req/s=10338  avg=6.19ms  p50=5.84ms  p99=12.73ms  requests=82703  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=10187  avg=6.28ms  p50=5.94ms  p99=13.11ms  requests=81495  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /user/42  req/s=10178  avg=6.29ms  p50=5.85ms  p99=13.85ms  requests=81422  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=9873  avg=6.48ms  p50=5.96ms  p99=16.02ms  requests=78982  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /user/*  req/s=8778  avg=7.29ms  p50=6.79ms  p99=17.38ms  requests=70220  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=8793  avg=7.28ms  p50=6.74ms  p99=15.43ms  requests=70343  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /user/*  req/s=8665  avg=7.38ms  p50=6.87ms  p99=16.04ms  requests=69320  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=8582  avg=7.45ms  p50=6.79ms  p99=18.40ms  requests=68659  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  GET /user/*  req/s=8140  avg=7.86ms  p50=7.11ms  p99=20.89ms  requests=65117  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=8554  avg=7.48ms  p50=6.90ms  p99=17.25ms  requests=68433  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  POST /user  req/s=12502  avg=5.12ms  p50=5.14ms  p99=13.22ms  requests=100015  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=12595  avg=5.08ms  p50=4.65ms  p99=11.96ms  requests=100757  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  POST /user  req/s=12572  avg=5.09ms  p50=4.61ms  p99=12.08ms  requests=100579  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=12530  avg=5.11ms  p50=4.66ms  p99=11.74ms  requests=100236  errors=0  non2xx=0
+build/angel-fix5/bundle/bin/angel  POST /user  req/s=12542  avg=5.10ms  p50=4.66ms  p99=11.53ms  requests=100333  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=12429  avg=5.15ms  p50=4.66ms  p99=12.91ms  requests=99429  errors=0  non2xx=0
+# load average 7.89 6.63 5.30
+# mean req/s
+GET /	build/angel/bundle/bin/angel	13069
+GET /	build/angel-fix5/bundle/bin/angel	12935
+GET /user/42	build/angel/bundle/bin/angel	10050
+GET /user/42	build/angel-fix5/bundle/bin/angel	9607
+GET /user/*	build/angel/bundle/bin/angel	8643
+GET /user/*	build/angel-fix5/bundle/bin/angel	8528
+POST /user	build/angel/bundle/bin/angel	12518
+POST /user	build/angel-fix5/bundle/bin/angel	12539

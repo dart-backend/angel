@@ -7,10 +7,9 @@ import 'package:angel3_framework/angel3_framework.dart' hide Header;
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http2/transport.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
+import 'package:angel3_route/string_util.dart';
 import 'package:uuid/uuid.dart';
 import 'package:meta/meta.dart';
-
-final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   final StreamController<List<int>> _body = StreamController();
@@ -124,7 +123,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
           }
           uri = uri.replace(path: inUri.path);
           if (inUri.hasQuery) uri = uri.replace(query: inUri.query);
-          var path = uri.path.replaceAll(_straySlashes, '');
+          var path = stripStraySlashes(uri.path);
           req._path = path;
           if (path.isEmpty) req._path = '/';
           break;

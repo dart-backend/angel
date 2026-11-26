@@ -262,44 +262,51 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   }
 
   @override
-  Future close() async {
-    if (!_isDetached) {
-      if (!_isClosed) {
-        if (!isBuffered) {
-          // Finalizer failures propagate, leaving the response open for the
-          // error handler.
-          if (_finalizing != null ||
-              hasPendingFinalizers ||
-              _finalizerError != null) {
-            await _commitOrThrow();
-          }
-          // Outside the try below: an invalid header must fail the response
-          // (leaving it open for the error handler), not be swallowed with
-          // the raw response never closed, which leaves the client waiting.
-          if (!_streamInitialized) validateHeaders();
-          try {
-            _openStream();
-            _flushQueued();
-            // Flushes the compression trailer, if any.
-            _encoderSink?.close();
-            // Observe the result: an unhandled failure here (e.g. the
-            // connection dropped) would otherwise terminate the server.
-            rawResponse.close().catchError((Object e, StackTrace st) {
-              app?.logger.warning('Failed to send response', e, st);
-            });
-          } catch (_) {
-            // This only seems to occur on `MockHttpRequest`, but
-            // this try/catch prevents a crash.
-          }
-        } else {
-          _buffer!.lock();
-        }
-
+  Future close() {
+    // Not async, which would cost a Future and a microtask per response; an
+    // error still fails the Future returned, as it did.
+    try {
+      if (_isDetached) return Future.value();
+      if (!_isClosed && isBuffered) {
+        _buffer!.lock();
         _isClosed = true;
       }
-
-      await super.close();
+      if (_isClosed) return super.close();
+      // Finalizer failures propagate, leaving the response open for the
+      // error handler.
+      if (_finalizing != null ||
+          hasPendingFinalizers ||
+          _finalizerError != null) {
+        return _commitOrThrow().then((_) => _closeStream());
+      }
+      return _closeStream();
+    } catch (e, st) {
+      return Future.error(e, st);
     }
+  }
+
+  /// Sends what is left of an unbuffered response, and closes it.
+  Future<void> _closeStream() {
+    // Outside the try below: an invalid header must fail the response
+    // (leaving it open for the error handler), not be swallowed with the raw
+    // response never closed, which leaves the client waiting.
+    if (!_streamInitialized) validateHeaders();
+    try {
+      _openStream();
+      _flushQueued();
+      // Flushes the compression trailer, if any.
+      _encoderSink?.close();
+      // Observe the result: an unhandled failure here (e.g. the connection
+      // dropped) would otherwise terminate the server.
+      rawResponse.close().catchError((Object e, StackTrace st) {
+        app?.logger.warning('Failed to send response', e, st);
+      });
+    } catch (_) {
+      // This only seems to occur on `MockHttpRequest`, but this try/catch
+      // prevents a crash.
+    }
+    _isClosed = true;
+    return super.close();
   }
 }
 

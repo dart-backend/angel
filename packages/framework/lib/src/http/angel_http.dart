@@ -11,6 +11,7 @@ import 'dart:io'
         SecurityContext;
 
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_route/string_util.dart';
 
 import '../core/core.dart';
 import 'bind_secure.dart';
@@ -18,8 +19,6 @@ import 'connections.dart';
 import 'headers.dart';
 import 'http_request_context.dart';
 import 'http_response_context.dart';
-
-final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 typedef ServerGeneratorType = Future<HttpServer> Function(dynamic, int);
 
@@ -200,7 +199,7 @@ class AngelHttp
     HttpRequest request,
     HttpResponse response,
   ) {
-    var path = request.uri.path.replaceAll(_straySlashes, '');
+    var path = stripStraySlashes(request.uri.path);
     if (path.isEmpty) path = '/';
     return HttpRequestContext.from(request, app, path);
   }
