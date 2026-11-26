@@ -28,6 +28,7 @@ import 'response_context.dart';
 import 'routable.dart';
 import 'server.dart' show Angel;
 import 'quality_list.dart';
+import '../util.dart';
 
 part 'injection.dart';
 
@@ -552,15 +553,19 @@ abstract class RequestContext<RawRequest> {
 
   /// Disposes of all resources.
   @mustCallSuper
-  Future<void> close() async {
+  Future<void> close() {
     if (!_closed) {
       _closed = true;
       _acceptsAllCache = null;
       _acceptRanges = null;
       serviceParams.clear();
       params.clear();
-      await Future.forEach(shutdownHooks, (dynamic hook) => hook());
+      // Most requests have no hooks, and need no Future.forEach.
+      if (shutdownHooks.isNotEmpty) {
+        return Future.forEach(shutdownHooks, (dynamic hook) => hook());
+      }
     }
+    return completed();
   }
 }
 

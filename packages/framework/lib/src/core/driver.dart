@@ -277,7 +277,15 @@ abstract class Driver<
           >
           resolveTuple() {
             var r = app.optimizedRouter;
-            var resolved = resolveRequest(r, path, req.method, strip: false);
+            // Not through the router's own cache: in production this one is
+            // in front of it, with the same keys, so it would only miss.
+            var resolved = resolveRequest(
+              r,
+              path,
+              req.method,
+              strip: false,
+              cached: false,
+            );
             if (resolved.isEmpty) {
               throw AngelHttpException.notFound();
             }
@@ -474,15 +482,8 @@ abstract class Driver<
     resolve,
   ) {
     var cache = app.handlerCache;
-    var max = app.maxHandlerCacheSize;
-    if (max <= 0) return resolve();
-
-    // Re-inserting moves the entry to the end, keeping eviction LRU.
-    var tuple = cache.remove(key) ?? resolve();
-    while (cache.length >= max) {
-      cache.remove(cache.keys.first);
-    }
-    return cache[key] = tuple;
+    if (cache.maxSize <= 0) return resolve();
+    return cache[key] ??= resolve();
   }
 
   /// Handles an [AngelHttpException].

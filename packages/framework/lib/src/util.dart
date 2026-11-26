@@ -1,8 +1,15 @@
+import 'dart:async';
+
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:logging/logging.dart';
 
 final RegExp straySlashes = RegExp(r'(^/+)|(/+$)');
+
+/// A [Future] that is complete already, unlike one of `Future.value()`,
+/// which completes in a microtask of its own. A callback of `then` that
+/// returns it costs no more microtasks.
+Future<void> completed() => (Completer<void>.sync()..complete()).future;
 
 T? matchingAnnotation<T>(List<ReflectedInstance> metadata) {
   for (var metaDatum in metadata) {
@@ -114,14 +121,25 @@ T? tryReflect<T>(T? Function() reflect) {
 /// when a `GET` route matches, so every `GET` route also answers `HEAD`
 /// (RFC 9110). Routes for any method (such as fallbacks) match both, which
 /// is why the answering route's method is checked rather than emptiness.
+///
+/// Unless [cached], the router's cache (see [Router.enableCache]) is not
+/// used: for a caller with a cache of its own in front of it.
 List<RoutingResult<T>> resolveRequest<T>(
   Router<T> router,
   String path,
   String method, {
   bool strip = true,
+  bool cached = true,
 }) {
-  List<RoutingResult<T>> resolve(String m) =>
-      router.resolveAbsolute(path, method: m, strip: strip).toList();
+  List<RoutingResult<T>> resolve(String m) {
+    if (cached) {
+      return router.resolveAbsolute(path, method: m, strip: strip).toList();
+    }
+    var out = <RoutingResult<T>>[];
+    router.resolve(path, path, out, method: m, strip: strip);
+    return out;
+  }
+
   bool answeredBy(List<RoutingResult<T>> results, String m) =>
       results.any((r) => r.deepest.shallowRoute.method == m);
 

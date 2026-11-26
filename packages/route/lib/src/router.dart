@@ -6,6 +6,7 @@ import 'package:belatuk_combinator/belatuk_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 import '../string_util.dart';
+import 'lru_map.dart';
 import 'routing_exception.dart';
 part 'grammar.dart';
 part 'route.dart';
@@ -22,8 +23,7 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 /// An abstraction over complex [Route] trees. Use this instead of the raw API. :)
 class Router<T> {
-  final Map<String, Iterable<RoutingResult<T>>> _cache = {};
-  int _maxCacheSize = 1024;
+  final LruMap<String, Iterable<RoutingResult<T>>> _cache = LruMap(1024);
 
   //final List<_ChainedRouter> _chained = [];
   final List<T> _middleware = [];
@@ -115,7 +115,7 @@ class Router<T> {
   /// of 0 or less disables caching.
   void enableCache({int maxSize = 1024}) {
     _useCache = true;
-    _maxCacheSize = maxSize;
+    _cache.maxSize = maxSize;
   }
 
   /// The number of resolutions currently cached (see [enableCache]).
@@ -382,7 +382,7 @@ class Router<T> {
 
         if (route is SymlinkRoute<T>) {
           if (route.parser != null) {
-            if (_tryParse(route.parser, scanner)?.successful == true) {
+            if (route._parseAt(scanner)?.successful == true) {
               var s = crawl(route.router);
               if (s) success = true;
             }
@@ -390,7 +390,7 @@ class Router<T> {
 
           scanner.position = pos;
         } else if (route.method == '*' || route.method == method) {
-          var parseResult = _tryParse(route.parser, scanner);
+          var parseResult = route._parseAt(scanner);
           if (parseResult != null) {
             if (parseResult.successful && scanner.isDone) {
               var tailResult = parseResult.value?.tail ?? '';
@@ -445,16 +445,14 @@ class Router<T> {
     String method = 'GET',
     bool strip = true,
   }) {
-    if (_useCache && _maxCacheSize > 0) {
+    if (_useCache && _cache.maxSize > 0) {
       var key = '$method\u0000$strip\u0000$absolute\u0000$relative';
-      // Re-inserting moves the entry to the end, keeping eviction LRU.
-      var results =
-          _cache.remove(key) ??
-          _resolveAll(absolute, relative, method: method, strip: strip);
-      while (_cache.length >= _maxCacheSize) {
-        _cache.remove(_cache.keys.first);
-      }
-      return _cache[key] = results;
+      return _cache[key] ??= _resolveAll(
+        absolute,
+        relative,
+        method: method,
+        strip: strip,
+      );
     }
 
     return _resolveAll(absolute, relative, method: method, strip: strip);

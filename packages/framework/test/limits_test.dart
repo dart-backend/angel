@@ -145,6 +145,21 @@ void main() {
       expect(app.handlerCache.keys, unorderedEquals(['GETa', 'GETusers/2']));
     });
 
+    test(
+      'is not backed by the router cache, which it is in front of',
+      () async {
+        // As when the server starts in production: routes are flattened into a
+        // router with a cache of its own.
+        app.optimizeForProduction();
+        await get('/users/1');
+        await get('/users/2');
+        await get('/a');
+
+        expect(app.handlerCache, hasLength(3));
+        expect(app.optimizedRouter.cacheLength, 0);
+      },
+    );
+
     test('is disabled when maxHandlerCacheSize is 0', () async {
       app.maxHandlerCacheSize = 0;
       expect(await get('/users/1'), json.encode('user 1'));

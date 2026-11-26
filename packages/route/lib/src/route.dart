@@ -49,6 +49,26 @@ class Route<T> {
 
   Parser<RouteResult>? get parser => _parser ??= _routeDefinition?.compile();
 
+  /// This route as a single [RegExp], which matches as [parser] does but
+  /// faster, or `null` if it cannot be written as one.
+  late final _RouteRegExp? _regExp =
+      // The parser of a route without segments matches the empty string.
+      _routeDefinition?.segments.isNotEmpty == true
+      ? _routeDefinition!._compileRegExp()
+      : _RouteRegExp(RegExp(''), const []);
+
+  /// Matches this route at the [scanner]'s position, as [parser] does: on
+  /// success the scanner is moved past the match. Returns `null`, or an
+  /// unsuccessful result, if the route does not match.
+  ParseResult<RouteResult>? _parseAt(SpanScanner scanner) {
+    var parser = this.parser;
+    var compiled = _regExp;
+    if (parser == null || compiled == null) {
+      return Router._tryParse(parser, scanner);
+    }
+    return compiled.parse(parser, scanner);
+  }
+
   /// The text that a path must start with to match this route: its leading
   /// constant segments, joined by `/`, as its [parser] matches them exactly.
   /// Checking it first spares the parser of most routes that a path cannot

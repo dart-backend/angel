@@ -17,18 +17,32 @@ import 'controller.dart';
 import 'request_context.dart';
 import 'server.dart' show Angel;
 import 'quality_list.dart';
+import '../util.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
-final RegExp _headerToken = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
+
+/// Whether each ASCII character may be in a header name (an RFC 9110 token).
+final List<bool> _tokenChars = () {
+  var table = List<bool>.filled(128, false);
+  const symbols = "!#\$%&'*+-.^_`|~";
+  for (var c in symbols.codeUnits) {
+    table[c] = true;
+  }
+  for (var c = 0x30; c <= 0x39; c++) {
+    table[c] = true;
+  }
+  for (var c = 0x41; c <= 0x5a; c++) {
+    table[c] = true;
+    table[c + 0x20] = true;
+  }
+  return table;
+}();
 
 /// A convenience wrapper around an outgoing HTTP request.
 abstract class ResponseContext<RawResponse>
     implements StreamConsumer<List<int>>, StreamSink<List<int>>, StringSink {
   final Map properties = {};
-  final CaseInsensitiveMap<String> _headers = _ValidatingHeaders.from({
-    'content-type': 'text/plain',
-    'server': 'Angel3',
-  });
+  final CaseInsensitiveMap<String> _headers = _ValidatingHeaders.defaults();
 
   //final log = Logger('ResponseContext');
 
@@ -59,13 +73,20 @@ abstract class ResponseContext<RawResponse>
   final Map<String, Converter<List<int>, List<int>>> encoders = {};
 
   /// Whether [name] is a valid HTTP header name (an RFC 9110 token).
-  static bool isValidHeaderName(String name) =>
-      name.isNotEmpty && _headerToken.hasMatch(name);
+  static bool isValidHeaderName(String name) {
+    if (name.isEmpty) return false;
+    for (var i = 0; i < name.length; i++) {
+      var c = name.codeUnitAt(i);
+      if (c > 0x7f || !_tokenChars[c]) return false;
+    }
+    return true;
+  }
 
   /// Whether [value] can be sent as an HTTP header value: visible ASCII,
   /// space and tab, the same rule `dart:io` enforces.
   static bool isValidHeaderValue(String value) {
-    for (var c in value.codeUnits) {
+    for (var i = 0; i < value.length; i++) {
+      var c = value.codeUnitAt(i);
       if (c != 0x09 && (c < 0x20 || c > 0x7e)) return false;
     }
     return true;
@@ -75,13 +96,18 @@ abstract class ResponseContext<RawResponse>
   /// be sent, after removing them so that the error response can be.
   ///
   /// Called before headers are sent, so an invalid header set by the app
-  /// fails the same clear way on every transport.
+  /// fails the same clear way on every transport. Headers set with `[]=`
+  /// were checked already, so this checks them only if a map method that
+  /// bypasses `[]=` was used since.
   void validateHeaders() {
+    var headers = this.headers;
+    if (headers is _ValidatingHeaders && !headers._mayBeInvalid) return;
     var invalid = [
       for (var name in headers.keys)
         if (!isValidHeaderName(name) || !isValidHeaderValue(headers[name]!))
           name,
     ];
+    if (headers is _ValidatingHeaders) headers._checked();
     if (invalid.isEmpty) return;
     invalid.forEach(headers.remove);
     throw AngelHttpException(
@@ -306,12 +332,37 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Gets or sets the content type to send back to a client.
+  ///
+  /// It is the `content-type` header, parsed; `text/plain` if there is none,
+  /// or it does not parse.
   MediaType get contentType {
+    var header = headers['content-type'];
+    if (header == null) return _textPlain;
+    return _parsedContentTypes[header] ?? _parseContentType(header);
+  }
+
+  /// The fallback [contentType].
+  static final MediaType _textPlain = MediaType('text', 'plain');
+
+  /// [contentType]s already parsed, by header. Parsing is regex-based and
+  /// runs for every response (headers are sent from [contentType]), and an
+  /// app sends few distinct content types, so they are kept; [MediaType] is
+  /// immutable, so they can be shared. Cleared when [_maxParsedContentTypes]
+  /// is reached, so headers that vary without end cannot grow it.
+  static final Map<String, MediaType> _parsedContentTypes = {};
+  static const int _maxParsedContentTypes = 256;
+
+  static MediaType _parseContentType(String header) {
+    MediaType parsed;
     try {
-      return MediaType.parse(headers['content-type']!);
-    } catch (_) {
-      return MediaType('text', 'plain');
+      parsed = MediaType.parse(header);
+    } on FormatException {
+      parsed = _textPlain;
     }
+    if (_parsedContentTypes.length >= _maxParsedContentTypes) {
+      _parsedContentTypes.clear();
+    }
+    return _parsedContentTypes[header] = parsed;
   }
 
   /// Gets or sets the content type to send back to a client.
@@ -385,7 +436,7 @@ abstract class ResponseContext<RawResponse>
     }
 
     _completeDone();
-    return Future.value();
+    return completed();
   }
 
   /// Serializes JSON to the response.
@@ -716,9 +767,58 @@ class _LockableBytesBuilderImpl implements LockableBytesBuilder {
 /// Response headers that reject a name or value which cannot be sent, at the
 /// point the app sets it, so the error surfaces in the handler rather than
 /// once output starts. [ResponseContext.validateHeaders] backs this up for
-/// map methods that bypass `[]=`.
+/// map methods that bypass `[]=`, which it notes the use of.
 class _ValidatingHeaders extends CaseInsensitiveMap<String> {
-  _ValidatingHeaders.from(super.other) : super.from();
+  /// The headers every response starts with, which need no check.
+  _ValidatingHeaders.defaults() {
+    super['content-type'] = 'text/plain';
+    super['server'] = 'Angel3';
+  }
+
+  /// Whether a method that bypasses `[]=` added or changed a header since
+  /// the last [ResponseContext.validateHeaders].
+  bool _unchecked = false;
+
+  /// Whether [cast] gave a view, through which headers may change unseen.
+  bool _viewed = false;
+
+  bool get _mayBeInvalid => _unchecked || _viewed;
+
+  void _checked() => _unchecked = false;
+
+  @override
+  String putIfAbsent(String key, String Function() ifAbsent) {
+    _unchecked = true;
+    return super.putIfAbsent(key, ifAbsent);
+  }
+
+  @override
+  String update(
+    String key,
+    String Function(String) update, {
+    String Function()? ifAbsent,
+  }) {
+    _unchecked = true;
+    return super.update(key, update, ifAbsent: ifAbsent);
+  }
+
+  @override
+  void updateAll(String Function(String key, String value) update) {
+    _unchecked = true;
+    super.updateAll(update);
+  }
+
+  @override
+  void addEntries(Iterable<MapEntry<String, String>> entries) {
+    _unchecked = true;
+    super.addEntries(entries);
+  }
+
+  @override
+  Map<K2, V2> cast<K2, V2>() {
+    _viewed = true;
+    return super.cast<K2, V2>();
+  }
 
   @override
   void operator []=(String key, String value) {
