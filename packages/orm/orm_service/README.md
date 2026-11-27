@@ -90,3 +90,39 @@ try {
   throw OrmService.httpErrorOf(error);
 }
 ```
+
+## A database of each tenant
+
+`OrmService.of` gives each call the executor of a function of its params, rather than one of its own, as the database of the tenant of a request. A middleware tells the tenant, of something the client cannot forge, as a claim of its user, and puts it in `req.serviceParams`, which are the params of each call of the request's service:
+
+```dart
+final pools = <String, QueryExecutor>{};
+
+app.fallback((req, res) {
+  req.serviceParams['tenant'] = tenantOf(req);
+  return true;
+});
+
+app.use('/todos', OrmService<int?, Todo, TodoQuery>.of(
+  (params) async {
+    var tenant = params?['tenant'];
+    if (tenant is! String || !knownTenants.contains(tenant)) {
+      throw AngelHttpException.notFound();
+    }
+    return pools[tenant] ??= await openPool(tenant);
+  },
+  () => TodoQuery(),
+));
+
+app.shutdownHooks.add((_) async {
+  for (var pool in pools.values) {
+    await pool.close();
+  }
+});
+```
+
+* **Once of each call.** The function is called once of each call that queries, as `read` or `update`, after its ids are checked, as of `validateId`, so that an id that cannot be a record's is a `404` without it; and before its query. An error it throws, as the `404` of a tenant that is not one, is that of the call.
+* **Clients cannot choose it.** A client's query parameters are under `query` of the params, as filters of the query's columns, so `?tenant=b` is a `400`, not the tenant `b`.
+* **Errors** of the database of a call are classified by its executor, so tenants of PostgreSQL and of MySQL may share a service.
+* **The pools are yours.** The service keeps none: open each tenant's when it is first needed, and close them when the app closes. With `angel3_production`, each isolate opens its own.
+* The `executor` of such a service throws a `StateError`, as it has none of its own.

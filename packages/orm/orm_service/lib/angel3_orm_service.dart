@@ -9,7 +9,16 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     extends Service<Id, Data>
     implements DocumentedService {
   /// The [QueryExecutor] used to communicate with a database.
+  ///
+  /// A service of [OrmService.of] has none of its own, as it gives each call
+  /// that of [executorOf]: its [executor] throws a [StateError] when used.
   final QueryExecutor executor;
+
+  /// The executor of each call of a service of [OrmService.of], of the
+  /// call's params, as the database of a tenant: `null` of a service of
+  /// [executor].
+  final FutureOr<QueryExecutor> Function(Map<String, dynamic>? params)?
+  executorOf;
 
   /// A callback that produces an instance of [TQuery].
   final FutureOr<TQuery> Function() queryCreator;
@@ -47,7 +56,38 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     this.allowQuery = true,
     this.validateId,
     super.readData,
-  });
+  }) : executorOf = null;
+
+  /// A service whose executor is that of each call, of [executorOf] of the
+  /// call's params, as the database of the tenant of a request, which a
+  /// middleware puts in `req.serviceParams`, which a client cannot set:
+  ///
+  /// ```dart
+  /// app.fallback((req, res) {
+  ///   req.serviceParams['tenant'] = tenantOf(req);
+  ///   return true;
+  /// });
+  /// app.use('/todos', OrmService<int?, Todo, TodoQuery>.of(
+  ///   (params) => executorOfTenant(params?['tenant']),
+  ///   () => TodoQuery(),
+  /// ));
+  /// ```
+  ///
+  /// It is called once of each call that queries, after the call's ids are
+  /// checked, as of [validateId], and before its query, so that an id that
+  /// cannot be a record's is answered without it. An error it throws, as an
+  /// [AngelHttpException] of a tenant that does not exist, is that of the
+  /// call. A database's error of the call is classified by its executor.
+  OrmService.of(
+    FutureOr<QueryExecutor> Function(Map<String, dynamic>? params)
+    this.executorOf,
+    this.queryCreator, {
+    this.idField = 'id',
+    this.allowRemoveAll = false,
+    this.allowQuery = true,
+    this.validateId,
+    super.readData,
+  }) : executor = const _NoExecutor();
 
   /// `$sort`, one of the query's columns, and one of each column that a
   /// query parameter can match, as `?level=100`, of its type: a number, a
@@ -135,13 +175,21 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
   }
 
-  /// The result of [run], a query of [executor]: an error of the database
-  /// that is of the request, as [QueryExecutor.classifyError] tells, is
-  /// thrown as its HTTP error, of [httpErrorOf], with the database's error
-  /// as its `error`; any other is thrown as it is.
-  Future<T> _run<T>(Future<T> Function() run) async {
+  /// The result of [run] of the executor of a call of [params]: [executor],
+  /// or that of [executorOf], of which it is called once. An error of the
+  /// database that is of the request, as the executor's
+  /// [QueryExecutor.classifyError] tells, is thrown as its HTTP error, of
+  /// [httpErrorOf], with the database's error as its `error`; any other is
+  /// thrown as it is.
+  Future<T> _run<T>(
+    Map<String, dynamic>? params,
+    Future<T> Function(QueryExecutor executor) run,
+  ) async {
+    var executor = executorOf == null
+        ? this.executor
+        : await executorOf!(params);
     try {
-      return await run();
+      return await run(executor);
     } catch (error, stackTrace) {
       var classified = executor.classifyError(error);
       if (classified == null) rethrow;
@@ -314,14 +362,14 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     await _applyQuery(query, params);
-    return await _run(() => query.get(executor));
+    return await _run(params, (executor) => query.get(executor));
   }
 
   @override
   Future<List<Data>> index([Map<String, dynamic>? params]) async {
     var query = await queryCreator();
     await _applyQuery(query, params);
-    return await _run(() => query.get(executor));
+    return await _run(params, (executor) => query.get(executor));
   }
 
   @override
@@ -329,7 +377,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     var query = await queryCreator();
     _applyId(query, id);
     await _applyQuery(query, params);
-    var result = await _run(() => query.getOne(executor));
+    var result = await _run(params, (executor) => query.getOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
@@ -341,7 +389,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
   ]) async {
     var query = await queryCreator();
     await _applyQuery(query, params);
-    var result = await _run(() => query.getOne(executor));
+    var result = await _run(params, (executor) => query.getOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: errorMessage);
   }
@@ -377,7 +425,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       );
     }
 
-    var result = await _run(() => query.insert(executor));
+    var result = await _run(params, (executor) => query.insert(executor));
     if (result.isPresent) return result.value;
     throw StateError(
       'The record was inserted into ${query.tableName}, but could not be '
@@ -440,7 +488,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     // One record, even if the query's conditions match more.
     query.limit(1);
 
-    var result = await _run(() => query.updateOne(executor));
+    var result = await _run(params, (executor) => query.updateOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
@@ -485,8 +533,36 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     // Also when removing "all": only the items that match the query.
     await _applyQuery(query, params);
 
-    var result = await _run(() => query.deleteOne(executor));
+    var result = await _run(params, (executor) => query.deleteOne(executor));
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
+}
+
+/// The [OrmService.executor] of a service of [OrmService.of], which has none
+/// of its own.
+class _NoExecutor extends QueryExecutor {
+  const _NoExecutor();
+
+  static Never _fail() => throw StateError(
+    'An OrmService of OrmService.of has no executor of its own: it gives '
+    'each call that of its executorOf.',
+  );
+
+  @override
+  Dialect get dialect => _fail();
+
+  @override
+  Future<List<List>> query(
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) async => _fail();
+
+  @override
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async =>
+      _fail();
 }
