@@ -6,6 +6,7 @@ import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_route/angel3_route.dart';
 
 import '../util.dart';
+import 'around.dart' show runHandlers;
 import 'hooked_service.dart';
 import 'metadata.dart';
 import 'request_context.dart';
@@ -27,17 +28,11 @@ typedef RequestHandler = FutureOr<dynamic> Function(
 /// The handler has the [SecurityRequirement]s of [handlers], so that
 /// documents of the API list them.
 RequestHandler chain(Iterable<RequestHandler> handlers) {
-  Future<bool> chained(RequestContext req, ResponseContext res) async {
-    // Like a route's own handlers: each must return `true` for the next to
-    // run, and results other than `bool` are serialized.
-    for (var handler in handlers) {
-      if (!res.isOpen) return false;
-      if (await req.app!.executeHandler(handler, req, res) != true) {
-        return false;
-      }
-    }
-    return true;
-  }
+  // Like a route's own handlers: each must return `true` for the next to
+  // run, and results other than `bool` are serialized. One of `around` runs
+  // the rest of the chain.
+  Future<bool> chained(RequestContext req, ResponseContext res) =>
+      runHandlers(handlers.iterator, req, res, req.app!, whileOpen: true);
 
   // One object, which the requirements are of, as an Expando is of
   // identity.

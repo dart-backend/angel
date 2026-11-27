@@ -1,3 +1,4 @@
+export 'around.dart' show AroundHandler, around;
 export 'anonymous_service.dart';
 export 'controller.dart';
 export 'driver.dart';

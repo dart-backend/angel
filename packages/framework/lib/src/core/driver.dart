@@ -9,6 +9,7 @@ import 'package:tuple/tuple.dart';
 
 import '../util.dart';
 import 'abort.dart';
+import 'around.dart' show PipelineHandlers, runHandlers;
 import 'core.dart';
 
 /// Base driver class for Angel implementations.
@@ -628,17 +629,8 @@ abstract class Driver<
     ResponseContextType res,
     Angel app,
   ) async {
-    var broken = false;
-    while (it.moveNext()) {
-      var current = it.current.handlers.iterator;
-
-      while (!broken && current.moveNext()) {
-        var result = await app.executeHandler(current.current, req, res);
-        if (result != true) {
-          broken = true;
-          break;
-        }
-      }
-    }
+    // Each handler that returns `true` is followed by the next, of its route
+    // and then of the routes after it; one made by `around` runs the rest.
+    await runHandlers(PipelineHandlers(it), req, res, app);
   }
 }

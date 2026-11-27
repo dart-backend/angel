@@ -1,5 +1,15 @@
 # Change Log
 
+## 10.3.0
+
+### New in 10.3.0
+
+* **Middleware:** `around((req, res, next) async { ... await next(); ... })` makes a handler that runs around the handlers after it of a route's pipeline, of its route and the routes after it, as of `app.fallback`, `app.chain`, a group or a route's `middleware`: `next` runs them, and completes when they have, or fails with the error one of them throws, so that code after it runs after them, as for timing, a transaction committed or rolled back, or a value of the request's container for the handlers after it. A handler that does not call `next` stops the pipeline; `next` may be called once. In `chain`, `next` runs the rest of the chain. A pipeline of no `around` handler runs as before, with as many microtasks (issue 174)
+
+### Fixes in 10.3.0
+
+* **HTTPS:** `AngelHttp.secure` reads its paths as paths of files, as `AngelHttp.resolveFilePath` does: an absolute one as it is, a `file:` URI as its path, and a relative one of the directory of the script, or of the current directory if the script is not a file. They were resolved as URIs of the script, so that an absolute Windows path, as `C:\certs\server.pem`, failed with "Cannot extract a file path from a c URI", and a relative one of `\` was not of directories
+
 ## 10.2.1
 
 ### Fixes in 10.2.1

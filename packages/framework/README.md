@@ -153,6 +153,37 @@ Without reflection, these features are unavailable: `@Expose` on controller meth
 
 To keep them in an AOT-compiled app, mark the classes `@injectable`, generate their reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator), and pass it to the app: `Angel(reflector: StaticReflector.combine([...]))`. On the Dart VM, `MirrorsReflector` of [`angel3_container_mirrors`](https://pub.dev/packages/angel3_container_mirrors) does the same with `dart:mirrors`.
 
+## Middleware around handlers
+
+A handler of a pipeline runs, and returns `true` for the next one to run. A handler made with `around` runs *around* the handlers after it instead: its `next` runs the rest of the pipeline, and completes when the rest has, or fails with its error, so code after it runs after them, as in a `try`/`finally`:
+
+```dart
+// Timing, and the status of the response once it is sent.
+app.fallback(around((req, res, next) async {
+  var watch = Stopwatch()..start();
+  res.done.then((_) => log('${req.path} ${res.statusCode} ${watch.elapsed}'));
+  await next();
+}));
+
+// A transaction around a route: committed if its handlers succeed, rolled
+// back if one throws. Its executor is the request's, for the handlers.
+app.chain([
+  around((req, res, next) async {
+    await executor.transaction((tx) async {
+      req.container!.registerSingleton<QueryExecutor>(tx);
+      await next();
+    });
+  }),
+]).post('/orders', createOrder);
+```
+
+* **Where it runs.** `next` runs the handlers after it of its route, and of the routes after it, as of `app.fallback`, `app.chain`, a group or a route's `middleware`. In `chain([...])`, `next` runs the rest of that chain.
+* **Errors.** An error of the rest fails `next`: catch it to answer it yourself, or let it through to the app's error handler, as a `500` or the `AngelHttpException` thrown.
+* **Stopping.** A handler that does not call `next` stops the pipeline, as one that returns `false`: it answers the request itself. `next` may be called once.
+* **The response is sent after the pipeline,** so `next` completes before it is. Do not wait for `res.done` in the handler, which would never complete; use `res.done.then(...)`, as above.
+* **Rewriting the body.** Call `res.useBuffer()` before `next`, and rewrite `res.buffer` after it, of handlers that write without closing the response. A handler that closes it, as one that returns a value, locks the buffer: rewrite that body in one of `app.responseFinalizers`, which also run on unbuffered responses, before their headers are sent.
+* **Cost.** A pipeline of no `around` handler runs as before.
+
 ## Request limits
 
 `req.parseBody()` (also used by services) reads at most `app.maxBodySize` bytes, 10 MB by default, and answers larger requests with `413 Payload Too Large`:
