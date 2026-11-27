@@ -27,6 +27,7 @@ The available features in Angel3 include:
 * Server-Side HTML Rendering with JAEL, Markdown, Mustache and Jinja
 * SPA with [Kelicap](https://github.com/dukefirehawk/kelicap)
 * ORM support for PostgreSQL, MySQL, MariaDB and SQLite
+* Multi-tenant support with a database for each tenant
 * MongoDB, Sembast and RethinkDB as storage
 * Cache with Redis
 * Dependency injection with or without `dart:mirrors`
@@ -42,7 +43,7 @@ The `packages` directory contains specialized sub-packages that act as individua
 They can broadly be categorized as follows:
 
 1. Core Framework & Request Handling
-   * framework: The foundational package (angel3_framework). It provides the base HTTP and HTTP/2 server, request/response contexts, services, controllers and middleware pipelines.
+   * framework: The foundational package (angel3_framework). It provides the base HTTP and HTTP/2 server, request/response contexts, services, controllers and middleware pipelines, including `around` middleware that wraps the handlers after it.
    * route: The routing engine handling URL matching and route parameters.
    * container: Dependency Injection (DI) system for resolving services, without `dart:mirrors`. `container_mirrors` provides the opt-in `MirrorsReflector` for the Dart VM, and `container_generator` generates reflection data for `@injectable` classes, so apps can be compiled with `dart compile exe`.
    * configuration: Utilities for loading YAML configuration files and `.env` files.
@@ -101,16 +102,20 @@ Branch: `master`
 
 ### Release Notes (version: 10.0.0)
 
-* Updated all packages to 10.0.0. Each package's `CHANGELOG.md` lists its breaking changes, new features and fixes, and its README tells how to upgrade, under *Migrating from 9.x to 10.0.0*
-* Removed the use of `dart:mirrors`, so apps can be compiled with `dart compile exe`. `MirrorsReflector` moved to the new `angel3_container_mirrors` package, and `angel3_container_generator` generates reflection data for `@injectable` classes, used through `StaticReflector`. `angel3_websocket`, `jael3` and `angel3_markdown` no longer use mirrors either
+* New packages: `angel3_oidc_server`, an OpenID Connect Provider on top of `angel3_auth_server`,
 * Framework: graceful shutdown, in which requests in progress finish before the shutdown hooks run; malformed requests are a 400 instead of a 500
-* ORM: `@HasMany` and `@ManyToMany` are loaded with a query each instead of joins, so a `limit` counts records; nested transactions use savepoints on PostgreSQL; MySQL and MariaDB use the `mysql_dart` driver; migrations are recorded by `Migration.name` instead of their source path
-* Security: CSRF protection (`CsrfFilter`) in `angel3_security`; JWTs expire after a day by default and expired ones are no longer revived (`angel3_auth`); a random `state` and PKCE verifier for each OAuth2 login (`angel3_auth_client`, renamed from `angel3_auth_oauth2`); SQL injection fixes in `like` (`angel3_orm`), `$sort` (`angel3_orm_service`) and string defaults (`angel3_migration_runner`)
+* ORM: `@HasMany` and `@ManyToMany` are loaded with a query each instead of joins, nested transactions use savepoints on PostgreSQL.
+* ORM: MySQL and MariaDB switch to using the `mysql_dart` driver
+* ORM: Requires PostgreSQL 16 or later, MySQL 8 or later, or MariaDB 10.2 or later
+* ORM: SQLite support with `angel3_orm_sqlite:10.1.0`
+* Security: Added CSRF protection (`CsrfFilter`) to `angel3_security`
+* Security: JWTs expire after a day by default and expired ones are no longer revived (`angel3_auth`)
+* Security: Added PKCE verifier to OAuth2 login
+* Security: Fixed SQL injection in `like` (`angel3_orm`) and `$sort` (`angel3_orm_service`)
 * Templates: Markdown values are HTML-escaped, and views outside the views directory are not read (`angel3_jinja`, `angel3_markdown`, `angel3_mustache`)
-* Requires PostgreSQL 16 or later, MySQL 8 or later, or MariaDB 10.2 or later
-* Updated the `belatuk_` dependencies to their latest releases (`belatuk_code_buffer`, `belatuk_combinator`, `belatuk_html_builder`, `belatuk_merge_map` and `belatuk_symbol_table` 6, `belatuk_range_header` 7). `angel3_html` pages are HTML-escaped by `belatuk_html_builder` 6: HTML written as it is needs `raw`
-* New packages: `angel3_oidc_server`, an OpenID Connect Provider on top of `angel3_auth_server`, and `angel3_orm_sqlite`, an ORM executor for SQLite
-* The repository is managed with `melos` 8.9 or later
+* Renamed `angel3_auth_oauth2` to `angel3_auth_client`
+* Renamed `angel3_oauth2` to `angel3_auth_server`
+* Removed the use of `dart:mirrors`, so apps can be compiled with `dart compile exe`. `MirrorsReflector` moved to the new `angel3_container_mirrors` package, and `angel3_container_generator` generates reflection data for `@injectable` classes, used through `StaticReflector`. `angel3_websocket`, `jael3` and `angel3_markdown` no longer use `dart:mirrors`
 
 ### Release Notes (since 10.0.0)
 
@@ -118,9 +123,9 @@ Minor releases of single packages, listed in full in each `CHANGELOG.md`:
 
 * New package `angel3_openapi`: OpenAPI 3.1 documents of the routes and services, with a Swagger UI page
 * New package `angel3_prometheus`: Prometheus metrics of the requests and the process, with a port for each instance of `angel3_production`
-* Mutual TLS: the servers of `angel3_framework` 10.2.0 ask for, or require, client certificates, which a handler reads as `req.clientCertificate`; `angel3_production` 10.1.0 turns them on with `--client-ca-file` and `--require-client-certificate`; `angel3_auth_server` 10.1.0 authenticates OAuth2 clients by certificate (`tls_client_auth`, `self_signed_tls_client_auth`) and binds access tokens to it (RFC 8705), also behind nginx or Apache
-* Framework 10.1.0: `RequestContext.bodyFieldsAll` gives every value of each form field
-* ORM: SQLite support, with `SqliteDialect` (`angel3_orm` 10.2.0) and `SqliteMigrationRunner` (`angel3_migration_runner` 10.1.0); `angel3_orm` 10.1.0 makes updates, inserts and deletes with joins, a `limit` or JSON predicates correct, with breaking changes listed in its `CHANGELOG.md`; `angel3_orm_postgres` 10.1.0 requires PostgreSQL 16 or later
+* Support Mutual TLS(RFC 8705)
+* Performance improvements for `angel3_framework:10.3.0` and `angel3_route:10.2.0`
+* ORM: Support UUID as primary key
 
 ### What is in the pipeline?
 
@@ -129,7 +134,7 @@ Minor releases of single packages, listed in full in each `CHANGELOG.md`:
 * Expand ORM to support
   * SQL Server
   * Oracle DB
-  * Multi-tenant architectures and SQL schema reverse engineering
+  * SQL schema reverse engineering
 * ORM caching with Redis
 
 ## Installation and Setup
