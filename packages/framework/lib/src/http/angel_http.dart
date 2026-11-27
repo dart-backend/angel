@@ -12,6 +12,7 @@ import 'dart:io'
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_route/string_util.dart';
+import 'package:path/path.dart' as p;
 
 import '../core/core.dart';
 import 'bind_secure.dart';
@@ -109,6 +110,10 @@ class AngelHttp
   /// [AngelHttp.fromSecurityContext]:
   /// give [clientAuthoritiesPath], a .pem of the certificates that may sign
   /// a client's, to trust them.
+  ///
+  /// Each path is of a file, as [resolveFilePath] reads it: an absolute one,
+  /// as `C:\certs\server.pem` on Windows, as it is, and a relative one of the
+  /// directory of the script.
   factory AngelHttp.secure(
     Angel app,
     String certificateChainPath,
@@ -119,17 +124,13 @@ class AngelHttp
     bool requireClientCertificate = false,
     String? clientAuthoritiesPath,
   }) {
-    var certificateChain = Platform.script
-        .resolve(certificateChainPath)
-        .toFilePath();
-    var serverKey = Platform.script.resolve(serverKeyPath).toFilePath();
+    var certificateChain = resolveFilePath(certificateChainPath);
+    var serverKey = resolveFilePath(serverKeyPath);
     var serverContext = SecurityContext();
     serverContext.useCertificateChain(certificateChain, password: password);
     serverContext.usePrivateKey(serverKey, password: password);
     if (clientAuthoritiesPath != null) {
-      var authorities = Platform.script
-          .resolve(clientAuthoritiesPath)
-          .toFilePath();
+      var authorities = resolveFilePath(clientAuthoritiesPath);
       serverContext
         ..setClientAuthorities(authorities)
         ..setTrustedCertificates(authorities);
@@ -142,6 +143,27 @@ class AngelHttp
       requestClientCertificate: requestClientCertificate,
       requireClientCertificate: requireClientCertificate,
     );
+  }
+
+  /// The file of [path], as [AngelHttp.secure] reads its paths:
+  ///
+  /// * an absolute path, as `C:\certs\server.pem` on Windows or
+  ///   `/etc/certs/server.pem`, as it is;
+  /// * a `file:` URI, as `file:///etc/certs/server.pem`, as its path;
+  /// * a relative path, of either separator on Windows, of the directory of
+  ///   [Platform.script] if it is a file, as of `dart run`, and else of the
+  ///   current directory.
+  ///
+  /// The path was resolved as a URI of the script, where a Windows path is
+  /// not one: `C:\certs\server.pem` was of a scheme `c`, which failed.
+  static String resolveFilePath(String path) {
+    if (path.startsWith('file:')) return Uri.parse(path).toFilePath();
+    if (p.isAbsolute(path)) return path;
+    var script = Platform.script;
+    if (script.isScheme('file')) {
+      return p.normalize(p.join(p.dirname(script.toFilePath()), path));
+    }
+    return p.absolute(path);
   }
 
   /// Handles [request], for use with a server created outside of

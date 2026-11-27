@@ -143,3 +143,107 @@ This same logic would be applied to `Http2ResponseContext`.
 * **More Robust Middleware:** Enables easier development of powerful middleware for transactions, logging, metrics collection, and response shaping.
 
 I believe either of these changes would be a valuable improvement to the framework's usability. Thank you for considering this proposal.
+
+## Comment 1
+
+Strong proposal—Proposal 1 (`next()` onion model) is generally much safer as the primary primitive than enabling `res.useBuffer()` globally. Default buffering into `BytesBuilder` creates real memory/OOM risk inside a Dart isolate for large file streams, proxies, or SSE responses, whereas a `Future<void> Function() next` wrapper gives you clean `try/finally` scoping for DB transactions, `Zone`-based request context, and metrics without breaking streaming. For injecting headers like `X-Execution-Time-ms` without full-body buffering, pairing `next()` with a lightweight pre-flush hook right before `HttpResponse` commits headers to the `IOSink` (while keeping `useBuffer()` opt-in only for body-mutating middlewares like JSON envelopes) usually hits the best balance between DX and throughput.
+
+## Comment 2
+
+@AttalliAyoub I agree with you. I also believe that **Proposal 1 (`next()` middleware pattern)** is the best direction for Angel3 in the long term.
+
+This approach is more closely aligned with middleware patterns found in established frameworks and ecosystems such as Shelf, Koa.js, Express.js, Next.js, and ASP.NET Core, making Angel3 more intuitive and familiar to developers coming from other technologies.
+
+It would provide several important benefits:
+
+* Explicit control over the middleware execution lifecycle.
+* Native support for pre-processing and post-processing logic.
+* Cleaner implementation of database transactions, logging, metrics, and request-scoped contexts.
+* Preservation of streaming capabilities without introducing unnecessary memory overhead.
+* Improved middleware composability and developer experience.
+
+I also agree with your suggestion of combining the `next()` pattern with a lightweight pre-flush hook while keeping `res.useBuffer()` as an opt-in mechanism for middleware that actually needs to modify the response body.
+
+Although Proposal 2 is less disruptive from an implementation perspective, I believe Proposal 1 provides a more flexible, scalable, and idiomatic architectural foundation for the future of Angel3, without compromising its original performance-oriented design.
+
+Ideally, this could be introduced incrementally while maintaining backward compatibility with the existing middleware API.
+
+## Comment 3
+
+As a practical example, I have already addressed this limitation in my own production application by implementing a custom router inspired by Shelf directly within Angel3, while retaining Angel's `RequestContext`, `ResponseContext`, dependency injection container, and other framework capabilities.
+
+The initial implementation dates back to November 2023, as discussed in issue #114:
+
+<https://github.com/dart-backend/angel/issues/114#issuecomment-1809400156>
+
+Since then, this implementation has evolved considerably and now includes:
+
+* Composable middleware following Shelf's higher-order function pattern, allowing logic to execute before and after the inner handler.
+* Global, group-level, and route-specific middleware.
+* Nested route groups with inherited middleware.
+* Middleware composition at route registration time.
+* Precompiled route matching expressions and HTTP method-based route indexing.
+* Request-scoped dependency injection and database connection lifecycle management.
+* Redis-backed session management.
+* Custom HTTP/1.x and HTTP/2 drivers and request/response contexts.
+* A custom multi-isolate production runner with synchronized metrics.
+* A custom development server with hot-reload support.
+
+The integration with Angel3 itself is relatively straightforward:
+
+```dart
+final router = CustomRouter(
+  globalMiddlewares: [
+    sessionMiddleware,
+    securityHeadersMiddleware,
+    corsMiddleware,
+    withDbMiddleware,
+  ],
+);
+
+router.get('/ping', (req, res) => res.write('pong'));
+
+app.all('*', router.call);
+```
+
+The middleware abstraction follows a model similar to Shelf:
+
+```dart
+typedef CustomHandler = FutureOr<dynamic> Function(
+  CustomHttpRequestContext req,
+  ResponseContext res,
+);
+
+typedef CustomMiddleware = CustomHandler Function(
+  CustomHandler innerHandler,
+);
+```
+
+This allows middleware to naturally wrap the execution of subsequent handlers:
+
+```dart
+CustomHandler timingMiddleware(CustomHandler innerHandler) {
+  return (req, res) async {
+    final stopwatch = Stopwatch()..start();
+
+    try {
+      return await innerHandler(req, res);
+    } finally {
+      stopwatch.stop();
+      print('Execution time: ${stopwatch.elapsedMilliseconds} ms');
+    }
+  };
+}
+```
+
+Although this approach works for my application, implementing, testing, integrating, and maintaining all this infrastructure represents a significant engineering effort and an ongoing maintenance cost for a framework consumer.
+
+**Developers should not have to implement and maintain their own routing and middleware infrastructure to obtain functionality that should ideally be provided natively by the framework.**
+
+Every custom component also increases the maintenance burden when upgrading Angel3, introduces potential compatibility issues, and makes it harder to benefit directly from improvements in the upstream framework.
+
+I appreciate the recent routing performance improvements introduced in `angel3_route` 10.0.1 and 10.0.2, as mentioned in issue #114. However, the middleware composition model remains a separate architectural concern.
+
+This is another reason why I strongly favor **Proposal 1**. Whether implemented through an explicit `next()` callback or a Shelf-style higher-order handler abstraction, having a native, composable middleware lifecycle would eliminate much of this unnecessary complexity for application developers.
+
+In my opinion, a framework should allow developers to focus on their application's business logic rather than requiring them to reimplement the framework's own infrastructure.
