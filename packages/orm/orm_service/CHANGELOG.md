@@ -1,10 +1,18 @@
 # Change Log
 
+## 10.2.0
+
+### New in 10.2.0
+
+* **Tenants:** `OrmService.of` gives each call the executor of `executorOf`, a function of its params, as the database of the tenant of a request that a middleware puts in `req.serviceParams`, rather than one executor of every call. It is called once of each call that queries, after its ids are checked, as of `validateId`, and before its query; an error it throws is that of the call, and a database's error of the call is classified by its executor. The `executor` of such a service throws a `StateError`. Tested on SQLite, PostgreSQL and MariaDB, of a database of each tenant (issue 151)
+
+### Fixes in 10.2.0
+
+* **Dependencies:** `postgres` is a dev dependency, of the tests only, as the service uses none of it: an app of MySQL, MariaDB or SQLite no longer depends on the PostgreSQL driver
+
 ## 10.1.0
 
 ### New in 10.1.0
-
-* **Tenants:** `OrmService.of` gives each call the executor of `executorOf`, a function of its params, as the database of the tenant of a request that a middleware puts in `req.serviceParams`, rather than one executor of every call. It is called once of each call that queries, after its ids are checked, as of `validateId`, and before its query; an error it throws is that of the call, and a database's error of the call is classified by its executor. The `executor` of such a service throws a `StateError` (issue 151)
 
 * **Query parameters:** `OrmService` is a `DocumentedService` of `angel3_framework` 10.2.0, which this version requires: its `indexQueryParameters` are `$sort`, of the query's columns, and one of each column a query parameter can match, of a number, a string, a boolean or a date and time, so that `angel3_openapi` documents them. Its `errorResponses` are a `409` of `create`, `modify`, `update` and `remove`, as its errors of the database give. None if `allowQuery` is `false`
 
@@ -13,8 +21,6 @@
 * **Errors:** An error of the database that is of the request, as the executor classifies it (`QueryExecutor.classifyError` of `angel3_orm` 10.3.0, which this version requires), is its HTTP error: a duplicate key, as an `id` or an email that exists, or a foreign key a `409 Conflict`, and a missing or invalid value, as a malformed UUID on PostgreSQL, a `400 Bad Request`, where each was a `500`. Its message names the column or constraint, not the value; the database's error is its `error`, for the server's logs. `OrmService.httpErrorOf` gives the HTTP error of a `QueryError`
 
 ### Fixes in 10.1.0
-
-* **Dependencies:** `postgres` is a dev dependency, of the tests only, as the service uses none of it: an app of MySQL, MariaDB or SQLite no longer depends on the PostgreSQL driver
 
 * **`create`:** Of a model whose id is text, as a UUID, data without an `id` is a 400, where the insert failed with the database's `NOT NULL` error, a 500
 * **`update` and `modify`:** The record keeps the id it is updated by, of a key the database does not generate, as a UUID, which `copyFrom` sets: `update` of data without an `id` failed with a `NOT NULL` error, and an `id` in the data, as in the body of a request, changed the record's key. A query callback may still set it
