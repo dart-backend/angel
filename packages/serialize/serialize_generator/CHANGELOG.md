@@ -13,6 +13,8 @@
 
 ### Fixes in 10.1.0
 
+* **Constructors:** A parameter of the unnamed constructor of the model class that is of a field, as `_User(this.name)` of `String name`, is given by the field's named parameter, where it was a positional parameter too, of the same name, so the generated class did not compile ("The name 'name' is already defined"), and `copyWith` and `fromMap` keep and read it as of any field. A named parameter is a named one of the generated constructor, `copyWith` and `fromMap`, with its `required` or its default, and is passed by name, where it was positional and passed by position, which did not compile (issue 171)
+
 * **Aliases:** An `alias` with `'`, `$` or `\`, such as `$ref`, is written as an escaped string in `toMap`, `fromMap`, the `Fields` class and the messages of required fields, where it made the generated code fail to compile, or read another key, and is quoted in the TypeScript definitions where it is not an identifier
 * **Nested models:** `toMap` writes `null` of a nullable `Map` of models that is `null`, where the generated code did not compile
 * **Nested models:** `toMap` writes `null` of a nullable model field that is `null`, where it threw "Required field [model] cannot be null", as of a `@BelongsTo Author? author` that is not set

@@ -72,7 +72,25 @@ class BuildContext {
   /// The fields declared on the original class.
   final List<FieldElement> fields = [];
 
+  /// The parameters of the unnamed constructor of the model class, which the
+  /// generated constructor passes to it.
   final List<FormalParameterElement> constructorParameters = [];
+
+  /// The [constructorParameters] that the generated constructor, `copyWith`
+  /// and `fromMap` take as parameters of their own: those not named as one of
+  /// the [fields], whose named parameter gives their value.
+  List<FormalParameterElement> get ownConstructorParameters => [
+    for (var param in constructorParameters)
+      if (!fields.any((field) => field.name == param.name)) param,
+  ];
+
+  /// The arguments of the call of the unnamed constructor of the model class,
+  /// each of the parameter of its name: by position or by name, as the
+  /// constructor declares it.
+  String get superArguments => [
+    for (var param in constructorParameters)
+      param.isNamed ? '${param.name}: ${param.name}' : param.name,
+  ].join(', ');
 
   final ConstantReader annotation;
 

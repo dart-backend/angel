@@ -173,18 +173,12 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         //      return f.setter == null && f is! ShimFieldImpl;
         //    });
 
-        for (var param in ctx.constructorParameters) {
-          //log.fine('Contructor Parameter: ${param.name}');
-          constructor.requiredParameters.add(
-            Parameter(
-              (b) => b
-                ..name = param.name!
-                ..type = convertTypeReference(
-                  param.type,
-                  library: ctx.clazz.library,
-                ),
-            ),
-          );
+        // Those of a field are given by its named parameter, below.
+        for (var param in ctx.ownConstructorParameters) {
+          (param.isNamed
+                  ? constructor.optionalParameters
+                  : constructor.requiredParameters)
+              .add(_constructorParameter(ctx, param));
         }
 
         // Generate intializers
@@ -281,11 +275,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         if (ctx.constructorParameters.isNotEmpty) {
           if (!shouldBeConstant(ctx) ||
               ctx.clazz.unnamedConstructor?.isConst == true) {
-            constructor.initializers.add(
-              Code(
-                'super(${ctx.constructorParameters.map((p) => p.name).join(',')})',
-              ),
-            );
+            constructor.initializers.add(Code('super(${ctx.superArguments})'));
           }
         }
       }),
@@ -304,28 +294,18 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           ..name = 'copyWith'
           ..returns = ctx.modelClassType;
 
-        // Add all `super` params
-        if (ctx.constructorParameters.isNotEmpty) {
-          for (var param in ctx.constructorParameters) {
-            method.requiredParameters.add(
-              Parameter(
-                (b) => b
-                  ..name = param.name!
-                  ..type = convertTypeReference(
-                    param.type,
-                    library: ctx.clazz.library,
-                  ),
-              ),
-            );
-          }
+        // The parameters of the model's constructor that are not of a field,
+        // which the model need not keep, so they are given again.
+        for (var param in ctx.ownConstructorParameters) {
+          (param.isNamed
+                  ? method.optionalParameters
+                  : method.requiredParameters)
+              .add(_constructorParameter(ctx, param));
         }
 
         var buf = StringBuffer('return ${ctx.modelClassName}(');
+        buf.write(_ownConstructorArguments(ctx));
         var i = 0;
-        for (var param in ctx.constructorParameters) {
-          if (i++ > 0) buf.write(', ');
-          buf.write(param.name);
-        }
 
         // Add named parameters
         for (var field in ctx.fields) {
