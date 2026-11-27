@@ -190,6 +190,69 @@ abstract class _Todo extends Model {
     );
   });
 
+  group('a constructor of the model class (issue 171)', () {
+    test('gives a parameter of a field once, as its named one', () async {
+      // `name` was both a positional parameter and a named one.
+      const source = '''
+@serializable
+abstract class _User {
+  _User(this.name);
+  String name;
+  String? get email;
+}
+''';
+      expect(await compileErrors(source), isEmpty);
+      var (_, model) = await generate(source);
+      expect(
+        model,
+        contains('User({required this.name, this.email}) : super(name);'),
+      );
+      expect(model, contains('User copyWith({String? name, String? email})'));
+    }, timeout: const Timeout(Duration(minutes: 3)));
+
+    test('keeps its named parameters named', () async {
+      // They were positional, and passed to it by position.
+      const source = '''
+@serializable
+abstract class _Item {
+  _Item(this.label, {required this.name, int count = 2, this.note});
+  final String label;
+  String name;
+  String? note;
+  String? get email;
+}
+''';
+      expect(await compileErrors(source), isEmpty);
+      var (_, model) = await generate(source);
+      expect(
+        model,
+        contains('super(label, name: name, count: count, note: note)'),
+      );
+      expect(model, contains('Item(String label, {int count = 2,'));
+      var (_, serializer) = await generate(
+        source,
+        builder: serializerBuilder(BuilderOptions.empty),
+        extension: 'angel3_serialize_serializer',
+      );
+      expect(
+        serializer,
+        contains('static Item fromMap(Map map, String label, {int count = 2})'),
+      );
+    }, timeout: const Timeout(Duration(minutes: 3)));
+
+    test('keeps a required named parameter of no field required', () async {
+      var errors = await compileErrors('''
+@serializable
+abstract class _Tag {
+  _Tag({required String label}) : name = label;
+  final String name;
+  String? get email;
+}
+''');
+      expect(errors, isEmpty);
+    }, timeout: const Timeout(Duration(minutes: 3)));
+  });
+
   test('compiles enum fields with and without a default', () async {
     var errors = await compileErrors('''
 enum Color { red, green }

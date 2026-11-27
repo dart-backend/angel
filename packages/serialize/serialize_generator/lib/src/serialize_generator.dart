@@ -41,6 +41,37 @@ Builder typescriptDefinitionBuilder(_) {
   return TypeScriptDefinitionBuilder();
 }
 
+/// [param], a parameter of the unnamed constructor of the model class of
+/// [ctx], as a parameter of the generated code: named, with the `required` or
+/// the default value it is declared with, if it is named, and else
+/// positional, to be added to the required parameters.
+///
+/// An optional positional parameter is required, as the named parameters of
+/// the fields follow it, which Dart does not allow of an optional one.
+Parameter _constructorParameter(
+  BuildContext ctx,
+  FormalParameterElement param,
+) => Parameter((b) {
+  b
+    ..name = param.name!
+    ..type = convertTypeReference(param.type, library: ctx.clazz.library);
+  if (param.isNamed) {
+    b
+      ..named = true
+      ..required = param.isRequiredNamed;
+    var defaultValue = param.defaultValueCode;
+    if (defaultValue != null) b.defaultTo = Code(defaultValue);
+  }
+});
+
+/// The arguments of a call of the generated constructor of [ctx] of the
+/// parameters of the model class's constructor of the same names, as
+/// `copyWith` and `fromMap` pass them, each followed by a comma.
+String _ownConstructorArguments(BuildContext ctx) => [
+  for (var param in ctx.ownConstructorParameters)
+    param.isNamed ? '${param.name}: ${param.name}, ' : '${param.name}, ',
+].join();
+
 /// [t] as it is written in Dart, without the `?` of a nullable type.
 String _withoutQuestion(DartType t) {
   var name = t.getDisplayString();

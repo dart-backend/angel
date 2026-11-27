@@ -53,6 +53,26 @@ A field of another `@serializable` class is serialized with that class's seriali
 * **Nullable**, as `AuthorEntity? author`: `null` is written, and read, as `null`.
 * **Non-nullable**, as `AuthorEntity author`, without a default: it is required, and `fromMap` throws of a map without it.
 
+### Constructors
+
+The generated constructor takes each field as a named parameter, and `fromMap` reads each of the map. A model class may also have an unnamed constructor of its own, which the generated one calls:
+
+```dart
+@serializable
+abstract class AccountEntity {
+  AccountEntity(this.region, {required this.owner, int tier = 1})
+    : level = tier * 10;
+
+  final String region; // not a field: it has no setter
+  final int level;
+  String owner;        // a field
+  String? get email;   // a field
+}
+```
+
+* **A parameter of a field**, as `owner`, is given by the field's named parameter: `Account('eu', owner: 'ana')`, and `copyWith` keeps it if it is not given.
+* **Any other parameter**, as `region` and `tier`, is a parameter of the generated constructor, of `copyWith` and of `fromMap` too, as the map does not hold it: `AccountSerializer.fromMap(map, 'eu', tier: 2)`. It is named, with its `required` or its default, if it is named, and positional and required if it is positional, even if it is optional. Such a model has no codec, as its `fromMap` takes more than the map.
+
 ### JSON Schema
 
 Each serializer also describes the map that its `toMap` writes, as a [JSON Schema](https://json-schema.org/draft/2020-12) (2020-12, as OpenAPI 3.1 has it):

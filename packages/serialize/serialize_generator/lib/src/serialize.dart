@@ -70,7 +70,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     // a model of map, which has fromMap; with json only, it is the abstract
     // class of toMap, which toJson calls.
     var codec =
-        ctx.constructorParameters.isEmpty &&
+        ctx.ownConstructorParameters.isEmpty &&
         serializers.contains(Serializers.map);
 
     if (codec) {
@@ -319,20 +319,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             ),
           );
 
-        // Add all `super` params
-        if (ctx.constructorParameters.isNotEmpty) {
-          for (var param in ctx.constructorParameters) {
-            method.requiredParameters.add(
-              Parameter(
-                (b) => b
-                  ..name = param.name ?? ''
-                  ..type = convertTypeReference(
-                    param.type,
-                    library: ctx.clazz.library,
-                  ),
-              ),
-            );
-          }
+        // The parameters of the model's constructor that are not of a field,
+        // which the map does not hold.
+        for (var param in ctx.ownConstructorParameters) {
+          (param.isNamed
+                  ? method.optionalParameters
+                  : method.requiredParameters)
+              .add(_constructorParameter(ctx, param));
         }
 
         var buf = StringBuffer();
@@ -349,13 +342,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         });
 
         buf.writeln('return ${ctx.modelClassName}(');
+        buf.write(_ownConstructorArguments(ctx));
         var i = 0;
-
-        // Parameters in the constructor
-        for (var param in ctx.constructorParameters) {
-          if (i++ > 0) buf.write(', ');
-          buf.write(param.name);
-        }
 
         // Fields
         for (var field in ctx.fields) {
