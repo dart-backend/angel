@@ -142,3 +142,7 @@ Future<void> main() async {
   );
 }
 ```
+
+## Comment
+
+After those contentType and router fixes, the remaining gap vs plain dart:io is usually per-request async microtask churn in the middleware chain and wrapper allocations. Have you profiled switching sync middleware hooks to FutureOr and writing via JsonUtf8Encoder directly to skip the intermediate String allocation on the JSON test?

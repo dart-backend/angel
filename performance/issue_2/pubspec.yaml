@@ -23,6 +23,8 @@ dev_dependencies:
 dependency_overrides:
   angel3_container:
     path: ../../packages/container/container
+  angel3_framework:
+    path: ../../packages/framework
   angel3_http_exception:
     path: ../../packages/http_exception
   angel3_mock_request:
