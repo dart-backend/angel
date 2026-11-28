@@ -17,7 +17,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_production: ^10.1.0
+  angel3_production: ^10.2.0
 ```
 
 ## Usage
@@ -55,7 +55,7 @@ An instance that fails to *start* the first time (a port in use, a bad certifica
 
 When combined with `systemd`, deploying Angel3 applications on Linux can be very simple.
 
-Set `ANGEL_ENV=production` in the environment of the runner, as with `Environment=ANGEL_ENV=production` in a `systemd` unit or `ENV ANGEL_ENV=production` in a `Dockerfile`. The runner does not set it: without it, every instance runs in development mode, which resolves the routes of each request again instead of caching them, and is much slower with many routes. See [Production mode](https://pub.dev/packages/angel3_framework#production-mode) of the framework.
+The instances run in production mode, which caches the routes each request resolves to, unless `ANGEL_ENV` is set otherwise: run with `ANGEL_ENV=development` to debug the app in development mode, which resolves the routes of each request again and logs the time of each. In production mode the routes are read once, when an instance starts, so add them all in `configureServer`. See [Production mode](https://pub.dev/packages/angel3_framework#production-mode) of the framework.
 
 ### Message Passing
 

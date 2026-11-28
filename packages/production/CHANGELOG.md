@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.2.0
+
+### New in 10.2.0
+
+* **Environment:** `Runner` runs its instances in production mode unless `ANGEL_ENV` is set (and not empty), so that a deployed app caches the routes of its requests without being told to; an `Angel` alone is still in development mode without `ANGEL_ENV`. `ANGEL_ENV=development` runs them in development mode, as before. `Runner.environment` gives the environment they run in. In production mode the routes are read once, when an instance starts: add them in `configureServer`
+
 ## 10.1.0
 
 ### New in 10.1.0
