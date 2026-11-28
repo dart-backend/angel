@@ -348,6 +348,32 @@ void main() {
     expect(closes, 1);
   });
 
+  test('a path of no route past an around fallback is a 404, over HTTP/2 '
+      'and HTTP/1', () async {
+    var statuses = <int>[];
+    var app = Angel()
+      ..fallback(
+        around((req, res, next) async {
+          res.done.then((_) => statuses.add(res.statusCode));
+          await next();
+        }),
+      )
+      ..get('/', (req, res) => 'ok');
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(app, ctx, allowHttp1: true);
+    var server = await h2.startServer();
+    addTearDown(h2.close);
+    var root = Uri.parse('https://127.0.0.1:${server.port}');
+
+    expect((await client.get(root.replace(path: '/nope'))).statusCode, 404);
+    expect((await h1c.get(root.replace(path: '/nope'))).statusCode, 404);
+    expect((await client.get(root)).body, '"ok"');
+    expect(statuses, [404, 404, 200]);
+  });
+
   test('close does not wait for idle HTTP/1 keep-alive connections', () async {
     var app = Angel()..get('/', (req, res) => 'ok');
     var ctx = SecurityContext()

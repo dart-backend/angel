@@ -1,0 +1,39 @@
+# 2026-11-28, Dart 3.14.1, servers on cpus 0,1, load on cpus 2,3, 8 s of 'GET /user/*' each.
+# Per-isolate requests and distinct client connections, counted by instrumented copies of bin/angel.dart (_dist_angel) and bin/angel_runner.dart (_dist_runner).
+# Connections include one of the readiness check.
+== _dist_angel isolates=2 connections=64 GET /user/*
+  isolate=0   requests=  45401 ( 50.7%)  connections=36
+  isolate=1   requests=  44089 ( 49.3%)  connections=29
+== _dist_angel isolates=2 connections=8 GET /user/*
+  isolate=0   requests=  41956 ( 54.6%)  connections=6
+  isolate=1   requests=  34879 ( 45.4%)  connections=3
+== _dist_angel isolates=4 connections=64 GET /user/*
+  isolate=0   requests=  20713 ( 25.0%)  connections=16
+  isolate=1   requests=  19839 ( 24.0%)  connections=13
+  isolate=2   requests=  18960 ( 22.9%)  connections=12
+  isolate=3   requests=  23256 ( 28.1%)  connections=24
+== _dist_angel isolates=4 connections=8 GET /user/*
+  isolate=0   requests=      1 (  0.0%)  connections=1
+  isolate=1   requests=  39263 ( 49.9%)  connections=4
+  isolate=2   requests=  39472 ( 50.1%)  connections=4
+  isolate=3   requests=      0 (  0.0%)  connections=0
+== _dist_runner isolates=2 connections=64 GET /user/*
+  isolate=0   requests=  36076 ( 48.6%)  connections=33
+  isolate=1   requests=  38156 ( 51.4%)  connections=32
+== _dist_runner isolates=2 connections=8 GET /user/*
+  isolate=0   requests=  37854 ( 50.1%)  connections=4
+  isolate=1   requests=  37682 ( 49.9%)  connections=5
+== _dist_runner isolates=4 connections=64 GET /user/*
+  isolate=0   requests=  20227 ( 23.7%)  connections=13
+  isolate=1   requests=  21449 ( 25.2%)  connections=16
+  isolate=2   requests=  21316 ( 25.0%)  connections=17
+  isolate=3   requests=  22185 ( 26.0%)  connections=19
+== _dist_runner isolates=4 connections=8 GET /user/*
+  isolate=0   requests=  29773 ( 38.9%)  connections=4
+  isolate=1   requests=      0 (  0.0%)  connections=0
+  isolate=2   requests=  13297 ( 17.4%)  connections=1
+  isolate=3   requests=  33458 ( 43.7%)  connections=4
+== _dist_angel isolates=4 connections=8, repeated
+round 1: requests 17.2% 48.8% 17.0% 17.0%, connections 2 5 1 1
+round 2: requests 26.1% 34.3% 13.6% 26.1%, connections 2 4 1 2
+round 3: requests 15.6% 28.6% 40.2% 15.5%, connections 2 2 4 1

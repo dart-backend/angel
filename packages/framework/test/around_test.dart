@@ -326,6 +326,66 @@ void _tests({required bool production, required bool useZone}) {
     expect(ran, ['in chain before', 'first', 'second', 'in chain after']);
   });
 
+  group('a path of no route, past a fallback that continues', () {
+    test('is a 404, after the around handler', () async {
+      int? sent;
+      app
+        ..fallback(
+          around((req, res, next) async {
+            res.done.then((_) => sent = res.statusCode);
+            ran.add('before');
+            await next();
+            ran.add('after');
+          }),
+        )
+        ..get('/', step('handler', 'root'));
+      expect(await get('/nope'), (404, 'error'));
+      expect(ran, ['before', 'after']);
+      expect(errors.single, isA<AngelHttpException>());
+      expect(sent, 404);
+      // A path of a route is answered as before.
+      expect(await get('/'), (200, '"root"'));
+    });
+
+    test('is a 404, of a plain fallback that returns true', () async {
+      app
+        ..fallback(step('fallback'))
+        ..get('/', step('handler', 'root'));
+      expect(await get('/nope'), (404, 'error'));
+      expect(ran, ['fallback']);
+    });
+
+    test('is answered by a fallback that writes', () async {
+      app.fallback((req, res) {
+        res.write('written');
+        return true;
+      });
+      expect(await get('/nope'), (200, 'written'));
+      expect(errors, isEmpty);
+    });
+
+    test('is answered by a fallback that sets the status', () async {
+      app.fallback((req, res) {
+        res.statusCode = 204;
+        return true;
+      });
+      expect((await get('/nope')).$1, 204);
+      expect(errors, isEmpty);
+    });
+
+    test('is answered by a fallback that buffers a body', () async {
+      app.fallback(
+        around((req, res, next) async {
+          res.useBuffer();
+          await next();
+          res.buffer!.add(utf8.encode('buffered'));
+        }),
+      );
+      expect(await get('/nope'), (200, 'buffered'));
+      expect(errors, isEmpty);
+    });
+  });
+
   test('leaves a pipeline of no around handlers as it was', () async {
     app
       ..fallback(step('first'))

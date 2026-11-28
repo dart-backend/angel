@@ -28,6 +28,9 @@ import 'options.dart';
 /// (with `--respawn`), after a delay that grows while it keeps failing.
 /// `SIGINT` and `SIGTERM` close every instance, letting its requests in
 /// progress finish and running its shutdown hooks, before the process ends.
+///
+/// The instances run in production mode unless `ANGEL_ENV` says otherwise
+/// (see [environment]).
 class Runner {
   final String name;
   final AngelConfigurer configureServer;
@@ -317,6 +320,19 @@ class Runner {
     });
   }
 
+  /// The environment of the instances: that of `ANGEL_ENV`, as the framework
+  /// reads it, and production if it is not set (or empty), where an [Angel]
+  /// alone would be in development. A runner is what serves an app when it
+  /// is deployed, and development mode resolves the routes of every request
+  /// again, instead of caching them. Set `ANGEL_ENV=development` to run in
+  /// development.
+  static AngelEnvironment get environment {
+    var value = Platform.environment['ANGEL_ENV'];
+    return AngelEnvironment(
+      value == null || value.isEmpty ? 'production' : value,
+    );
+  }
+
   /// Makes and starts the server of an instance, logging to the main
   /// isolate.
   static Future<Driver> _startInstance(RunnerArgsWithId argsWithId) async {
@@ -324,7 +340,7 @@ class Runner {
     var options = args.options;
     var client = IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
 
-    var app = Angel(reflector: args.reflector)
+    var app = Angel(reflector: args.reflector, environment: environment)
       ..container.registerSingleton<Client>(client)
       ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
 

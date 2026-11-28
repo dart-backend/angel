@@ -441,7 +441,7 @@ abstract class ResponseContext<RawResponse>
 
   /// Serializes JSON to the response.
   Future<bool> json(Object? value) =>
-      serialize(value, contentType: MediaType('application', 'json'));
+      serialize(value, contentType: _applicationJson);
 
   /// Returns a JSONP response.
   ///
@@ -622,13 +622,29 @@ abstract class ResponseContext<RawResponse>
     if (!isOpen) {
       throw closed();
     }
-    this.contentType = contentType ?? MediaType('application', 'json');
+    this.contentType = contentType ?? _applicationJson;
+    // The default serializer encodes straight to UTF-8, without building the
+    // JSON as a String and then encoding that (about 1.3–1.8x faster).
+    // A tear-off is `==`, not always `identical`, to another of it.
+    if (serializer == c.json.encode) {
+      var bytes = _jsonUtf8.convert(value);
+      // As `await serializer(value)` did, so code that runs after an
+      // unawaited call, as setting the status, still runs before the body
+      // is written.
+      await Future<void>.value();
+      _addBytes(bytes);
+      await close();
+      return false;
+    }
     var text = await serializer(value);
     if (text.isEmpty) return true;
     write(text);
     await close();
     return false;
   }
+
+  static final MediaType _applicationJson = MediaType('application', 'json');
+  static final JsonUtf8Encoder _jsonUtf8 = JsonUtf8Encoder();
 
   /// Streams a file to this response.
   ///
@@ -676,13 +692,18 @@ abstract class ResponseContext<RawResponse>
   @override
   void write(value, {Encoding? encoding}) {
     encoding ??= utf8;
+    if (!isOpen && isBuffered) throw closed();
+    _addBytes(encoding.encode(value.toString()));
+  }
 
+  /// Writes [bytes] as [write] writes its encoded value.
+  void _addBytes(List<int> bytes) {
     if (!isOpen && isBuffered) {
       throw closed();
     } else if (!isBuffered) {
-      add(encoding.encode(value.toString()));
+      add(bytes);
     } else {
-      buffer!.add(encoding.encode(value.toString()));
+      buffer!.add(bytes);
     }
   }
 

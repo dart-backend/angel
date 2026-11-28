@@ -1,0 +1,35 @@
+# 2026-11-28T11:39:03+08:00 load average 2.14 2.17 1.88
+build/angel/bundle/bin/angel  GET /  req/s=20577  avg=3.11ms  p50=4.43ms  p99=6.51ms  requests=164613  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /  req/s=18207  avg=3.51ms  p50=3.56ms  p99=9.36ms  requests=145652  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=19828  avg=3.23ms  p50=3.08ms  p99=7.06ms  requests=158626  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /  req/s=20521  avg=3.12ms  p50=3.04ms  p99=5.09ms  requests=164167  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /  req/s=20207  avg=3.17ms  p50=3.05ms  p99=5.45ms  requests=161654  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /  req/s=19990  avg=3.20ms  p50=3.16ms  p99=5.06ms  requests=159917  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=15894  avg=4.03ms  p50=3.97ms  p99=6.30ms  requests=127148  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /user/42  req/s=15631  avg=4.09ms  p50=4.00ms  p99=6.83ms  requests=125047  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=15575  avg=4.11ms  p50=4.02ms  p99=7.64ms  requests=124597  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /user/42  req/s=15753  avg=4.06ms  p50=3.98ms  p99=6.40ms  requests=126020  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/42  req/s=15873  avg=4.03ms  p50=3.99ms  p99=6.65ms  requests=126984  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /user/42  req/s=15153  avg=4.22ms  p50=4.03ms  p99=9.54ms  requests=121220  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=13642  avg=4.69ms  p50=4.45ms  p99=9.59ms  requests=109135  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /user/*  req/s=13091  avg=4.89ms  p50=4.62ms  p99=10.62ms  requests=104731  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=12527  avg=5.11ms  p50=4.85ms  p99=11.05ms  requests=100212  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /user/*  req/s=13460  avg=4.75ms  p50=4.52ms  p99=9.96ms  requests=107683  errors=0  non2xx=0
+build/angel/bundle/bin/angel  GET /user/*  req/s=13594  avg=4.71ms  p50=4.46ms  p99=9.70ms  requests=108755  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  GET /user/*  req/s=12825  avg=4.99ms  p50=4.65ms  p99=10.98ms  requests=102597  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=19858  avg=3.22ms  p50=3.14ms  p99=5.21ms  requests=158860  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  POST /user  req/s=19421  avg=3.29ms  p50=3.21ms  p99=6.22ms  requests=155367  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=19884  avg=3.22ms  p50=3.17ms  p99=5.33ms  requests=159071  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  POST /user  req/s=18916  avg=3.38ms  p50=3.22ms  p99=6.67ms  requests=151326  errors=0  non2xx=0
+build/angel/bundle/bin/angel  POST /user  req/s=19781  avg=3.23ms  p50=3.18ms  p99=5.36ms  requests=158251  errors=0  non2xx=0
+build/angel_runner/bundle/bin/angel_runner  POST /user  req/s=19690  avg=3.25ms  p50=4.44ms  p99=6.59ms  requests=157521  errors=0  non2xx=0
+# load average 5.19 4.02 2.74
+# mean req/s
+GET /	build/angel/bundle/bin/angel	20204
+GET /	build/angel_runner/bundle/bin/angel_runner	19573
+GET /user/42	build/angel/bundle/bin/angel	15781
+GET /user/42	build/angel_runner/bundle/bin/angel_runner	15512
+GET /user/*	build/angel/bundle/bin/angel	13254
+GET /user/*	build/angel_runner/bundle/bin/angel_runner	13125
+POST /user	build/angel/bundle/bin/angel	19841
+POST /user	build/angel_runner/bundle/bin/angel_runner	19342

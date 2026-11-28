@@ -5,6 +5,7 @@ Compares the Angel3, Shelf and Relic apps of [issue 2](../../../../doc/issues/is
 ## Contents
 
 - `bin/angel.dart`, `bin/shelf.dart`, `bin/relic.dart`: the apps of the issue, unchanged except that `ISOLATES` and `PORT` can be set from the environment.
+- `bin/angel_runner.dart`: the Angel3 app of the issue served by `Runner` of `angel3_production`, with its defaults, instead of isolates spawned by hand.
 - `bin/raw.dart`: the same three routes on plain `dart:io`.
 - `bin/load.dart`: an HTTP/1.1 load generator over keep-alive connections, used because `wrk` is not available here. A `*` in the path is replaced by a value that differs on every request.
 - `bin/profile.dart`: samples the CPU of a server started with `--observe` and prints self and inclusive time per function, and the time in `dart:async` by the first caller outside it.
@@ -14,7 +15,7 @@ Compares the Angel3, Shelf and Relic apps of [issue 2](../../../../doc/issues/is
 - `ab.sh`: compares builds of servers given as paths, alternating them several times per route so that load on the machine affects them alike.
 - `results/`: the output of the runs below.
 
-The `pubspec.yaml` overrides the Angel3 packages with those of the workspace, so the benchmarks measure the code here, not the versions on pub.dev.
+The `pubspec.yaml` overrides the Angel3 packages with those of the workspace (`angel3_framework` and `angel3_production` among them), so the benchmarks measure the code here, not the versions on pub.dev.
 
 ## Running
 
@@ -182,6 +183,46 @@ With the second only, through the mock ([`bin/microtasks.dart`](bin/microtasks.d
 A real request costs about 140 µs of CPU, so the 1–2 µs saved is about 1%, below the noise over HTTP ([results/run-8-async-chain-ab.txt](results/run-8-async-chain-ab.txt): the new build was faster in 6 rounds of 12). The future chain that is left belongs to `dart:io`, or to the framework's API: `createRequestContext` and `createResponseContext` return futures, which the driver must wait for.
 
 The first change also showed that `angel3_shelf` hijacked a request in time only because the framework took a microtask or two before it sent the response: `shelf.Request.hijack` runs the hijack in a microtask. `embedShelf` now waits for the hijack, whatever the framework's timing.
+
+## Served by `Runner` (angel3_production 10.2.0)
+
+`bin/angel_runner.dart` serves the app of `bin/angel.dart` with `Runner`, as a deployed app would be: in production mode, which `Runner` sets by default since 10.2.0, with no zone per request, respawning on, and its instances logging to the main isolate. It listens on all addresses, as `bin/angel.dart` does, with `ISOLATES` instances on `PORT`.
+
+The two were alternated three times per route, 8 s each after a 3 s warmup, with 2 isolates and 64 connections ([results/run-11-runner-ab.txt](results/run-11-runner-ab.txt), framework 10.3.0, load average 5.2 at the end):
+
+```sh
+./ab.sh build/angel/bundle/bin/angel build/angel_runner/bundle/bin/angel_runner
+```
+
+| Route | Isolates by hand | `Runner` | Change |
+| --- | ---: | ---: | ---: |
+| `GET /` | 20,204 | 19,573 | −3.1% |
+| `GET /user/42` | 15,781 | 15,512 | −1.7% |
+| `GET /user/*` | 13,254 | 13,125 | −1.0% |
+| `POST /user` | 19,841 | 19,342 | −2.5% |
+
+`Runner` costs about 2%. That is within the noise of one round (the rounds of `bin/angel.dart` on `GET /user/*` ranged from 12,527 to 13,642), but it was slower in 9 rounds of 12. Each instance has a `belatuk_pub_sub` client in its container and a logger that sends records to the main isolate, which serves no requests, but none of that runs per request in production mode. Before 10.2.0, `Runner` ran in development mode unless `ANGEL_ENV=production` was set, which resolves the routes of every request again; that, not `Runner` itself, was the cost to avoid.
+
+### How requests are spread over the isolates
+
+Copies of both servers that count the requests and the distinct client connections of each isolate ([results/run-12-runner-distribution.txt](results/run-12-runner-distribution.txt), 8 s of `GET /user/*`) show that `dart:io` spreads connections, not requests, over the isolates of a shared server: each connection is given to one isolate, which serves every request of it, as the load generator keeps them alive. The connections are not dealt round-robin, but in clumps that change from run to run:
+
+| Server | Isolates | Connections | Requests per isolate | Connections per isolate |
+| --- | ---: | ---: | --- | --- |
+| By hand | 2 | 64 | 50.7% / 49.3% | 36 / 29 |
+| `Runner` | 2 | 64 | 48.6% / 51.4% | 33 / 32 |
+| By hand | 4 | 64 | 25.0 / 24.0 / 22.9 / 28.1% | 16 / 13 / 12 / 24 |
+| `Runner` | 4 | 64 | 23.7 / 25.2 / 25.0 / 26.0% | 13 / 16 / 17 / 19 |
+| By hand | 4 | 8 | 0 / 49.9 / 50.1 / 0% | 1 / 4 / 4 / 0 |
+| `Runner` | 4 | 8 | 38.9 / 0 / 17.4 / 43.7% | 4 / 0 / 1 / 4 |
+
+The connection counts include the one of the readiness check. Three more runs of 4 isolates and 8 connections by hand gave the busiest isolate 49%, 34% and 40% of the requests.
+
+With 64 connections, as in every benchmark here, each isolate gets a fair share, so the figures above are not skewed by it. With few connections, some isolates, and the cores they would use, may get none. Both servers behave alike, as `HttpServer.bind(shared: true)` of `dart:io` gives out the connections, below Angel3. For a deployment, this means:
+
+- A reverse proxy should keep several connections per isolate open to the app, as 64 connections did here.
+- Connections that end now and then (`keepalive_requests` of nginx, or `HttpServer.idleTimeout`) are given out again, which evens the shares out over time.
+- Processes of one isolate each, on ports of their own behind a load balancer, have the balancer spread the requests instead. `dart:io` cannot bind several processes to one TCP port: `reusePort` is only of `RawDatagramSocket`, for UDP.
 
 ## Suggested fixes, by measured payoff
 

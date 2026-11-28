@@ -200,6 +200,16 @@ abstract class Driver<
   /// clients cannot, so a driver for them overrides this.
   bool supportsChunkedEncoding(Request request) => true;
 
+  /// Whether a request that every handler continued past (returned `true`,
+  /// or called the `next` of an `around` handler) without answering it is
+  /// answered with a `404`, as one of no route is: past a fallback of
+  /// middleware, for a path of no route.
+  ///
+  /// `false` by default, so that a driver that answers such a request
+  /// itself keeps doing so, as `angel3_shelf`'s passes it on to a shelf
+  /// handler; `AngelHttp` and `AngelHttp2` are `true`.
+  bool get notFoundIfUnanswered => false;
+
   void setStatusCode(Response response, int value);
 
   void addCookies(Response response, Iterable<Cookie> cookies);
@@ -325,12 +335,15 @@ abstract class Driver<
             req.container?.registerSingleton<Stopwatch>(Stopwatch()..start());
           }
 
-          return runPipeline(
-            it,
-            req,
-            res,
-            app,
-          ).then((_) => sendResponse(request, response, req, res));
+          return runPipeline(it, req, res, app).then((continued) {
+            // Every handler continued, as a fallback that returns `true`
+            // (or calls `next`) does, and none answered: there is no route
+            // for the request, as when none matched.
+            if (continued && notFoundIfUnanswered && _unanswered(res)) {
+              throw AngelHttpException.notFound();
+            }
+            return sendResponse(request, response, req, res);
+          });
         }
 
         if (useZone == false) {
@@ -619,8 +632,9 @@ abstract class Driver<
     });
   }
 
-  /// Runs a [MiddlewarePipeline].
-  static Future<void> runPipeline<
+  /// Runs a [MiddlewarePipeline]. Whether every handler of it continued
+  /// (returned `true`, or called the `next` of an `around` handler).
+  static Future<bool> runPipeline<
     RequestContextType extends RequestContext,
     ResponseContextType extends ResponseContext
   >(
@@ -631,6 +645,17 @@ abstract class Driver<
   ) async {
     // Each handler that returns `true` is followed by the next, of its route
     // and then of the routes after it; one made by `around` runs the rest.
-    await runHandlers(PipelineHandlers(it), req, res, app);
+    // Awaited, not returned, so the pipeline takes as many microtasks as it
+    // did: code relies on them (see the README of performance/issue_2, fix 6).
+    var continued = await runHandlers(PipelineHandlers(it), req, res, app);
+    return continued;
   }
+
+  /// Whether no handler has answered [res]: it is open, has sent nothing,
+  /// has its default status, and buffered nothing.
+  static bool _unanswered(ResponseContext res) =>
+      res.isOpen &&
+      !res.headersSent &&
+      res.statusCode == 200 &&
+      (res.buffer?.isEmpty ?? true);
 }

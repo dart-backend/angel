@@ -854,6 +854,47 @@ void main() {
     expect(options.keyPassword, 'given');
   });
 
+  group('environment', () {
+    /// The environment of the instance of `test/env_app.dart`, run with
+    /// [angelEnv] as its `ANGEL_ENV`, or without one if it is `null`.
+    Future<String> environmentOf(String? angelEnv) async {
+      var environment = Map.of(Platform.environment)..remove('ANGEL_ENV');
+      if (angelEnv != null) environment['ANGEL_ENV'] = angelEnv;
+      var process = await Process.start(
+        Platform.resolvedExecutable,
+        ['test/env_app.dart', '-j', '1', '-p', '0'],
+        environment: environment,
+        includeParentEnvironment: false,
+      );
+      addTearDown(process.kill);
+      var out = <String>[];
+      process.stdout
+          .transform(const SystemEncoding().decoder)
+          .transform(const LineSplitter())
+          .listen(out.add);
+      process.stderr.drain<void>();
+      await printed(out, 'listening at', timeout: const Duration(seconds: 60));
+      process.kill(ProcessSignal.sigint);
+      await process.exitCode.timeout(const Duration(seconds: 40));
+      // Printed through the runner's log, as `<time> INFO [env]: <line>`.
+      var line = out.firstWhere((l) => l.contains('environment: '));
+      return line.substring(line.indexOf('environment: ') + 13);
+    }
+
+    test('is production without ANGEL_ENV', () async {
+      expect(await environmentOf(null), 'production');
+    }, timeout: const Timeout(Duration(minutes: 2)));
+
+    test('is production with an empty ANGEL_ENV', () async {
+      expect(await environmentOf(''), 'production');
+    }, timeout: const Timeout(Duration(minutes: 2)));
+
+    test('is that of ANGEL_ENV, if it is set', () async {
+      expect(await environmentOf('development'), 'development');
+      expect(await environmentOf('Staging'), 'staging');
+    }, timeout: const Timeout(Duration(minutes: 3)));
+  }, testOn: '!windows');
+
   test('the process exits once its instances have closed', () async {
     var process = await Process.start(Platform.resolvedExecutable, [
       'test/stop_app.dart',
