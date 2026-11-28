@@ -1,0 +1,34 @@
+# 2026-11-28T09:57:44+08:00  dart 3.14.1  4 cpus
+# server cpus=0,1 isolates=2; load cpus=2,3 isolates=2 connections=64 duration=10s
+raw  GET /  req/s=29652  avg=2.16ms  p50=2.06ms  p99=4.46ms  requests=296517  errors=0  non2xx=0
+raw  GET /  req/s=29101  avg=2.20ms  p50=2.08ms  p99=4.88ms  requests=291006  errors=0  non2xx=0
+raw  GET /user/42  req/s=20696  avg=3.09ms  p50=3.02ms  p99=5.89ms  requests=206957  errors=0  non2xx=0
+raw  GET /user/42  req/s=20076  avg=3.19ms  p50=3.41ms  p99=8.14ms  requests=200762  errors=0  non2xx=0
+raw  GET /user/*  req/s=20576  avg=3.11ms  p50=3.12ms  p99=5.86ms  requests=205758  errors=0  non2xx=0
+raw  GET /user/*  req/s=19967  avg=3.20ms  p50=3.09ms  p99=6.05ms  requests=199666  errors=0  non2xx=0
+raw  POST /user  req/s=27841  avg=2.30ms  p50=2.17ms  p99=4.89ms  requests=278406  errors=0  non2xx=0
+raw  POST /user  req/s=28458  avg=2.25ms  p50=2.17ms  p99=4.49ms  requests=284576  errors=0  non2xx=0
+angel  GET /  req/s=20516  avg=3.12ms  p50=3.02ms  p99=5.05ms  requests=205164  errors=0  non2xx=0
+angel  GET /  req/s=20225  avg=3.16ms  p50=3.13ms  p99=5.16ms  requests=202252  errors=0  non2xx=0
+angel  GET /user/42  req/s=14442  avg=4.43ms  p50=4.27ms  p99=9.66ms  requests=144420  errors=0  non2xx=0
+angel  GET /user/42  req/s=15562  avg=4.11ms  p50=4.09ms  p99=8.43ms  requests=155622  errors=0  non2xx=0
+angel  GET /user/*  req/s=13487  avg=4.75ms  p50=4.55ms  p99=10.60ms  requests=134871  errors=0  non2xx=0
+angel  GET /user/*  req/s=13333  avg=4.80ms  p50=4.51ms  p99=10.48ms  requests=133326  errors=0  non2xx=0
+angel  POST /user  req/s=19745  avg=3.24ms  p50=3.21ms  p99=5.40ms  requests=197451  errors=0  non2xx=0
+angel  POST /user  req/s=19735  avg=3.24ms  p50=3.21ms  p99=5.33ms  requests=197349  errors=0  non2xx=0
+shelf  GET /  req/s=19429  avg=3.29ms  p50=3.25ms  p99=5.27ms  requests=194294  errors=0  non2xx=0
+shelf  GET /  req/s=18948  avg=3.38ms  p50=3.28ms  p99=5.83ms  requests=189481  errors=0  non2xx=0
+shelf  GET /user/42  req/s=13720  avg=4.66ms  p50=4.58ms  p99=7.12ms  requests=137198  errors=0  non2xx=0
+shelf  GET /user/42  req/s=13805  avg=4.63ms  p50=4.61ms  p99=6.90ms  requests=138047  errors=0  non2xx=0
+shelf  GET /user/*  req/s=13616  avg=4.70ms  p50=4.65ms  p99=7.02ms  requests=136160  errors=0  non2xx=0
+shelf  GET /user/*  req/s=12677  avg=5.05ms  p50=5.50ms  p99=13.02ms  requests=126767  errors=0  non2xx=0
+shelf  POST /user  req/s=16487  avg=3.88ms  p50=5.66ms  p99=10.69ms  requests=164871  errors=0  non2xx=0
+shelf  POST /user  req/s=17463  avg=3.66ms  p50=4.25ms  p99=7.87ms  requests=174625  errors=0  non2xx=0
+relic  GET /  req/s=41670  avg=1.53ms  p50=1.37ms  p99=3.33ms  requests=416697  errors=0  non2xx=0
+relic  GET /  req/s=41616  avg=1.54ms  p50=1.37ms  p99=3.53ms  requests=416163  errors=0  non2xx=0
+relic  GET /user/42  req/s=40884  avg=1.56ms  p50=1.41ms  p99=2.95ms  requests=408841  errors=0  non2xx=0
+relic  GET /user/42  req/s=40296  avg=1.59ms  p50=1.42ms  p99=3.55ms  requests=402964  errors=0  non2xx=0
+relic  GET /user/*  req/s=39065  avg=1.64ms  p50=1.49ms  p99=2.95ms  requests=390645  errors=0  non2xx=0
+relic  GET /user/*  req/s=39488  avg=1.62ms  p50=1.47ms  p99=3.18ms  requests=394884  errors=0  non2xx=0
+relic  POST /user  req/s=42113  avg=1.52ms  p50=1.37ms  p99=2.80ms  requests=421127  errors=0  non2xx=0
+relic  POST /user  req/s=41488  avg=1.54ms  p50=1.38ms  p99=3.16ms  requests=414884  errors=0  non2xx=0
