@@ -20,14 +20,14 @@ dev_dependencies:
   lints: ^6.0.0
 
 # Measure the workspace's packages, not those on pub.dev.
-# dependency_overrides:
-#   angel3_container:
-#     path: ../../packages/container/container
-#   angel3_http_exception:
-#     path: ../../packages/http_exception
-#   angel3_mock_request:
-#     path: ../../packages/mock_request
-#   angel3_model:
-#     path: ../../packages/model
-#   angel3_route:
-#     path: ../../packages/route
+dependency_overrides:
+  angel3_container:
+    path: ../../packages/container/container
+  angel3_http_exception:
+    path: ../../packages/http_exception
+  angel3_mock_request:
+    path: ../../packages/mock_request
+  angel3_model:
+    path: ../../packages/model
+  angel3_route:
+    path: ../../packages/route

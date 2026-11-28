@@ -8,6 +8,7 @@
 
 ### Fixes in 10.3.0
 
+* **Responses:** `ResponseContext.serialize` (and so `res.json` and a handler that returns a value) encodes JSON straight to UTF-8 bytes with `JsonUtf8Encoder` while the serializer is the default `json.encode`, instead of building a `String` and encoding it again. A response of 20 small objects is sent about 24% faster, and one of 200 about 38%. The bytes sent, and the moment they are written, are the same as before; an app or response whose `serializer` is set otherwise uses it as before
 * **HTTPS:** `AngelHttp.secure` reads its paths as paths of files, as `AngelHttp.resolveFilePath` does: an absolute one as it is, a `file:` URI as its path, and a relative one of the directory of the script, or of the current directory if the script is not a file. They were resolved as URIs of the script, so that an absolute Windows path, as `C:\certs\server.pem`, failed with "Cannot extract a file path from a c URI", and a relative one of `\` was not of directories
 
 ## 10.2.1
