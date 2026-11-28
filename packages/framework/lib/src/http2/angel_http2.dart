@@ -406,6 +406,11 @@ class AngelHttp2
     _pendingFor(response).statusCode = value;
   }
 
+  /// A request that every handler continued past without answering it is a
+  /// `404`, as one of no route is.
+  @override
+  bool get notFoundIfUnanswered => true;
+
   @override
   Uri get uri => Uri(
     scheme: 'https',

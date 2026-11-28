@@ -180,6 +180,7 @@ app.chain([
 * **Where it runs.** `next` runs the handlers after it of its route, and of the routes after it, as of `app.fallback`, `app.chain`, a group or a route's `middleware`. In `chain([...])`, `next` runs the rest of that chain.
 * **Errors.** An error of the rest fails `next`: catch it to answer it yourself, or let it through to the app's error handler, as a `500` or the `AngelHttpException` thrown.
 * **Stopping.** A handler that does not call `next` stops the pipeline, as one that returns `false`: it answers the request itself. `next` may be called once.
+* **Paths of no route.** If every handler continues, as an `around` fallback that calls `next` does, and none answers the request (it writes nothing, and leaves the status at 200), the request is answered with a `404`, as one that matches no route is. So `app.fallback(around(...))` above does not answer unknown paths, and its `res.done` sees their `404`.
 * **The response is sent after the pipeline,** so `next` completes before it is. Do not wait for `res.done` in the handler, which would never complete; use `res.done.then(...)`, as above.
 * **Rewriting the body.** Call `res.useBuffer()` before `next`, and rewrite `res.buffer` after it, of handlers that write without closing the response. A handler that closes it, as one that returns a value, locks the buffer: rewrite that body in one of `app.responseFinalizers`, which also run on unbuffered responses, before their headers are sent.
 * **Cost.** A pipeline of no `around` handler runs as before.

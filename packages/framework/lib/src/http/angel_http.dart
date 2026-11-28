@@ -256,6 +256,11 @@ class AngelHttp
     }
   }
 
+  /// A request that every handler continued past without answering it is a
+  /// `404`, as one of no route is.
+  @override
+  bool get notFoundIfUnanswered => true;
+
   /// HTTP/1.0 has no chunked encoding; Content-Length is sent instead.
   @override
   bool supportsChunkedEncoding(HttpRequest request) =>
